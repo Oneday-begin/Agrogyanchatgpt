@@ -1,139 +1,114 @@
-"""Database engine, session factory and FastAPI session dependency.
-
-Supports SQLite (local development, default) and PostgreSQL (DATABASE_URL in
-production). Connection pooling and SQLite concurrency settings are configured
-here so individual routes never need to think about them.
-"""
-from __future__ import annotations
-
-import logging
 import os
-from typing import Iterator
-
-from sqlalchemy import create_engine, event, inspect, text
-from sqlalchemy.orm import Session, declarative_base, sessionmaker
-
-logger = logging.getLogger("agrogyan.database")
+from sqlalchemy import create_engine, text
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DEFAULT_SQLITE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'agrogyan.db')}"
 DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_SQLITE_URL)
 
-# Render/Heroku-style URLs use postgres://, SQLAlchemy expects postgresql://
+# Render/Postgres may provide postgres://; SQLAlchemy expects postgresql://
 if DATABASE_URL.startswith("postgres://"):
     DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
 
-IS_SQLITE = DATABASE_URL.startswith("sqlite")
-
-if IS_SQLITE:
-    engine = create_engine(
-        DATABASE_URL,
-        # FastAPI runs sync routes in a thread pool, so the connection must be
-        # shareable across threads. `timeout` waits for locks instead of failing.
-        connect_args={"check_same_thread": False, "timeout": 15},
-    )
-
-    @event.listens_for(engine, "connect")
-    def _sqlite_pragmas(dbapi_connection, _record):  # pragma: no cover - driver hook
-        cursor = dbapi_connection.cursor()
-        # WAL lets readers proceed while a writer commits (fixes "database is locked").
-        cursor.execute("PRAGMA journal_mode=WAL")
-        cursor.execute("PRAGMA synchronous=NORMAL")
-        cursor.execute("PRAGMA foreign_keys=ON")
-        cursor.close()
+engine_kwargs = {}
+if DATABASE_URL.startswith("sqlite"):
+    engine_kwargs["connect_args"] = {"check_same_thread": False}
 else:
-    engine = create_engine(
-        DATABASE_URL,
-        pool_pre_ping=True,  # drop dead connections transparently
-        pool_size=int(os.getenv("DB_POOL_SIZE", "5")),
-        max_overflow=int(os.getenv("DB_MAX_OVERFLOW", "10")),
-        pool_recycle=int(os.getenv("DB_POOL_RECYCLE_SECONDS", "1800")),
-        pool_timeout=int(os.getenv("DB_POOL_TIMEOUT_SECONDS", "30")),
-    )
+    engine_kwargs["pool_pre_ping"] = True
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+engine = create_engine(DATABASE_URL, **engine_kwargs)
+
+# Session
+SessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=engine
+)
+
+# Base class for models
 Base = declarative_base()
 
 
-def get_session() -> Iterator[Session]:
-    """FastAPI dependency: yields a session and always releases it.
+def _ensure_columns():
+    """Ensure the expected columns exist in the posts table.
 
-    Rolls back on any exception so a failed request never leaves a
-    half-written transaction on a pooled connection.
+    This prevents `OperationalError: no such column` when a DB file was created
+    before a schema change (e.g., added likes/dislikes).
     """
-    session = SessionLocal()
-    try:
-        yield session
-    except Exception:
-        session.rollback()
-        raise
-    finally:
-        session.close()
+
+    with engine.connect() as conn:
+        try:
+            result = conn.execute(text("PRAGMA table_info(posts)"))
+        except Exception:
+            return
+
+        existing_columns = {row[1] for row in result}
+
+        if "likes" not in existing_columns:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0"))
+
+        if "dislikes" not in existing_columns:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN dislikes INTEGER DEFAULT 0"))
+
+        if "reactions" not in existing_columns:
+            conn.execute(text("ALTER TABLE posts ADD COLUMN reactions TEXT DEFAULT '{}'"))
+
+        try:
+            user_result = conn.execute(text("PRAGMA table_info(users)"))
+        except Exception:
+            return
+
+        existing_user_columns = {row[1] for row in user_result}
+
+        if "mobile_number" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN mobile_number TEXT"))
+
+        if "date_of_birth" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN date_of_birth TEXT"))
+
+        if "state" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN state TEXT"))
+
+        if "district" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN district TEXT"))
+
+        if "crop_name" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN crop_name TEXT"))
+
+        if "land_size" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN land_size TEXT"))
+
+        if "soil_type" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN soil_type TEXT"))
+
+        if "season" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN season TEXT"))
+
+        if "village" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN village TEXT"))
+
+        if "preferred_language" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN preferred_language TEXT"))
+
+        if "simple_mode" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN simple_mode TEXT"))
+
+        if "role" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'farmer'"))
+
+        if "phone_verified" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN phone_verified BOOLEAN DEFAULT 0"))
+
+        if "otp_channel" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN otp_channel TEXT"))
+
+        if "created_at" not in existing_user_columns:
+            conn.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
+            conn.execute(text("UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL"))
+
+        conn.commit()
 
 
-def check_database() -> bool:
-    """Lightweight connectivity probe used by the /health endpoint."""
-    try:
-        with engine.connect() as conn:
-            conn.execute(text("SELECT 1"))
-        return True
-    except Exception:
-        logger.exception("Database health check failed")
-        return False
-
-
-# Columns added after the first release. Older agrogyan.db files are upgraded
-# in place so queries never fail with "no such column".
-_LEGACY_COLUMNS: dict[str, dict[str, str]] = {
-    "posts": {
-        "likes": "INTEGER DEFAULT 0",
-        "dislikes": "INTEGER DEFAULT 0",
-        "reactions": "TEXT DEFAULT '{}'",
-    },
-    "users": {
-        "mobile_number": "TEXT",
-        "date_of_birth": "TEXT",
-        "state": "TEXT",
-        "district": "TEXT",
-        "crop_name": "TEXT",
-        "land_size": "TEXT",
-        "soil_type": "TEXT",
-        "season": "TEXT",
-        "village": "TEXT",
-        "preferred_language": "TEXT",
-        "simple_mode": "TEXT",
-        "role": "TEXT DEFAULT 'farmer'",
-        "phone_verified": "BOOLEAN DEFAULT FALSE",
-        "otp_channel": "TEXT",
-        "created_at": "TIMESTAMP",
-    },
-}
-
-
-def ensure_legacy_columns() -> None:
-    """Add any missing columns to tables that already exist.
-
-    Uses the SQLAlchemy inspector so it works on SQLite and PostgreSQL alike.
-    Failures are logged rather than raised so a migration hiccup can never
-    prevent the API from starting.
-    """
-    try:
-        inspector = inspect(engine)
-        existing_tables = set(inspector.get_table_names())
-        with engine.begin() as conn:
-            for table, columns in _LEGACY_COLUMNS.items():
-                if table not in existing_tables:
-                    continue
-                present = {col["name"] for col in inspector.get_columns(table)}
-                for name, ddl in columns.items():
-                    if name in present:
-                        continue
-                    logger.info("Adding missing column %s.%s", table, name)
-                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
-                    if table == "users" and name == "created_at":
-                        conn.execute(text("UPDATE users SET created_at = CURRENT_TIMESTAMP WHERE created_at IS NULL"))
-    except Exception:
-        logger.exception("Schema upgrade check failed; continuing with existing schema")
-
-
-ensure_legacy_columns()
+# Apply schema fixes automatically on import
+_ensure_columns()

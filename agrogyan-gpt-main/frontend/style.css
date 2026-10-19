@@ -124,35 +124,10 @@ button:hover,
     transform: translateY(-2px);
 }
 
-button:active,
-.nav-btn:active,
-.primary-btn:active,
-.icon-btn:active,
-.tab-btn:active,
-.login-btn-green:active {
-    transform: translateY(1px) scale(0.97);
-    box-shadow: none;
-}
-
-button:focus-visible,
-.nav-btn:focus-visible,
-.primary-btn:focus-visible,
-.icon-btn:focus-visible,
-.tab-btn:focus-visible,
-.login-btn-green:focus-visible {
-    outline: 3px solid rgba(44, 100, 47, 0.7);
-    outline-offset: 3px;
-}
-
-button:disabled,
-button[disabled],
-.primary-btn:disabled,
-.primary-btn[disabled] {
-    opacity: 0.55;
+button:disabled {
+    opacity: 0.65;
     cursor: not-allowed;
     transform: none;
-    box-shadow: none;
-    pointer-events: none;
 }
 
 input,
@@ -188,7 +163,7 @@ button:focus {
     outline-offset: 3px;
 }
 
-textarea:not(.agro-chat-textarea) {
+textarea {
     min-height: 148px;
     resize: vertical;
 }
@@ -616,9 +591,30 @@ body.dark-mode .mini-value {
     width: 100%;
 }
 
+.chat-shell {
+    display: grid;
+    gap: 18px;
+}
 
-/* .image-upload, .controls, .section-header etc. layout helpers kept below */
+.question-input {
+    min-height: 230px;
+    font-size: 1.04rem;
+}
+
+.assistant-shell .nav-btn,
+.assistant-shell .icon-btn {
+    background: rgba(255, 249, 230, 0.94);
+    color: #325328;
+    border-color: rgba(227, 198, 115, 0.52);
+}
+
+.assistant-shell .nav-btn:hover,
+.assistant-shell .icon-btn:hover {
+    background: rgba(255, 244, 206, 0.98);
+}
+
 .image-upload,
+.controls,
 .history-header,
 .section-header,
 .search-bar,
@@ -631,6 +627,7 @@ body.dark-mode .mini-value {
     flex-wrap: wrap;
 }
 
+.controls,
 .history-header,
 .section-header,
 .scheme-toolbar {
@@ -646,6 +643,7 @@ body.dark-mode .mini-value {
     flex-wrap: wrap;
 }
 
+.answer-box,
 .history-box,
 .market-board,
 .advisory-card,
@@ -660,12 +658,20 @@ body.dark-mode .mini-value {
     backdrop-filter: blur(14px);
 }
 
+.assistant-shell {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
 .assistant-side {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;
 }
 
+.answer-box h3,
 .history-box h3,
 .market-board h3,
 .advisory-card h3,
@@ -676,6 +682,7 @@ body.dark-mode .mini-value {
     font-size: 1.35rem;
 }
 
+.answer-box p,
 .history-item p,
 .scheme-card p,
 .profile-card p,
@@ -683,6 +690,22 @@ body.dark-mode .mini-value {
 .advisory-list li,
 .timeline-item p {
     line-height: 1.65;
+}
+
+.answer-intro {
+    margin: 0 0 10px;
+    padding: 10px 14px;
+    border-radius: 16px;
+    background: rgba(44, 100, 47, 0.1);
+    border: 1px solid rgba(44, 100, 47, 0.14);
+    color: var(--green-strong);
+    font-weight: 700;
+}
+
+#confidence {
+    margin-top: 14px;
+    font-size: 0.94rem;
+    color: var(--text-soft);
 }
 
 .history-list,
@@ -939,6 +962,13 @@ body.dark-mode .profile-card h3 {
 
 .reaction-btn:hover {
     background: rgba(255, 239, 186, 0.95);
+}
+
+body[data-page="community"] .community-hero {
+    background:
+        radial-gradient(circle at 82% 8%, rgba(241, 209, 111, 0.34), transparent 18%),
+        radial-gradient(circle at 12% 16%, rgba(112, 181, 84, 0.24), transparent 24%),
+        linear-gradient(135deg, rgba(255, 252, 241, 0.96), rgba(237, 246, 226, 0.88));
 }
 
 .community-live-stats .stat-card {
@@ -2733,12 +2763,49 @@ body.dark-mode .trust-badge {
     gap: 12px;
 }
 
-
+.assistant-panel-head,
 .progress-layout,
 .summary-flip-grid,
 .badge-row,
 .map-board {
     display: flex;
+}
+
+.assistant-panel-head {
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+}
+
+.voice-pill {
+    padding: 10px 14px;
+    border-radius: 999px;
+    background: rgba(27, 75, 35, 0.92);
+    border: 1px solid rgba(239, 213, 127, 0.4);
+    color: #fdf0c2;
+    box-shadow: 0 0 18px rgba(120, 216, 105, 0.14);
+    white-space: nowrap;
+}
+
+.chat-shell {
+    position: relative;
+    overflow: hidden;
+}
+
+.typing-scan {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0;
+    background:
+        linear-gradient(180deg, transparent 0, rgba(100, 255, 153, 0.09) 48%, transparent 100%),
+        repeating-linear-gradient(180deg, rgba(85, 212, 127, 0.08) 0 2px, transparent 2px 12px);
+    transform: translateY(-100%);
+}
+
+.chat-shell.thinking .typing-scan {
+    opacity: 1;
+    animation: scanSweep 1.6s linear infinite;
 }
 
 .live-weather-card {
@@ -4791,6 +4858,33 @@ body.dark-mode .shop-product-callout strong {
     gap: 18px;
 }
 
+.chatbot-spotlight {
+    padding: 30px;
+}
+
+.chatbot-stage {
+    grid-template-columns: 1fr;
+}
+
+.chatbot-main-shell {
+    min-height: 100%;
+    padding: 28px;
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(255, 228, 143, 0.18), transparent 24%),
+        linear-gradient(180deg, rgba(255, 252, 242, 0.98), rgba(246, 237, 205, 0.82));
+    border: 1px solid rgba(211, 180, 96, 0.32);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78), var(--shadow-soft);
+}
+
+.chatbot-spotlight .question-input {
+    min-height: 280px;
+    font-size: 1.08rem;
+}
+
+.chatbot-spotlight .answer-box {
+    min-height: 220px;
+}
 
 .home-secondary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -4837,7 +4931,8 @@ body.dark-mode .timeline-item a {
 }
 
 body.dark-mode .widget-card,
-body.dark-mode .market-row {
+body.dark-mode .market-row,
+body.dark-mode .chatbot-main-shell {
     background: linear-gradient(180deg, rgba(255, 241, 197, 0.08), rgba(255, 241, 197, 0.04));
 }
 
@@ -4873,6 +4968,10 @@ body.dark-mode .weather-mini-stat {
         grid-template-columns: 1fr;
     }
 
+    .chatbot-spotlight,
+    .chatbot-main-shell {
+        padding: 22px;
+    }
 
     .weather-hero-main,
     .market-widget-header,
@@ -6275,26 +6374,4 @@ body[data-page="sell-produce"] .hero-panel {
         transform: scale(1.12);
         opacity: 1;
     }
-}
-
-/* Keep the assistant page responsive on integrated graphics. Decorative movement
-   and full-panel backdrop blur otherwise repaint while the user types or scrolls. */
-body[data-page="home"]::after,
-body[data-page="home"] .page-shell::before,
-body[data-page="home"] .page-shell::after {
-    content: none;
-    animation: none;
-}
-body[data-page="home"] :is(.hero-panel, .chat-container, .timeline-card, .advisory-card,
-    .market-board, .sun-glow, .cloud, .wind-line, .rain-glow, .monitor-dot, .welcome-live-dot) {
-    animation: none;
-}
-body[data-page="home"] :is(.top-bar, .hero-panel, .chat-container, .timeline-card,
-    .advisory-card, .forecast-card, .glass-card) {
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-}
-body[data-page="home"] .dashboard-widgets {
-    content-visibility: auto;
-    contain-intrinsic-size: auto 480px;
 }

@@ -39,16 +39,6 @@ class Post(Base):
     reactions = Column(String, default='{}')
 
 
-class Comment(Base):
-    __tablename__ = "comments"
-
-    id = Column(Integer, primary_key=True, index=True)
-    post_id = Column(Integer, ForeignKey("posts.id", ondelete="CASCADE"), nullable=False, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    text = Column(Text, nullable=False)
-    timestamp = Column(DateTime(timezone=True), server_default=func.now())
-
-
 class QueryMemory(Base):
     __tablename__ = "query_memory"
 
