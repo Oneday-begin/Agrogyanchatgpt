@@ -1,0 +1,647 @@
+{
+  "date": "2026-10-19",
+  "removed": [
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/__init__.cpython-312.pyc",
+      "bytes": 179,
+      "sha256": "9a696d7ab4efa00004f569321bb2f1536cb440343e31e63eeafeec39fde325b0",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/build_knowledge_base.cpython-312.pyc",
+      "bytes": 5605,
+      "sha256": "69ca0bfe3832c9b045f823ea23408f4c5966916c49f59543fe15bd890ce3d3c6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/build_vector_index.cpython-312.pyc",
+      "bytes": 1073,
+      "sha256": "660b5e602246f9767838a305e3c4d13520ffd8d357c4592455a7089194e931ec",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/data_loader.cpython-312.pyc",
+      "bytes": 12968,
+      "sha256": "0e0453ec684eb0f498e8d6634ad89f169e52199f08040deb11d48ce18fbc9915",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/database.cpython-312.pyc",
+      "bytes": 6406,
+      "sha256": "aaa2af22300dfccb28d65c4db678a233e534c84290da023dc1d5c07a095b58db",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/document_processing.cpython-312.pyc",
+      "bytes": 6025,
+      "sha256": "40b118002922ef3a44c23111acae9a27d9e5c0b17481473721ca2ce3e2f18d89",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/gr_scope.cpython-312.pyc",
+      "bytes": 4022,
+      "sha256": "2945c0afde88932a36e5d79e604ea1fb4990dfec3ed77fd2392ab07f53cb4d53",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/import_maharashtra_grs.cpython-312.pyc",
+      "bytes": 18828,
+      "sha256": "ec01828b3f9668ff33ca73ce6d243c07251b2b4f33c37367f89444b093bbb9a6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/intelligence.cpython-312.pyc",
+      "bytes": 14176,
+      "sha256": "fcabbca7288fa8b371a2d22e8d6ab274f8ba0c558aecbabf7eed750197729951",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/main.cpython-312.pyc",
+      "bytes": 140891,
+      "sha256": "64bf697c208bbafd20612be6b6d4efa751184ca54518e62de214d72b223e0676",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/models.cpython-312.pyc",
+      "bytes": 13604,
+      "sha256": "37ba6c08216da63c95ffb4a52f57e7bc0119d4b10942dc64acca2ba3a5adfa95",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/multilingual.cpython-312.pyc",
+      "bytes": 13226,
+      "sha256": "2fb4ba246c407a579cb88633603bc3b6fb8aa04c49ab8669cd57a70b003e43fd",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/passwords.cpython-312.pyc",
+      "bytes": 2481,
+      "sha256": "a402b1f420b7d049374486edcb56a2d174605bd98afd55f5c9dc464547a57937",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/pdf_ingestion.cpython-312.pyc",
+      "bytes": 9714,
+      "sha256": "00868666685a95c03d5562e397db1040f56a1622607f413ad87533a9eb4b0ca0",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/rag.cpython-312.pyc",
+      "bytes": 38019,
+      "sha256": "f6681d6b93f2db1197f1aca4172cec56d5af0acb4a8f43041c997da8705e3b8a",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/retrieval_policy.cpython-312.pyc",
+      "bytes": 5761,
+      "sha256": "29b302d243846716356eaf9648009e63943d58b87d056760538de080dea435d0",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/retriever.cpython-312.pyc",
+      "bytes": 30758,
+      "sha256": "55a8d2843c03e544edb0749f14c4b0b0e3207af1b81333dc843d489419a50d1d",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/security.cpython-312.pyc",
+      "bytes": 8611,
+      "sha256": "6b0e1e725766674a2577601dfb3377c5e166f8a6fa2369f98f5bbf258b4cde73",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/setup_rag.cpython-312.pyc",
+      "bytes": 3251,
+      "sha256": "5d90462dce3f282fb65d6317fe85b3064d068e6a353ee840e0d6f076921a8484",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/translation.cpython-312.pyc",
+      "bytes": 13613,
+      "sha256": "05be4e2f90ed676d94fe3ce2045576b9d08c048f4879bd811d0592765757caec",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/__pycache__/vector_store.cpython-312.pyc",
+      "bytes": 14206,
+      "sha256": "a3c422f594ee0f617b929fa23e6a1a51fb70cd7526c7f86638d11b6a53333cb3",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/backend/knowledge/gr_bilingual_preview.json",
+      "bytes": 2021494,
+      "sha256": "cad0d5f9efa28a06c54fd1aec15ead5c95df90e30bc9a9ed40affcbbc0211ec8",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/Instruction to start.txt",
+      "bytes": 132,
+      "sha256": "fe5d00b4360a5858f4bfd751e86af84773e7a8f7241a87130fb609e2cf32b9b9",
+      "reason": "Generated cache or superseded diagnostic output; setup note consolidated into report and README"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_chatbot.cpython-312.pyc",
+      "bytes": 48371,
+      "sha256": "1714a09a261dc51d7cbb8cc1f0d11f9d06aa9f163093e2203383672e307477bc",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_gr_import.cpython-312.pyc",
+      "bytes": 10959,
+      "sha256": "496fd999bd4cae12efd7656cbefda34a4e044b102881adb0a3e40f4fe1c392df",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_multilingual_rag.cpython-312.pyc",
+      "bytes": 10520,
+      "sha256": "71d28b6a497fc34cf8097dd58094f5ab83bf368eb7b5079bbf3db74e94df89d8",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_rag.cpython-312.pyc",
+      "bytes": 25765,
+      "sha256": "02244cdb2e106fcde2bb1b7a2b4b0d0eb93c36e56028e47662510f73adb87f09",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_retrieval_improvements.cpython-312.pyc",
+      "bytes": 14105,
+      "sha256": "e661f24023820104f2b7831d984522936be23b08e2dc2f3f8054af7d82df1998",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_security.cpython-312.pyc",
+      "bytes": 8406,
+      "sha256": "aab7017471818e2dc20eb863566c037ff5ebcd19a776c3f57795d3098f11d914",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "agrogyan-gpt-main/tests/__pycache__/test_translation_local.cpython-312.pyc",
+      "bytes": 11826,
+      "sha256": "a4b3869b15001a48c593fef5e3075ea347ee0ac78d138d58a695aeab0d8d955e",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/.gr9_footer_4.png",
+      "bytes": 15730,
+      "sha256": "ebb668b69bb0908af09a3b97e52273d8bae8b5e10443bcb895d3d298140a5bf7",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/.gr9_footer_5.png",
+      "bytes": 7530,
+      "sha256": "5387070236c9fd2fe51d6542c01353f08febb4f2b52b38b96d64ba6bafdc7593",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/audit_checks.py",
+      "bytes": 10215,
+      "sha256": "1c214ebf7332ae06643b047cfc753b285ceddcdadc3bfd462c3c63dadb2c96ee",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/audit_preview.py",
+      "bytes": 1289,
+      "sha256": "bf036b60eb8ac3cdd6ef9d41ff478fd340933cbe01cf9b6546eec40e0f49f151",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/audit_results.json",
+      "bytes": 33170,
+      "sha256": "c2188a44a06923bc31b2abf25880315ec29a2fd09722ff3f0f860222b4ab6550",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/benchmark_gr_embeddings.py",
+      "bytes": 1237,
+      "sha256": "5d35f282a99ab7a9a11023a569b6901825a34af6285fe6d5ff47adaabe6a8b41",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/browser_audit.json",
+      "bytes": 764,
+      "sha256": "73b10fa7a32ffced6cc3b60d7d5736e2a339f0ec2f76af54a0bc91179216eab2",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/chat-gujarati-verified.jpg",
+      "bytes": 88410,
+      "sha256": "2c71ed02e3e1f015e09615fff54b904fbac688aad43f9734c5300f780b820886",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/chat-workspace-clean.jpg",
+      "bytes": 23425,
+      "sha256": "b8b0fe0f5ea533f12805756f472cc888431f38d84042fca296072961dbb47852",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/chat-workspace-sidebar.jpg",
+      "bytes": 25272,
+      "sha256": "4facb64a360a823d30ebd5b823943fc02d1e6e255742f5e3944b582167b98b62",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/community-contrast-fixed.png",
+      "bytes": 93926,
+      "sha256": "2383cea4629cf208846fb7d6c379562caa45629cc11e4395afb4d6f739d3640f",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_bulk_completion.json",
+      "bytes": 611,
+      "sha256": "4b0ad1ee3ffa1c5a07a3d534a5cbfc9b6a39110557b5089bcf23ba9ca70e1110",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_bulk_tests.log",
+      "bytes": 20755,
+      "sha256": "5488b9140ddeab76097698fbc7091b0db88e6626f01efd08bd0dc52c9b6c2632",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_bulk_verification.json",
+      "bytes": 15279,
+      "sha256": "3456344779d4d4cd9db6f07376b2817acf48316372bf97e48fc8329ac0d170a1",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_embedding_build.log",
+      "bytes": 10719,
+      "sha256": "bdf708084e917da422b02f7370884a6b15b05c5709df80c973aa8cb9d9f7de10",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_embedding_model_benchmark.json",
+      "bytes": 515,
+      "sha256": "bf9168317c708fe1d51bdc660c52cbb39961e69f5a741b1c31fc3f87c04fc704",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_live_checks.json",
+      "bytes": 16622,
+      "sha256": "6e63fdacea7ba3e1c23de4c7906b0df7b91d29f754228fea3055d0af151e3cc5",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_server_stderr.log",
+      "bytes": 3055,
+      "sha256": "061b5ddb0249d8b3c5b2766134dd16bb1ca1827d74015ba31609a0e46e3b5869",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_server_stdout.log",
+      "bytes": 333,
+      "sha256": "53f805a3d08f79223e49c86a5ac1e79f41a015fd419b4db8724994d15447bca9",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_shutdown_result.json",
+      "bytes": 100,
+      "sha256": "6766eb76a797cea207148fa22e8fb82958d37741b681e1a5aa33a76b025e5736",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_shutdown_stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gr_shutdown_stdout.log",
+      "bytes": 50,
+      "sha256": "66fa16d93f0eab50278af0f43edaf09fa4eba0dc43d2b19e248bc362c892cabb",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gujarati-live.log",
+      "bytes": 4892,
+      "sha256": "8abaf266051b1baddb9106ddaf957e2b8a9f4fae4f123d83860137d6f6fa79ff",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gujarati-server-error.log",
+      "bytes": 7856,
+      "sha256": "78584f179625b56102b6b8324c17703fc4d499ea69db9b59f0c3ca375b738562",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gujarati-server-out.log",
+      "bytes": 6526,
+      "sha256": "cd75732553e422702aaed5b44cf00c26de3f54f76115114f7c1e50bfd22357b6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/gujarati-tests.log",
+      "bytes": 30681,
+      "sha256": "34eb4ccae2f1066673d7a226e7e28b663ce0853046a989811c3001fbf91acee1",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/home-chat-server-error.log",
+      "bytes": 5494,
+      "sha256": "2d70635d0db7afaf6ae881faf320fe248106c3004102b09aeb9e063e9113a7e2",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/home-chat-server-out.log",
+      "bytes": 9195,
+      "sha256": "637abbe9f45a75d0375d4e546f317f8048e8acb1835d647f884af069d4c3f168",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_api_stdout.log",
+      "bytes": 3342,
+      "sha256": "24f4a7b3655454c57dc43f41ec032c66169fa21c4141f83df7cfe0390876240f",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_api_verification.json",
+      "bytes": 33615,
+      "sha256": "d433ef3f8827376b6c6d825453723b8cd04a4e87fe7f9056a512ad67fec20129",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_model_final_comparison.json",
+      "bytes": 30074,
+      "sha256": "c52f208204007e68094137d25e3af4e24834f4bd9db2e3315f4c70ff1269fe71",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_repair_benchmark.json",
+      "bytes": 18694,
+      "sha256": "7594fbe8615668184a07cfe64758daa015fe76ba1f8e5073144a13fa04c53d85",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_selector_0_6b.json",
+      "bytes": 15884,
+      "sha256": "f8d178dc817a96b9196b0d4bde0ca776951b724e151a2f56d557e54701b85bd5",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_server_stderr.log",
+      "bytes": 6164,
+      "sha256": "017f9258a8a26e30c255630ff5429b4106f04eaab2ef6caf72b8ab98b2c4fd95",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_server_stdout.log",
+      "bytes": 3054,
+      "sha256": "d9d95b82a5b72411eeb20c7faad2e770f0e4b7605a3be4529abdfa4410430cdc",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/multilingual_unit_tests.log",
+      "bytes": 23224,
+      "sha256": "7f2807350248a8f403a69fc9670aaaa199a9a936402007d036699da65b782025",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-database-check.json",
+      "bytes": 1192,
+      "sha256": "f0fe250a70f5359cf7721782c8970265cb45141e7ff633feec7bcc2aa9976631",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-final-live-chat.log",
+      "bytes": 3323,
+      "sha256": "71d261ad206b95ea958fe6a9e6be09e429cdb4362e90b0457109145219c0f4f6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-final-server-error.log",
+      "bytes": 6659,
+      "sha256": "aaad0d2a5aebf137559410f8fe54f4cec4fb444c25ca210be1e96771b13c9cee",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-final-server-out.log",
+      "bytes": 4642,
+      "sha256": "bced4d64e4c013e992b19ad5ab3df7d51b483f41de0392d5cfaf5bd05ece8c67",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-live-chat.log",
+      "bytes": 3341,
+      "sha256": "989f2d6f033a514c4231aa086accec835dde9cd5f383bcfc51b85d5c2b2db9f2",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-offline-weather.json",
+      "bytes": 2360,
+      "sha256": "ced83b6ce48f34ef390ae91f08723d6c662aec459119776efe06de59e74d2941",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-probe.log",
+      "bytes": 3803,
+      "sha256": "63468ae70121a820c70d7ffe9e33b7443d1e279e54717f702f131f95b568eff6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-server-error.log",
+      "bytes": 7539,
+      "sha256": "95f3f2ceb4e73c4f2176a774995c17022cda9abd842984ffc09e1ca4fee61911",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-server-out.log",
+      "bytes": 5570,
+      "sha256": "76028724eff7f22c2f68bafd50484edac0ffe9bfdbec695a1beaba37ee2bf0bc",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation-tests.log",
+      "bytes": 28485,
+      "sha256": "a19417b9c20fed33fa0d4903b34e0fb74c4a0715bf1d5669ba480a922dade1ef",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/remediation_probe.py",
+      "bytes": 1591,
+      "sha256": "030e3154de64dde89d13a9340b5a612f7ad7f537e6342f1340bf969140562c32",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/repair_benchmark.json",
+      "bytes": 21100,
+      "sha256": "34dc876536f54cf9ab04efe6f3360ad838d8e5602898b035014888827318251c",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/repair_benchmark.py",
+      "bytes": 3327,
+      "sha256": "3a88ef671c5e93bb00869a778b46627f8e913b5ecdf6557d5d38d3e9ea7a03ae",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/repair_benchmark_0_6b.json",
+      "bytes": 20203,
+      "sha256": "4734c51d0bf2292f0eb2296abeebdedab52f00da6aee9cdce1f2bdbf8c6202cb",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/repair_benchmark_1_7b.json",
+      "bytes": 20211,
+      "sha256": "f40b419eacbe477c27936e732d512cdc1a150bdfe874213473c0d6defc0116b0",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-after.json",
+      "bytes": 32900,
+      "sha256": "b96dcd2b5bb3b0163d426cd9a8c2ad4f8e281b3872acb8b061ee06fc5c850f71",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-before.json",
+      "bytes": 9983,
+      "sha256": "e035e673e43adacbdf60f8030bf0f72f5aba3b1e98a74649810a651068c1a8d3",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-complete-server-error.log",
+      "bytes": 9891,
+      "sha256": "57f7d81245139ec42b459f83dce79cb1c52e043efbb403690f9ce43419eb0133",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-complete-server-out.log",
+      "bytes": 23369,
+      "sha256": "452090b8c07477cc4c624701da765cc946393c6dfd01065c37a38724e02d25be",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-embedding.log",
+      "bytes": 6559,
+      "sha256": "5e4d7990cde75e9e56b66174735c3e7c57c63d362562354515b87c4e1bb4cabe",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-final-live.json",
+      "bytes": 19449,
+      "sha256": "f347a1bafa394febe5c5128f90dac87d478b83a9b75f5fefc0d3c243e85ea72f",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-final-server-error.log",
+      "bytes": 3428,
+      "sha256": "b6907e0677a846430afe384343609679e9319faf018c4a74792a5fa7ce40b786",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-final-server-out.log",
+      "bytes": 686,
+      "sha256": "f6243af65d12a616e59606337260b701ab32712575ed031e4e9974373671b92b",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-gujarati-complete.json",
+      "bytes": 8071,
+      "sha256": "0c301c48beaf53d9815abf23d50ee5d97aceee6dc293f07d627c62110f6eddbb",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-ollama-error.log",
+      "bytes": 159391,
+      "sha256": "6f6b9431c097ed433c19322498abad7a4f45aa547cf21865b54b016bed9621d8",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-ollama-out.log",
+      "bytes": 5397,
+      "sha256": "a88889009451e59488ae383b030d2b349b670fe9cb56495aae96d80648bc6f2a",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-server-error.log",
+      "bytes": 2640,
+      "sha256": "b73d77491f037063ce99dde0b61f791c6c7daea5b7d2c15a93b6450078e7a83b",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-server-out.log",
+      "bytes": 59,
+      "sha256": "ae90dceaada22713c30c3a2b7b8ec953fffc9f86ea05e776637093f943b32c6d",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-tests-complete.log",
+      "bytes": 35726,
+      "sha256": "891452fb7ecaf2f3e18d3110674ad6e4f0cba8b961335f501e8c5efc88a1b040",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-tests-final.log",
+      "bytes": 34367,
+      "sha256": "e9b5aa1e7c5ecb213495d581754f882fc0b41024f8398db340a6303735aeeb09",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-tests-v2.log",
+      "bytes": 35955,
+      "sha256": "c1a545766d99c9d29f5d4179d6e25df7e87f29e675d56125412e1773db478ed3",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-tests-verified.log",
+      "bytes": 35340,
+      "sha256": "b4fe4d6a0bf7c439af127958287c44a15210ae45a75084114a764d8ccc29703f",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-tests.log",
+      "bytes": 2369,
+      "sha256": "ad9eab90703ce6dc52ae6e3fd036e252ab84933897ae39e12da68d0050d4ac1f",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-verified-server-error.log",
+      "bytes": 6240,
+      "sha256": "f32479949035d1382d2a6d19fafde360d3e0dc2bff20c2c2aab69fac66968a13",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/retrieval-verified-server-out.log",
+      "bytes": 8556,
+      "sha256": "6fe3cf3cdf93a30c7a5e65d128e5dca8916e304420a7d4fbe69ea184c66ae9c6",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/shutdown_after_gr_completion.py",
+      "bytes": 1102,
+      "sha256": "df11f6db93e2c43f121a4bc18eb3291ec7832346665b221c7f52d174bba70391",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/translation-baseline.json",
+      "bytes": 892,
+      "sha256": "1b3c33f142162800c7b4420f32888ba6d6535fd9c9feabff799f175b747d07b0",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/verify_gr_bulk.py",
+      "bytes": 2882,
+      "sha256": "1177a5c3a2fde83f12a848eb52f3e5b488e3973ed427fd79640a18f4b2134c11",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    },
+    {
+      "path": "graphify-out/verify_multilingual_api.py",
+      "bytes": 3575,
+      "sha256": "98126209fdbfe91836f688433a476971364920700e86473047187c327f876535",
+      "reason": "Regenerable cache or superseded diagnostic output"
+    }
+  ],
+  "skipped": [],
+  "total_bytes": 3664870,
+  "preserved": [
+    "All application databases and SQLite sidecars",
+    "backups",
+    "Original PDF sources and excluded-source provenance",
+    "backend/external/mahGRs including its Git repository",
+    "Runtime virtual environment and OCR language models",
+    "Source code tests config and deployment files",
+    "Knowledge graph and its metadata",
+    "Latest placement test log and final navigation screenshot"
+  ]
+}

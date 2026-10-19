@@ -1,0 +1,420 @@
+[
+  {
+    "id": "organic-farming",
+    "title": "Organic farming — FAO",
+    "question": "What is organic farming?",
+    "aliases": [
+      "organic agriculture",
+      "organic cultivation",
+      "सेंद्रिय शेती म्हणजे काय",
+      "जैविक खेती क्या है",
+      "સેન્દ્રિય ખેતી શું છે",
+      "સજીવ ખેતી",
+      "organic farming meaning",
+      "organic farming kya hai",
+      "jaivik kheti kya hai",
+      "sendriya sheti mhanje kay",
+      "sendriya kheti shu che"
+    ],
+    "content": "Organic farming is a farming system that supports soil organisms, biodiversity and natural biological cycles. It uses locally adapted practices such as crop rotation and biological or mechanical management, with restrictions on synthetic inputs. Simply avoiding synthetic inputs does not by itself establish organic certification.",
+    "source_url": "https://www.fao.org/unfao/bodies/coag/coaG15/X0075E.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "organic farming",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase",
+    "localized_answers": {
+      "gu": "સેન્દ્રિય ખેતી એવી ખેતી પદ્ધતિ છે જે જમીનના સજીવો, જૈવવિવિધતા અને કુદરતી જૈવિક ચક્રોને ટેકો આપે છે. તેમાં પાક ફેરબદલી તથા જૈવિક અથવા યાંત્રિક વ્યવસ્થાપન જેવી સ્થાનિક પરિસ્થિતિને અનુકૂળ પદ્ધતિઓ વપરાય છે અને કૃત્રિમ સામગ્રીના ઉપયોગ પર નિયંત્રણ હોય છે. માત્ર કૃત્રિમ સામગ્રીનો ઉપયોગ ટાળવાથી સેન્દ્રિય પ્રમાણપત્ર મળતું નથી."
+    },
+    "localization_content_hash": "a2d87bbd20683bfa9abf414fd50297205f2c87297893d45ca87116ad04ceef2a"
+  },
+  {
+    "id": "crop-rotation",
+    "title": "Crop rotation — FAO",
+    "question": "What is crop rotation?",
+    "aliases": [
+      "rotation of crops",
+      "crop rotation benefits",
+      "पीक फेरपालट म्हणजे काय",
+      "फसल चक्र क्या है",
+      "પાક ફેરબદલી શું છે",
+      "પાક ફેરપાળી",
+      "why rotate crops",
+      "fasal chakra kya hai",
+      "pik ferpalat mhanje kay",
+      "pak ferbadli shu che"
+    ],
+    "content": "Crop rotation is growing different crops in a planned sequence on the same field over successive seasons or years. It can help maintain soil fertility and reduce the pest, disease and weed problems associated with repeatedly growing the same crop.",
+    "source_url": "https://www.fao.org/fileadmin/user_upload/agp/icm12.pdf",
+    "reviewed_date": "2026-10-18",
+    "topic": "crop rotation",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase",
+    "localized_answers": {
+      "gu": "પાક ફેરબદલી એટલે એક જ ખેતરમાં ઋતુઓ અથવા વર્ષો દરમિયાન આયોજન મુજબ જુદા જુદા પાક ઉગાડવા. તે જમીનની ફળદ્રુપતા જાળવવામાં અને વારંવાર એક જ પાક ઉગાડવાથી થતી જીવાત, રોગ અને નીંદણની સમસ્યાઓ ઘટાડવામાં મદદ કરી શકે છે."
+    },
+    "localization_content_hash": "ef5c1ed5baa95b319f5cacab5ad8a61167825cd459864a4564a011e80d50d0cf"
+  },
+  {
+    "id": "drip-irrigation",
+    "title": "Drip irrigation — FAO",
+    "question": "What is drip irrigation?",
+    "aliases": [
+      "trickle irrigation",
+      "drip irrigation benefits",
+      "ठिबक सिंचन म्हणजे काय",
+      "ड्रिप सिंचाई क्या है",
+      "टपक सिंचाई",
+      "ટપક સિંચાઈ શું છે",
+      "drip irrigation saves water",
+      "drip irrigation kya hai",
+      "thibak sinchan mhanje kay",
+      "tapak sinchai shu che"
+    ],
+    "content": "Drip irrigation is a method that delivers water slowly through small emitters near plants, wetting part of the root zone. Good management can reduce runoff, deep drainage and evaporation losses. The crop still needs its full water requirement; the irrigation method does not reduce that requirement.",
+    "source_url": "https://www.fao.org/4/s8684e/s8684e07.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "drip irrigation",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "drip-blockage",
+    "title": "Blocked drip emitters — FAO",
+    "question": "Why do drip irrigation emitters become blocked?",
+    "aliases": [
+      "drip emitter clogging",
+      "drip filter",
+      "ठिबक बंद होते",
+      "ड्रिप जाम",
+      "ટપક સિંચાઈ બંધ",
+      "drippers blocked"
+    ],
+    "content": "Drip emitters can become blocked by sediment, algae or mineral and fertilizer deposits. Filtration helps remove suspended material, but some chemical blockage problems need advice from the equipment supplier or an irrigation specialist.",
+    "source_url": "https://www.fao.org/4/s8684e/s8684e07.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "drip irrigation maintenance",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "compost",
+    "title": "Compost and composting — FAO",
+    "question": "What is compost?",
+    "aliases": [
+      "what is composting",
+      "compost benefits",
+      "कंपोस्ट म्हणजे काय",
+      "कम्पोस्ट क्या है",
+      "કમ્પોસ્ટ શું છે",
+      "compost manure",
+      "compost kya hai",
+      "compost mhanje kay",
+      "compost shu che"
+    ],
+    "content": "Compost is decomposed organic material produced through managed microbial breakdown of materials such as crop residues and animal wastes. Composting turns suitable organic residues into a soil amendment that supplies organic matter and nutrients and can improve soil properties.",
+    "source_url": "https://www.fao.org/4/y5104e/y5104e05.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "compost",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "mulching",
+    "title": "Plant-residue mulching — FAO TECA",
+    "question": "What is mulching?",
+    "aliases": [
+      "mulch benefits",
+      "crop residue mulch",
+      "आच्छादन म्हणजे काय",
+      "मल्चिंग क्या है",
+      "મલ્ચિંગ શું છે",
+      "મલ્ચ",
+      "soil cover straw",
+      "mulching kya hai",
+      "mulching mhanje kay",
+      "mulching shu che"
+    ],
+    "content": "Mulching is covering the soil surface with material such as straw, leaves or crop residues. Plant-residue mulch supports soil organisms, helps water enter the soil and protects against erosion. As organic mulch decomposes, it contributes organic matter to the soil.",
+    "source_url": "https://www.fao.org/family-farming/detail/en/c/1617795/",
+    "reviewed_date": "2026-10-18",
+    "topic": "mulching",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "ipm",
+    "title": "Integrated pest management — FAO",
+    "question": "What is integrated pest management?",
+    "aliases": [
+      "what is IPM",
+      "IPM meaning",
+      "integrated pest management benefits",
+      "एकात्मिक कीड व्यवस्थापन म्हणजे काय",
+      "समेकित कीट प्रबंधन क्या है",
+      "સંકલિત જીવાત વ્યવસ્થાપન શું છે",
+      "જંતુ નિયંત્રણ",
+      "ipm kya hai",
+      "ipm mhanje kay",
+      "ipm shu che"
+    ],
+    "content": "Integrated pest management is an approach that combines suitable biological, cultural, physical and chemical methods to manage pests. IPM aims to grow healthy crops while reducing unnecessary pesticide use and risks to people and the environment, and supporting natural pest-control processes.",
+    "source_url": "https://www.fao.org/pest-and-pesticide-management/ipm/integrated-pest-management/en",
+    "reviewed_date": "2026-10-18",
+    "topic": "integrated pest management",
+    "scope": "general education; no pesticide dosage recommendation",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "soil-health",
+    "title": "Soil health — USDA NRCS",
+    "question": "What is soil health?",
+    "aliases": [
+      "healthy soil meaning",
+      "मृदा आरोग्य म्हणजे काय",
+      "मिट्टी का स्वास्थ्य क्या है",
+      "જમીનનું સ્વાસ્થ્ય શું છે",
+      "soil health benefits",
+      "soil health kya hai",
+      "maticha arogya mhanje kay",
+      "jameen nu swasthya shu che"
+    ],
+    "content": "Soil health is the ability of soil to keep functioning as a living system that supports plants, animals and people. Healthy soil supports nutrient cycling, water storage and the organisms that contribute to productive ecosystems.",
+    "source_url": "https://www.nrcs.usda.gov/conservation-basics/soil/soil-health",
+    "reviewed_date": "2026-10-18",
+    "topic": "soil health",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "improve-soil-health",
+    "title": "Improving soil health — USDA NRCS",
+    "question": "How can I improve soil health?",
+    "aliases": [
+      "soil health principles",
+      "improve soil fertility",
+      "मातीचे आरोग्य कसे सुधारावे",
+      "मिट्टी का स्वास्थ्य कैसे सुधारें",
+      "જમીનનું સ્વાસ્થ્ય કેવી રીતે સુધારવું",
+      "healthy soil practices"
+    ],
+    "content": "To improve soil health, reduce unnecessary soil disturbance, keep the soil covered, grow a diversity of crops, and maintain living roots for more of the year. Practices such as cover crops and diverse rotations can improve organic matter, water infiltration and nutrient cycling.",
+    "source_url": "https://www.nrcs.usda.gov/conservation-basics/soil/soil-health/soil-health-on-cropland",
+    "reviewed_date": "2026-10-18",
+    "topic": "soil health management",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "cover-crops",
+    "title": "Cover crops — USDA NRCS",
+    "question": "What are cover crops?",
+    "aliases": [
+      "cover crop benefits",
+      "what is a cover crop",
+      "आच्छादन पिके",
+      "आवरण फसल क्या है",
+      "આવરણ પાક શું છે",
+      "soil protection crops",
+      "cover crop kya hai",
+      "cover crops mhanje kay",
+      "cover crops shu che"
+    ],
+    "content": "Cover crops are crops grown to protect and improve soil during periods when it would otherwise be bare. They can reduce erosion and nutrient losses, improve water infiltration and organic matter, suppress weeds and provide habitat for useful organisms.",
+    "source_url": "https://www.nrcs.usda.gov/conservation-basics/soil/soil-health/cover-crops-for-soil-health",
+    "reviewed_date": "2026-10-18",
+    "topic": "cover crops",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "green-manure",
+    "title": "Green manure — FAO",
+    "question": "What is green manure?",
+    "aliases": [
+      "green manuring",
+      "हिरवळीचे खत म्हणजे काय",
+      "हरी खाद क्या है",
+      "લીલો પડવાશ શું છે",
+      "લીલું ખાતર",
+      "hari khad kya hai",
+      "hirvaliche khat mhanje kay",
+      "lilu khatar shu che"
+    ],
+    "content": "Green manure is a crop grown so its fresh plant material can be incorporated into the soil to add organic matter. Cover crops may use the same species, but their defining purpose is to cover and protect the soil rather than necessarily being incorporated.",
+    "source_url": "https://www.fao.org/4/a0100e/a0100e07.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "green manure",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "soil-testing",
+    "title": "Soil testing — Government of India Soil Health Card programme",
+    "question": "Why should I test my soil?",
+    "aliases": [
+      "what is soil testing",
+      "soil test benefits",
+      "माती परीक्षण का करावे",
+      "मिट्टी की जांच क्यों करें",
+      "માટી પરીક્ષણ શા માટે",
+      "fertilizer recommendation soil test",
+      "mitti ki janch kyu kare",
+      "mati parikshan ka karave",
+      "mati parikshan sha mate"
+    ],
+    "content": "Soil testing measures soil properties and nutrient status to guide crop-specific fertilizer and soil-amendment decisions. The Soil Health Card programme reports information such as pH, electrical conductivity, organic carbon and nutrient levels, with recommendations based on the test results.",
+    "source_url": "https://soilhealth.dac.gov.in/files/Manual/Updated_140723FinalDraftManualClasses6_8.pdf",
+    "reviewed_date": "2026-10-18",
+    "topic": "soil testing",
+    "scope": "general education; no field-specific fertilizer dose",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "soil-health-card",
+    "title": "Soil Health Card — Government of India",
+    "question": "What is a Soil Health Card?",
+    "aliases": [
+      "SHC meaning",
+      "soil health card use",
+      "मृदा आरोग्य पत्रिका म्हणजे काय",
+      "मृदा स्वास्थ्य कार्ड क्या है",
+      "સોઇલ હેલ્થ કાર્ડ શું છે",
+      "માટી આરોગ્ય કાર્ડ",
+      "soil health card kya hai",
+      "soil health card mhanje kay",
+      "soil health card shu che"
+    ],
+    "content": "A Soil Health Card is a report of a farm's soil test results. It describes nutrient status and other measured soil properties and provides crop-based fertilizer and soil-improvement recommendations. It helps farmers use the actual condition of their soil when planning nutrient management.",
+    "source_url": "https://soilhealth.dac.gov.in/files/Manual/Updated_140723FinalDraftManualClasses6_8.pdf",
+    "reviewed_date": "2026-10-18",
+    "topic": "soil health card",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "vnmkv",
+    "title": "Vasantrao Naik Marathwada Krishi Vidyapeeth — official university information",
+    "question": "What is VNMKV?",
+    "aliases": [
+      "VNMKV full form",
+      "where is VNMKV",
+      "Parbhani agricultural university",
+      "Vasantrao Naik Marathwada Krishi Vidyapeeth",
+      "वनामकृवि",
+      "वसंतराव नाईक मराठवाडा कृषी विद्यापीठ",
+      "વી એન એમ કે વી શું છે",
+      "vnmkv kya hai",
+      "vnmkv mhanje kay",
+      "vnmkv shu che"
+    ],
+    "content": "VNMKV stands for Vasantrao Naik Marathwada Krishi Vidyapeeth, an agricultural university in Parbhani, Maharashtra, established in 1972. Its work includes agricultural education, research based on regional needs and extension activities that share farming knowledge and technology.",
+    "source_url": "https://www.vnmkv.ac.in/",
+    "reviewed_date": "2026-10-18",
+    "topic": "agricultural university VNMKV",
+    "state": "Maharashtra",
+    "scope": "institutional information",
+    "provenance": "reviewed_primary_source_paraphrase",
+    "localized_answers": {
+      "gu": "VNMKV એટલે વસંતરાવ નાઈક મરાઠવાડા કૃષિ વિદ્યાપીઠ. તે મહારાષ્ટ્રના પરભણીમાં આવેલી કૃષિ યુનિવર્સિટી છે, જેની સ્થાપના 1972માં થઈ હતી. તેનું કાર્ય કૃષિ શિક્ષણ, પ્રાદેશિક જરૂરિયાતો આધારિત સંશોધન અને ખેતીના જ્ઞાન તથા તકનીકના પ્રસારનું છે."
+    },
+    "localization_content_hash": "ec36e02e018adf7fd69ab4f41927ebfe41e10588c817407633012f883a85c1f9"
+  },
+  {
+    "id": "mahadbt-mechanization-documents",
+    "title": "MahaDBT farm mechanization document checklist — official scheme page",
+    "question": "Which documents are required for tractor subsidy on MahaDBT?",
+    "aliases": [
+      "MahaDBT farm mechanization required documents",
+      "tractor subsidy documents",
+      "SMAM documents",
+      "महाडीबीटी ट्रॅक्टर अनुदान कागदपत्रे",
+      "ट्रैक्टर सब्सिडी के लिए दस्तावेज",
+      "ટ્રેક્ટર સબસિડી માટે કયા દસ્તાવેજો જોઈએ",
+      "agricultural machinery application documents",
+      "mahadbt tractor subsidy documents kya chahiye",
+      "tractor anudan kagadpatre",
+      "tractor subsidy mate documents",
+      "महाडीबीटी (MahaDBT) वर ट्रॅक्टर अनुदानासाठी कोणती कागदपत्रे लागतात?",
+      "Which documents are required for tractor subsidy?"
+    ],
+    "content": "The MahaDBT Sub-mission on Farm Mechanization page lists Aadhaar, 7/12 and 8-A land certificates, an equipment quotation and a test certificate from a Central Government approved agency, a caste certificate for SC/ST beneficiaries, a self-declaration and a pre-sanction letter. This is the published document checklist, not confirmation of eligibility or approval; check the linked portal for your component and application stage.",
+    "source_url": "https://mahadbt.maharashtra.gov.in/Farmer/SchemeData/SchemeData?str=E9DDFA703C38E51A23C0254248DAFF28",
+    "reviewed_date": "2026-10-18",
+    "topic": "MahaDBT tractor farm mechanization documents",
+    "state": "Maharashtra",
+    "scope": "published application checklist; verify current portal requirements",
+    "provenance": "reviewed_primary_source_paraphrase",
+    "localized_answers": {
+      "gu": "MahaDBTના કૃષિ યાંત્રિકીકરણ ઉપમિશનના પાનાં પર આ દસ્તાવેજો સૂચવ્યા છે: આધાર, જમીનના 7/12 અને 8-A પ્રમાણપત્રો, સાધનનું ભાવપત્રક અને કેન્દ્ર સરકારની માન્યતા ધરાવતી સંસ્થાનું પરીક્ષણ પ્રમાણપત્ર, SC/ST લાભાર્થીઓ માટે જાતિનું પ્રમાણપત્ર, સ્વઘોષણાપત્ર અને પૂર્વમંજૂરી પત્ર. આ પ્રકાશિત દસ્તાવેજોની યાદી છે; તે પાત્રતા કે મંજૂરીની પુષ્ટિ નથી. તમારી યોજનાના ઘટક અને અરજીના તબક્કા માટે આપેલી પોર્ટલ લિંક તપાસો."
+    },
+    "localization_content_hash": "73262ff0c5b118f000b70d16e1b50c61b655c47b6a2ccb62f3c595cbde3a5297"
+  },
+  {
+    "id": "intercropping",
+    "title": "Intercropping — FAO AGROVOC",
+    "question": "What is intercropping?",
+    "aliases": [
+      "inter cropping",
+      "interplanting",
+      "आंतरपीक म्हणजे काय",
+      "अंतरफसली खेती क्या है",
+      "આંતરપાક શું છે",
+      "two crops same field at same time",
+      "antar fasli kheti kya hai",
+      "antarpik mhanje kay",
+      "antarpak shu che"
+    ],
+    "content": "Intercropping means cultivating two or more crops together in one field during the same period. Crop rotation instead places different crops in a sequence over time.",
+    "source_url": "https://agrovoc.fao.org/browse/agrovoc/en/page/c_3910",
+    "additional_source_urls": [
+      "https://www.fao.org/fileadmin/user_upload/agp/icm12.pdf"
+    ],
+    "reviewed_date": "2026-10-18",
+    "topic": "intercropping",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "rainwater-harvesting",
+    "title": "Water harvesting for crops — FAO",
+    "question": "What is rainwater harvesting in farming?",
+    "aliases": [
+      "water harvesting",
+      "farm rainwater collection",
+      "पावसाचे पाणी साठवणे",
+      "वर्षा जल संचयन क्या है",
+      "વરસાદી પાણીનો સંગ્રહ",
+      "runoff collection irrigation",
+      "rainwater harvesting kya hai",
+      "pavsache pani kase sathvave",
+      "varsadi pani no sangrah"
+    ],
+    "content": "Water harvesting is collecting rainfall runoff for later or targeted use, such as directing it into crop-growing soil or storing it in a tank or farm reservoir for supplementary irrigation. Planning depends on rainfall, the catchment area, storage capacity and crop water needs.",
+    "source_url": "https://www.fao.org/4/a0100e/a0100e07.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "water harvesting",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  },
+  {
+    "id": "agroforestry",
+    "title": "Agroforestry — FAO",
+    "question": "What is agroforestry?",
+    "aliases": [
+      "trees with crops",
+      "कृषिवनशेती म्हणजे काय",
+      "कृषि वानिकी क्या है",
+      "કૃષિ વનવિદ્યા શું છે",
+      "agro forestry",
+      "agroforestry kya hai",
+      "krushivan sheti mhanje kay",
+      "agroforestry shu che"
+    ],
+    "content": "Agroforestry is a farming system that integrates trees or shrubs with crops, pasture or livestock. Alley cropping is one form, with crops grown between rows of woody plants. The design must fit local soil, water, climate and crop conditions.",
+    "source_url": "https://www.fao.org/4/a0100e/a0100e07.htm",
+    "reviewed_date": "2026-10-18",
+    "topic": "agroforestry",
+    "scope": "general education",
+    "provenance": "reviewed_primary_source_paraphrase"
+  }
+]

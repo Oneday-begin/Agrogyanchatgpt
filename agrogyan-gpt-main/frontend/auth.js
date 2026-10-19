@@ -1,3 +1,4 @@
+localStorage.removeItem("pendingRegistrationManualCode");
 const API_URL = window.AGRO_API_URL || "http://127.0.0.1:8000";
 const PENDING_REGISTRATION_STORAGE_KEY = "agroPendingRegistration";
 let pendingRegistration = null;
@@ -86,7 +87,8 @@ function updateRegisterReview(payload = pendingRegistration || collectRegistrati
 function savePendingRegistration(payload, step = registerStep) {
     if (!payload) return;
     try {
-        sessionStorage.setItem(PENDING_REGISTRATION_STORAGE_KEY, JSON.stringify({ payload, step }));
+        const {password, ...safePayload} = payload;
+        sessionStorage.setItem(PENDING_REGISTRATION_STORAGE_KEY, JSON.stringify({ payload: safePayload, step }));
     } catch (error) {
         console.error("savePendingRegistration error", error);
     }
@@ -153,10 +155,7 @@ function restorePendingRegistration() {
             modal.classList.remove("hidden");
         }
         setRegisterStep("otp");
-        const manualCode = localStorage.getItem("pendingRegistrationManualCode");
-        const message = manualCode
-            ? `Temporary fallback active. Use code ${manualCode} to register now.`
-            : (typeof t === "function" ? t("enterOtpPrompt") : "Enter the 6-digit OTP sent to your phone.");
+        const message = typeof t === "function" ? t("enterOtpPrompt") : "Enter the 6-digit OTP sent to your phone.";
         setRegisterMessage(message);
     }
 }
@@ -295,7 +294,7 @@ async function login() {
             }
             window.location.replace(data.role === "admin" ? "admin.html" : "index.html");
         } else {
-            showMessage(data.message, true);
+            showMessage(data.detail || data.message || "Unable to log in", true);
         }
     } catch (err) {
         showMessage(t("unableToLogin"), true);
@@ -391,12 +390,7 @@ async function sendRegistrationOtp(isResend = false) {
             const otpInstruction = typeof t === "function"
                 ? t("otpInstruction")
                 : "Check your phone and enter the 6-digit code.";
-            if (data.fallback_mode === "manual" && data.development_otp) {
-                localStorage.setItem("pendingRegistrationManualCode", data.development_otp);
-                setRegisterMessage(`Temporary fallback active. Use code ${data.development_otp} to register now. Phone verification will stay pending until SMS is connected.`);
-            } else {
-                setRegisterMessage(`${resendText} ${otpInstruction}`);
-            }
+            setRegisterMessage(`${resendText} ${otpInstruction}`);
             updateRegisterReview(pendingRegistration);
             setRegisterStep("otp");
         } else {

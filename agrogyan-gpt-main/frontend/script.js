@@ -31,98 +31,7 @@ function escapeHtml(value) {
         .replace(/'/g, "&#39;");
 }
 
-const CROP_DECISION_DATA = {
-    tomato: {
-        profitMultiplier: 0.32,
-        risk: "Medium",
-        roi: 16,
-        alternative: "Capsicum",
-        alternativeRoiBoost: 4,
-        strongLocations: ["maharashtra", "karnataka", "andhra pradesh", "telangana"],
-        weakLocations: ["rajasthan", "ladakh"],
-        budgetFloor: 35000
-    },
-    capsicum: {
-        profitMultiplier: 0.36,
-        risk: "Medium",
-        roi: 20,
-        alternative: "Tomato",
-        alternativeRoiBoost: 1,
-        strongLocations: ["maharashtra", "karnataka", "himachal pradesh"],
-        weakLocations: ["bihar"],
-        budgetFloor: 40000
-    },
-    paddy: {
-        profitMultiplier: 0.18,
-        risk: "Low",
-        roi: 12,
-        alternative: "Soybean",
-        alternativeRoiBoost: 2,
-        strongLocations: ["west bengal", "odisha", "chhattisgarh", "telangana"],
-        weakLocations: ["rajasthan"],
-        budgetFloor: 25000
-    },
-    wheat: {
-        profitMultiplier: 0.16,
-        risk: "Low",
-        roi: 11,
-        alternative: "Mustard",
-        alternativeRoiBoost: 3,
-        strongLocations: ["punjab", "haryana", "uttar pradesh", "madhya pradesh"],
-        weakLocations: ["kerala"],
-        budgetFloor: 22000
-    },
-    cotton: {
-        profitMultiplier: 0.24,
-        risk: "High",
-        roi: 15,
-        alternative: "Soybean",
-        alternativeRoiBoost: 2,
-        strongLocations: ["maharashtra", "gujarat", "telangana"],
-        weakLocations: ["kerala", "sikkim"],
-        budgetFloor: 45000
-    },
-    soybean: {
-        profitMultiplier: 0.2,
-        risk: "Medium",
-        roi: 13,
-        alternative: "Paddy",
-        alternativeRoiBoost: 1,
-        strongLocations: ["madhya pradesh", "maharashtra", "rajasthan"],
-        weakLocations: ["kerala"],
-        budgetFloor: 24000
-    },
-    sugarcane: {
-        profitMultiplier: 0.27,
-        risk: "Medium",
-        roi: 17,
-        alternative: "Paddy",
-        alternativeRoiBoost: 2,
-        strongLocations: ["maharashtra", "uttar pradesh", "karnataka"],
-        weakLocations: ["himachal pradesh"],
-        budgetFloor: 50000
-    },
-    mustard: {
-        profitMultiplier: 0.19,
-        risk: "Low",
-        roi: 14,
-        alternative: "Wheat",
-        alternativeRoiBoost: 1,
-        strongLocations: ["rajasthan", "haryana", "uttar pradesh"],
-        weakLocations: ["kerala"],
-        budgetFloor: 18000
-    },
-    onion: {
-        profitMultiplier: 0.3,
-        risk: "Low",
-        roi: 15,
-        alternative: "Tomato",
-        alternativeRoiBoost: 2,
-        strongLocations: ["maharashtra", "madhya pradesh", "karnataka"],
-        weakLocations: ["kerala"],
-        budgetFloor: 28000
-    }
-};
+
 let selectedEcosystemType = "mandi";
 let googleMapsLoaderPromise = null;
 let googleMapInstance = null;
@@ -141,10 +50,6 @@ function formatInr(value) {
     }).format(Number.isFinite(value) ? value : 0);
 }
 
-function getCropDecisionProfile(cropName) {
-    const key = String(cropName || "").trim().toLowerCase();
-    return CROP_DECISION_DATA[key] || CROP_DECISION_DATA.tomato;
-}
 
 function normalizeRecommendationText(answer) {
     const text = String(answer || "").trim();
@@ -160,68 +65,9 @@ function getMainAnswerForSpeech(answer) {
     return (mainAnswer || normalized).trim();
 }
 
-function updateAnswerPresentation(answer) {
-    const answerBox = document.getElementById("answer");
-    const answerIntro = document.getElementById("answerIntro");
-    if (!answerBox) return "No answer found.";
 
-    const normalized = normalizeRecommendationText(answer);
-    answerBox.innerText = normalized;
 
-    if (answerIntro) {
-        if (normalized && !/waiting for your question/i.test(normalized)) {
-            answerIntro.classList.remove("hidden");
-        } else {
-            answerIntro.classList.add("hidden");
-        }
-    }
 
-    return normalized;
-}
-
-function hideAnswerIntro() {
-    const answerIntro = document.getElementById("answerIntro");
-    if (answerIntro) {
-        answerIntro.classList.add("hidden");
-    }
-}
-
-function getLocationScore(profile, location) {
-    const normalizedLocation = String(location || "").trim().toLowerCase();
-    if (!normalizedLocation) return 0;
-    if (profile.strongLocations.some(item => normalizedLocation.includes(item))) return 2;
-    if (profile.weakLocations.some(item => normalizedLocation.includes(item))) return -3;
-    return 0;
-}
-
-function deriveRiskLevel(baseRisk, locationScore, budgetGap) {
-    const levels = ["Low", "Medium", "High"];
-    let index = levels.indexOf(baseRisk);
-    if (index < 0) index = 1;
-    if (locationScore <= -2 || budgetGap > 15000) index += 1;
-    if (locationScore >= 2 && budgetGap <= 0) index -= 1;
-    return levels[Math.max(0, Math.min(levels.length - 1, index))];
-}
-
-function calculateDecisionMetrics(crop, location, budget) {
-    const profile = getCropDecisionProfile(crop);
-    const locationScore = getLocationScore(profile, location);
-    const budgetGap = Math.max(0, profile.budgetFloor - budget);
-    const budgetScore = budget >= profile.budgetFloor ? 0 : budgetGap >= 15000 ? -3 : -1;
-    const roi = Math.max(5, profile.roi + locationScore + budgetScore);
-    const risk = deriveRiskLevel(profile.risk, locationScore, budgetGap);
-    const profit = Math.round((budget || 0) * profile.profitMultiplier);
-    const shouldGrow = roi >= 12 && risk !== "High";
-
-    return {
-        profile,
-        roi,
-        risk,
-        profit,
-        shouldGrow,
-        budgetGap
-    };
-}
 
 function populateDecisionDefaults() {
     const farm = typeof window.getAgroFarmSnapshot === "function" ? window.getAgroFarmSnapshot() : {};
@@ -250,110 +96,24 @@ function populateDecisionDefaults() {
 }
 
 function runProfitCalculator() {
-    const crop = document.getElementById("profitCrop")?.value || "Tomato";
-    const investment = parseCurrencyInput(document.getElementById("profitInvestment")?.value);
-    const profile = getCropDecisionProfile(crop);
-    const profitValue = document.getElementById("profitResultValue");
-    const riskValue = document.getElementById("profitRiskValue");
-    const insightBox = document.getElementById("profitInsight");
-
-    if (!investment) {
-        if (profitValue) profitValue.innerText = formatInr(0);
-        if (riskValue) riskValue.innerText = "Add investment";
-        if (insightBox) insightBox.innerHTML = `<div class="timeline-item"><p>Enter your expected investment to estimate profit.</p></div>`;
-        return;
-    }
-
-    const expectedProfit = Math.round(investment * profile.profitMultiplier);
-    const breakEven = Math.round(investment / (1 + profile.profitMultiplier));
-
-    if (profitValue) profitValue.innerText = formatInr(expectedProfit);
-    if (riskValue) riskValue.innerText = profile.risk;
-    if (insightBox) {
-        insightBox.innerHTML = `
-            <div class="timeline-item"><p>Projected profit for <strong>${crop}</strong> is about <strong>${formatInr(expectedProfit)}</strong> on an investment of <strong>${formatInr(investment)}</strong>.</p></div>
-            <div class="timeline-item"><p>Estimated break-even point starts near <strong>${formatInr(breakEven)}</strong>. Risk is <strong>${profile.risk}</strong> based on the crop's price volatility and input sensitivity.</p></div>
-        `;
-    }
-}
-
-function runDecisionEngine() {
-    const crop = document.getElementById("decisionCrop")?.value || "Tomato";
-    const location = document.getElementById("decisionLocation")?.value || "";
-    const budget = parseCurrencyInput(document.getElementById("decisionBudget")?.value);
-    const { profile, roi, risk, shouldGrow } = calculateDecisionMetrics(crop, location, budget);
-
-    const growBadge = document.getElementById("decisionGrowBadge");
-    const roiValue = document.getElementById("decisionRoiValue");
-    const riskValue = document.getElementById("decisionRiskValue");
-    const altValue = document.getElementById("decisionAltValue");
-    const altReason = document.getElementById("decisionAltReason");
-
-    if (growBadge) {
-        growBadge.classList.remove("grow", "no-grow");
-        growBadge.classList.add(shouldGrow ? "grow" : "no-grow");
-        growBadge.innerText = shouldGrow ? `Grow ${crop} ${String.fromCharCode(9989)}` : `Don't grow ${crop} ${String.fromCharCode(10060)}`;
-    }
-    if (roiValue) roiValue.innerText = `${roi}%`;
-    if (riskValue) riskValue.innerText = risk;
-    if (altValue) altValue.innerText = `${profile.alternative} (${roi + profile.alternativeRoiBoost}% ROI)`;
-    if (altReason) {
-        altReason.innerText = shouldGrow
-            ? `${profile.alternative} still looks slightly stronger if you want higher upside than ${crop}.`
-            : `${profile.alternative} looks safer for ${location || "this location"} with your current budget.`;
-    }
+    ["profitResultValue", "profitRiskValue"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = "Not estimated"; });
+    const box = document.getElementById("profitInsight");
+    if (box) box.textContent = "Profit requires expected sale quantity × price minus all costs. Investment alone cannot predict profit.";
 }
 
 function runCompareDecisions() {
-    const cropOne = document.getElementById("compareCropOne")?.value || "Tomato";
-    const cropTwo = document.getElementById("compareCropTwo")?.value || "Onion";
-    const location = document.getElementById("decisionLocation")?.value || localStorage.getItem("userState") || "Maharashtra";
-    const budget = parseCurrencyInput(document.getElementById("compareBudget")?.value || document.getElementById("decisionBudget")?.value);
-    const optionOne = calculateDecisionMetrics(cropOne, location, budget);
-    const optionTwo = calculateDecisionMetrics(cropTwo, location, budget);
-    const compareInsight = document.getElementById("compareInsight");
-
-    const nameOne = document.getElementById("compareNameOne");
-    const nameTwo = document.getElementById("compareNameTwo");
-    const profitOne = document.getElementById("compareProfitOne");
-    const profitTwo = document.getElementById("compareProfitTwo");
-    const riskOne = document.getElementById("compareRiskOne");
-    const riskTwo = document.getElementById("compareRiskTwo");
-
-    if (nameOne) nameOne.innerText = cropOne;
-    if (nameTwo) nameTwo.innerText = cropTwo;
-    if (profitOne) profitOne.innerText = formatInr(optionOne.profit);
-    if (profitTwo) profitTwo.innerText = formatInr(optionTwo.profit);
-    if (riskOne) riskOne.innerText = optionOne.risk;
-    if (riskTwo) riskTwo.innerText = optionTwo.risk;
-
-    const winner = optionOne.profit >= optionTwo.profit ? { crop: cropOne, data: optionOne } : { crop: cropTwo, data: optionTwo };
-    if (compareInsight) {
-        compareInsight.innerHTML = `
-            <div class="timeline-item"><p><strong>${winner.crop}</strong> currently looks stronger for ${location} with an expected profit near <strong>${formatInr(winner.data.profit)}</strong>.</p></div>
-            <div class="timeline-item"><p>${cropOne} shows <strong>${optionOne.risk}</strong> risk while ${cropTwo} shows <strong>${optionTwo.risk}</strong> risk. Use this comparison to choose between upside and stability.</p></div>
-        `;
-    }
+    ["compareProfitOne", "compareProfitTwo", "compareRiskOne", "compareRiskTwo"].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = "Not estimated"; });
+    const box = document.getElementById("compareInsight");
+    if (box) box.textContent = "A reliable comparison needs your expected yield, local sale prices and all cultivation costs. District prices alone cannot predict profit.";
 }
 
-function handleExpertConnect(mode) {
-    const expertModeValue = document.getElementById("expertModeValue");
-    const expertEtaValue = document.getElementById("expertEtaValue");
-    const expertInsight = document.getElementById("expertInsight");
-
-    if (expertModeValue) expertModeValue.innerText = mode === "paid" ? "Paid consultation" : "Free (limited)";
-    if (expertEtaValue) expertEtaValue.innerText = mode === "paid" ? "Within 30 mins" : "Within 24 hrs";
-    if (expertInsight) {
-        expertInsight.innerHTML = mode === "paid"
-            ? `
-                <div class="timeline-item"><p>Paid consultation unlocked. Offer video or call-based crop planning, disease review, and market timing help.</p></div>
-                <div class="timeline-item"><p>This can become a direct revenue stream with premium agronomist support for urgent farmer decisions.</p></div>
-            `
-            : `
-                <div class="timeline-item"><p>Free mode gives one limited expert follow-up with slower turnaround and basic guidance.</p></div>
-                <div class="timeline-item"><p>Use this as the top of the funnel, then upsell paid consultation for faster and deeper advice.</p></div>
-            `;
-    }
+function handleExpertConnect() {
+    const box = document.getElementById("expertInsight");
+    if (box) box.innerHTML = '<p>Find your local Krishi Vigyan Kendra through the <a href="https://kvk.icar.gov.in/" target="_blank" rel="noopener">official ICAR KVK directory</a>. Contact the centre for availability and field advice.</p>';
+    const mode = document.getElementById("expertModeValue");
+    if (mode) mode.textContent = "Local KVK advisory";
+    const eta = document.getElementById("expertEtaValue");
+    if (eta) eta.textContent = "Contact centre for availability";
 }
 
 function saveGoogleMapsApiKey() {
@@ -533,105 +293,323 @@ function getPersonalHistory() {
     return [];
 }
 
-// ===============================
-// ASK QUESTION (MAIN FUNCTION)
-// ===============================
-async function askQuestion() {
-    const question = document.getElementById("question").value;
-    const language = document.getElementById("language").value;
-    const answerBox = document.getElementById("answer");
-    const confidenceBox = document.getElementById("confidence");
-    const assistantShell = document.getElementById("assistantShell");
-    const userId = getCurrentUserId();
+// ================================================================
+// CHAT UI HELPERS
+// ================================================================
 
-    if (!question.trim()) {
-        alert(t("pleaseEnterQuestion"));
+let chatRequestPending = false;
+let activeChatRequest = null;
+let chatWaitTimer = null;
+let chatScrollFrame = null;
+let latestChatAnswer = null;
+
+function chatUiText(key, language = document.getElementById("language")?.value) {
+    const labels = {
+        English: { waiting: "Checking your question against the stored sources…", slow: "Still waiting for the local answer. You can keep typing or stop waiting.", stop: "Stop waiting", stopped: "Stopped waiting for this answer.", retry: "Try again", timeout: "This answer took too long. Try again or ask a shorter question.", offline: "Could not reach AgroGyan. Check the connection and try again." },
+        Gujarati: { waiting: "સંગ્રહિત સ્રોતોમાં તમારા પ્રશ્નનો જવાબ શોધી રહ્યા છીએ…", slow: "સ્થાનિક જવાબની રાહ જોઈ રહ્યા છીએ. તમે લખવાનું ચાલુ રાખી શકો છો અથવા રાહ જોવાનું બંધ કરી શકો છો.", stop: "રાહ જોવાનું બંધ કરો", stopped: "આ જવાબની રાહ જોવાનું બંધ કર્યું.", retry: "ફરી પ્રયાસ કરો", timeout: "જવાબમાં વધુ સમય લાગ્યો. ફરી પ્રયાસ કરો અથવા ટૂંકો પ્રશ્ન પૂછો.", offline: "એગ્રોજ્ઞાન સાથે જોડાઈ શકાયું નથી. કનેક્શન તપાસીને ફરી પ્રયાસ કરો." },
+        Hindi: { waiting: "संग्रहीत स्रोतों में आपके प्रश्न का उत्तर खोज रहे हैं…", slow: "स्थानीय उत्तर की प्रतीक्षा है। आप लिखना जारी रख सकते हैं या प्रतीक्षा रोक सकते हैं।", stop: "प्रतीक्षा रोकें", stopped: "इस उत्तर की प्रतीक्षा रोक दी गई।", retry: "फिर कोशिश करें", timeout: "उत्तर में अधिक समय लगा। फिर कोशिश करें या छोटा प्रश्न पूछें।", offline: "एग्रोज्ञान से संपर्क नहीं हो सका। कनेक्शन जाँचकर फिर कोशिश करें।" },
+        Marathi: { waiting: "संग्रहित स्रोतांमध्ये तुमच्या प्रश्नाचे उत्तर शोधत आहोत…", slow: "स्थानिक उत्तराची वाट पाहत आहोत. तुम्ही लिहित राहू शकता किंवा प्रतीक्षा थांबवू शकता.", stop: "प्रतीक्षा थांबवा", stopped: "या उत्तराची प्रतीक्षा थांबवली.", retry: "पुन्हा प्रयत्न करा", timeout: "उत्तराला जास्त वेळ लागला. पुन्हा प्रयत्न करा किंवा छोटा प्रश्न विचारा.", offline: "एग्रोज्ञानशी संपर्क झाला नाही. जोडणी तपासून पुन्हा प्रयत्न करा." }
+    };
+    return (labels[language] || labels.English)[key];
+}
+
+function _requestLanguage(question, selected) {
+    if (selected !== "Auto") return selected;
+    if (/[\u0A80-\u0AFF]/.test(question)) return "Gujarati";
+    if (/[\u0900-\u097F]/.test(question)) return /काय|आहे|म्हणजे|शेती|माती|शेत/.test(question) ? "Marathi" : "Hindi";
+    return "English";
+}
+
+function cancelChatRequest() {
+    if (!activeChatRequest) return;
+    activeChatRequest.cancelled = true;
+    activeChatRequest.controller.abort();
+}
+
+function readLatestAnswer() {
+    if (latestChatAnswer) speakText(getMainAnswerForSpeech(latestChatAnswer.answer), latestChatAnswer.answer_language);
+}
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const status = document.getElementById("backendStatus");
+    if (!status) return;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+        const response = await fetch(`${API_URL}/health`, { signal: controller.signal });
+        const health = await response.json();
+        status.textContent = response.ok && health.chatbot_ready ? "Backend connected" : "Backend needs attention";
+    } catch {
+        status.textContent = "Backend unreachable";
+    } finally {
+        clearTimeout(timeout);
+    }
+});
+function _chatMessages() { return document.getElementById("agroChatMessages"); }
+function _chatTyping()   { return document.getElementById("agroTyping"); }
+function _sendBtn()      { return document.getElementById("agroSendBtn"); }
+function _explainBtn()   { return document.getElementById("explainBtn"); }
+function _confLabel()    { return document.getElementById("confidence"); }
+
+function _scrollToBottom() {
+    if (chatScrollFrame !== null) return;
+    chatScrollFrame = requestAnimationFrame(() => {
+        chatScrollFrame = null;
+        const el = _chatMessages();
+        if (el) el.scrollTop = el.scrollHeight;
+    });
+}
+
+function _setTyping(on, language) {
+    clearTimeout(chatWaitTimer);
+    const t = _chatTyping();
+    if (!t) return;
+    if (on) { t.removeAttribute("hidden"); t.removeAttribute("aria-hidden"); }
+    else    { t.setAttribute("hidden", ""); t.setAttribute("aria-hidden", "true"); }
+    const status = document.getElementById("agroRequestStatus");
+    const stop = document.getElementById("agroStopBtn");
+    if (stop) { stop.textContent = chatUiText("stop", language); stop.hidden = !activeChatRequest; }
+    if (status && on) {
+        status.textContent = chatUiText("waiting", language);
+        chatWaitTimer = setTimeout(() => { status.textContent = chatUiText("slow", language); }, 8000);
+    }
+    _scrollToBottom();
+}
+
+function _setBusy(on) {
+    chatRequestPending = on;
+    const s = _sendBtn(), e = _explainBtn();
+    if (s) s.disabled = on;
+    if (e && on) e.disabled = true;
+    const upload = document.getElementById("imageInput");
+    if (upload) upload.disabled = on;
+    document.getElementById("agroChat")?.setAttribute("aria-busy", String(on));
+    window.chatWorkspace?.setBusy(on);
+    // keep explainBtn disabled until at least one bot answer has been rendered
+}
+
+function _appendMsg(role, html) {
+    const msgs = _chatMessages();
+    if (!msgs) return;
+    const isUser = role === "user";
+    const avatarContent = isUser ? "👤" : "🌾";
+    const div = document.createElement("div");
+    div.className = `agro-msg agro-msg--${isUser ? "user" : "bot"}`;
+    div.innerHTML = `
+        <div class="agro-msg-avatar" aria-hidden="true">${avatarContent}</div>
+        <div class="agro-msg-bubble">${html}</div>`;
+    document.getElementById("chatEmptyState")?.remove();
+    msgs.appendChild(div);
+    window.chatWorkspace?.capture();
+    _scrollToBottom();
+    return div;
+}
+
+function _buildBotHtml(data) {
+    const answer = (data.answer || "No answer found.").trim();
+    // Convert markdown-like bullets and newlines
+    const formatted = escapeHtml(answer)
+        .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+        .replace(/^[-•]\s+/gm, "• ")
+        .split("\n").map(l => `<p>${l}</p>`).join("");
+
+    // Source badge
+    const sourceType = data.source_type || "documents";
+    const sourceLabelMap = {
+        documents: "📂 From knowledge base",
+        general:   "💡 General agronomy guidance",
+        none:      "❓ Not found in knowledge base",
+        conversation: "🌾 AgroGyan assistant",
+        clarification: "💬 More details needed",
+    };
+    const sourceLabel = data.answer_language === "Gujarati" ? (data.answer_mode === "source_excerpt" ? "📄 સંબંધિત સ્રોત · સંપૂર્ણ જવાબ ચકાસાયેલો નથી" : data.answer_mode === "reviewed_reference" ? "📖 સ્રોત આધારિત માર્ગદર્શન" : sourceType === "conversation" ? "🌾 એગ્રોજ્ઞાન સહાયક" : sourceType === "none" ? "સ્રોતમાં જવાબ મળ્યો નથી" : "📂 જ્ઞાન આધારિત જવાબ") : data.answer_mode === "source_excerpt"
+        ? "📄 Related source · answer unverified"
+        : data.answer_mode === "reviewed_reference" ? "📖 Sourced farming reference"
+        : (sourceLabelMap[sourceType] || sourceLabelMap.documents);
+    const badgeHtml = `<span class="agro-msg-source agro-source--${escapeHtml(sourceType)}">${sourceLabel}</span>`;
+
+    // Follow-up chips
+    let chipsHtml = "";
+    if (Array.isArray(data.follow_up_questions) && data.follow_up_questions.length) {
+        const chips = data.follow_up_questions.map(q =>
+            `<button class="agro-followup-chip" type="button" data-question="${escapeHtml(String(q))}">${escapeHtml(String(q))}</button>`
+        ).join("");
+        chipsHtml = `<div class="agro-followup-row">${chips}</div>`;
+    }
+
+    // References
+    let refsHtml = "";
+    if (Array.isArray(data.references) && data.references.length) {
+        const refLines = data.references.map(r => {
+            const parts = [r.title, r.state, r.section].filter(Boolean);
+            const sourceHref = r.source_name === "farming_reference.json" && /^https:\/\//i.test(r.source_url || "")
+                ? r.source_url
+                : r.source_excerpt_url?.startsWith("/knowledge/gr/")
+                ? `${API_URL}${r.source_excerpt_url}`
+                : r.source_id
+                ? `${API_URL}/knowledge/pdf/${encodeURIComponent(r.source_id)}#page=${Number(r.page) || 1}`
+                : `${API_URL}/knowledge/sources/${encodeURIComponent(r.source_name || "")}`;
+            const link = r.source_name ? ` <a href="${escapeHtml(sourceHref)}" target="_blank" rel="noopener noreferrer">${r.page ? `${r.source_excerpt_url ? "View excerpt" : "View PDF"} · page ${Number(r.page)}` : "View source"}</a>` : "";
+            const official = r.source_url !== sourceHref && /^https?:\/\//i.test(r.source_url || "") ? ` <a href="${escapeHtml(r.source_url)}" target="_blank" rel="noopener noreferrer">Original source</a>` : "";
+            return `[${r.index}] ${escapeHtml(parts.join(" › "))}${link}${official}`;
+        }).join("<br>");
+        refsHtml = `<div class="agro-references"><strong>Sources:</strong><br>${refLines}</div>`;
+    }
+
+    // Confidence label update
+    if (data.confidence !== undefined) {
+        const conf = Math.round(data.confidence * 100);
+        const lbl = _confLabel();
+        if (lbl) lbl.textContent = conf > 0 ? `Source match: ${conf}% · ${(data.response_ms / 1000 || 0).toFixed(2)}s` : (["conversation", "clarification"].includes(sourceType) ? "" : "No supporting source found");
+    }
+
+    const warningsHtml = (data.warnings || []).map(w => `<p class="agro-answer-warning">${escapeHtml(w)}</p>`).join("");
+    const evidenceHtml = data.warnings?.length && data.evidence?.length
+        ? `<details class="agro-references"><summary>Original source excerpts</summary>${data.evidence.map(e => `<p>${escapeHtml(e.text)} [${e.index}]</p>`).join("")}</details>`
+        : "";
+    const originalHtml = data.original_answer && data.original_answer !== data.answer
+        ? `<details class="agro-references"><summary>${data.answer_language === 'Gujarati' ? 'મૂળ સ્રોતનો જવાબ' : 'Original answer'}</summary><p>${escapeHtml(data.original_answer)}</p></details>` : '';
+    return formatted + badgeHtml + warningsHtml + evidenceHtml + originalHtml + chipsHtml + refsHtml;
+}
+
+document.addEventListener("click", event => {
+    const chip = event.target.closest?.(".agro-followup-chip[data-question]");
+    if (chip) askFollowUp(chip.dataset.question);
+});
+
+function askFollowUp(question) {
+    if (chatRequestPending) return;
+    const qEl = document.getElementById("question");
+    if (qEl) qEl.value = question;
+    askQuestion();
+}
+
+
+// Auto-grow textarea
+(function wireTextareaAutoGrow() {
+    document.addEventListener("DOMContentLoaded", () => {
+        const ta = document.getElementById("question");
+        if (!ta) return;
+        // Native content sizing avoids a synchronous layout read on every keystroke.
+        if (window.CSS?.supports("field-sizing", "content")) return;
+        let resizeFrame = null;
+        ta.addEventListener("input", () => {
+            if (resizeFrame !== null) return;
+            resizeFrame = requestAnimationFrame(() => {
+                resizeFrame = null;
+                ta.style.height = "auto";
+                ta.style.height = Math.min(ta.scrollHeight, 130) + "px";
+            });
+        });
+    });
+})();
+
+// ================================================================
+// ASK QUESTION (MAIN FUNCTION)
+// ================================================================
+async function askQuestion() {
+    if (chatRequestPending) return;
+    const questionEl = document.getElementById("question");
+    const language   = document.getElementById("language")?.value || "English";
+    const question   = (questionEl?.value || "").trim();
+    const userId     = getCurrentUserId();
+
+    if (!question) {
+        alert(typeof t === "function" ? t("pleaseEnterQuestion") : "Please enter a question.");
         return;
     }
 
-    answerBox.innerText = "Thinking...";
-    if (confidenceBox) confidenceBox.innerText = "";
-    if (assistantShell) assistantShell.classList.add("thinking");
+    // Append user bubble
+    const userMessage = _appendMsg("user", `<p>${escapeHtml(question)}</p>`);
+    if (questionEl) { questionEl.value = ""; questionEl.style.height = "auto"; }
+
+    const controller = new AbortController();
+    const requestLanguage = _requestLanguage(question, language);
+    activeChatRequest = { controller, cancelled: false };
+    const currentRequest = activeChatRequest;
+    _setTyping(true, requestLanguage);
+    _setBusy(true);
+    const timeout = setTimeout(() => controller.abort(), 90000);
 
     try {
         const response = await fetch(`${API_URL}/ask`, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                question: question,
-                language: language,
-                user_id: userId
-            })
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ question, language, user_id: userId }),
+            signal: controller.signal,
         });
 
+        _setTyping(false);
+
         if (!response.ok) {
-            const errorText = await response.text();
-            answerBox.innerText = "Error: " + (errorText || response.statusText);
+            const errData = await response.json().catch(() => ({}));
+            const msg = errData.detail || `Server error ${response.status}. Please try again.`;
+            _appendMsg("bot", `<p>${escapeHtml(msg)}</p>`);
             return;
         }
 
         const data = await response.json();
-        const extraSections = [];
-        if (Array.isArray(data.references) && data.references.length) {
-            extraSections.push(
-                "References:\n" + data.references.map((item) => {
-                    const statePart = item.state ? ` | ${item.state}` : "";
-                    const sectionPart = item.section ? ` | ${item.section}` : "";
-                    return `[${item.index}] ${item.title}${statePart}${sectionPart}`;
-                }).join("\n")
-            );
+        if (userMessage && data.display_question && data.display_question !== question) {
+            userMessage.querySelector('.agro-msg-bubble').innerHTML = `<p lang="${data.answer_language === 'Gujarati' ? 'gu' : ''}">${escapeHtml(data.display_question)}</p><details><summary>મૂળ પ્રશ્ન</summary><p>${escapeHtml(question)}</p></details>`;
         }
-        if (Array.isArray(data.follow_up_questions) && data.follow_up_questions.length) {
-            extraSections.push(
-                "Related questions:\n" + data.follow_up_questions.map((item, index) => `${index + 1}. ${item}`).join("\n")
-            );
-        }
-        const answerWithContext = [data.answer || "No answer found.", ...extraSections].filter(Boolean).join("\n\n");
-        const formattedAnswer = updateAnswerPresentation(answerWithContext);
+        _appendMsg("bot", _buildBotHtml(data));
+        latestChatAnswer = { answer: data.answer || "", answer_language: data.answer_language || requestLanguage };
+        const readButton = document.getElementById("readAnswerBtn");
+        if (readButton) readButton.disabled = !latestChatAnswer.answer;
 
-        if (data.confidence !== undefined && confidenceBox) {
-            confidenceBox.innerText = `${t("confidence")} ${(data.confidence * 100).toFixed(0)}%`;
-        }
+        // Enable "Explain simply" now that there's an answer
+        const eb = _explainBtn();
+        if (eb) eb.disabled = false;
 
-        saveHistoryEntry({
-            question,
-            answer: formattedAnswer,
-            language,
-            ts: Date.now(),
-        });
+        // Save to local history
+        saveHistoryEntry({ question, answer: data.answer || "", language, ts: Date.now() });
+        renderHistory({ force: true });
 
-        renderHistory();
-        const spokenAnswer = getMainAnswerForSpeech(data.answer || formattedAnswer);
-        speakText(`Based on your query and soil conditions, I recommend ${spokenAnswer}`, language);
-    } catch (error) {
-        hideAnswerIntro();
-        answerBox.innerText = t("backendNotReachable");
-        console.error(error);
+    } catch (err) {
+        _setTyping(false);
+        const messageKey = currentRequest.cancelled ? "stopped" : err.name === "AbortError" ? "timeout" : "offline";
+        _appendMsg("bot", `<p>${escapeHtml(chatUiText(messageKey, requestLanguage))}</p><button class="agro-followup-chip" type="button" data-question="${escapeHtml(question)}">${escapeHtml(chatUiText("retry", requestLanguage))}</button>`);
+        if (err.name !== "AbortError") console.error("askQuestion error:", err);
     } finally {
-        if (assistantShell) assistantShell.classList.remove("thinking");
+        clearTimeout(timeout);
+        activeChatRequest = null;
+        _setTyping(false);
+        _setBusy(false);
     }
 }
 
+// ================================================================
+// EXPLAIN SIMPLY (re-summarise last bot answer)
+// ================================================================
 async function explainLatestAnswer() {
-    const answerBox = document.getElementById("answer");
-    const language = document.getElementById("language").value;
-    const text = answerBox?.innerText || "";
-    if (!text || text === t("answerWaiting")) {
-        return;
-    }
+    if (chatRequestPending) return;
+    const lastBotBubble = [...document.querySelectorAll(".agro-msg--bot .agro-msg-bubble")].pop();
+    const text = lastBotBubble?.innerText?.trim() || document.getElementById("answer")?.innerText || "";
+    if (!text) return;
 
+    const language = document.getElementById("language")?.value || "English";
+    _setTyping(true);
+    _setBusy(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 20000);
     try {
         const response = await fetch(`${API_URL}/ai/explain-simply`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ text, language })
+            body: JSON.stringify({ text, language }),
+            signal: controller.signal,
         });
         const data = await response.json();
-        updateAnswerPresentation(data.answer);
-    } catch (error) {
-        console.error("explain simply error", error);
+        _setTyping(false);
+        if (data.answer) {
+            _appendMsg("bot", `<p><strong>Source wording preserved:</strong> ${escapeHtml(data.answer)}</p>`);
+        }
+    } catch (err) {
+        _setTyping(false);
+        console.error("explain simply error:", err);
+    } finally {
+        clearTimeout(timeout);
+        _setBusy(false);
     }
 }
 
@@ -656,14 +634,46 @@ function clearHistory() {
     }
 }
 
-async function renderHistory() {
+let historyRequest = null;
+let historyFetchedAt = 0;
+let historyObserver = null;
+async function renderHistory({ force = false } = {}) {
+    const list = document.getElementById("historyList");
+    if (!list) return;
+    if (force) historyFetchedAt = 0;
+    if (!getCurrentUserId()) {
+        list.textContent = "Log in to view your private chat history.";
+        return;
+    }
+    const bounds = list.getBoundingClientRect();
+    if ("IntersectionObserver" in window && (bounds.top > window.innerHeight + 200 || bounds.bottom < -200)) {
+        if (!historyObserver) {
+            historyObserver = new IntersectionObserver(entries => {
+                if (!entries.some(entry => entry.isIntersecting)) return;
+                historyObserver.disconnect();
+                historyObserver = null;
+                renderHistory();
+            }, { rootMargin: "200px" });
+            historyObserver.observe(list);
+        }
+        return;
+    }
+    if (historyRequest) return historyRequest;
+    if (Date.now() - historyFetchedAt < 15000) return;
+    historyFetchedAt = Date.now();
+    historyRequest = _renderHistory();
+    try { await historyRequest; } finally { historyRequest = null; }
+}
+
+async function _renderHistory() {
     const list = document.getElementById("historyList");
     if (!list) return;
 
-    list.innerHTML = `<p class="small-note">Loading recent community questions...</p>`;
+    list.innerHTML = `<p class="small-note">Loading your private questions...</p>`;
 
     try {
         const response = await fetch(`${API_URL}/questions/feed?limit=20`);
+        if (response.status === 401) { list.textContent = "Log in to view your private chat history."; return; }
         if (!response.ok) {
             throw new Error(`feed request failed: ${response.status}`);
         }
@@ -732,7 +742,7 @@ window.addEventListener("DOMContentLoaded", () => {
     [
         () => populateDecisionDefaults(),
         () => runProfitCalculator(),
-        () => runDecisionEngine(),
+        () => window.runDecisionEngine?.(),
         () => runCompareDecisions(),
         () => handleExpertConnect("free"),
         () => renderHistory()
@@ -749,7 +759,7 @@ window.addEventListener("agro-farm-profile-updated", () => {
     try {
         populateDecisionDefaults();
         runProfitCalculator();
-        runDecisionEngine();
+        window.runDecisionEngine?.();
         runCompareDecisions();
     } catch (error) {
         console.error("farm profile refresh error", error);
@@ -775,6 +785,8 @@ function speakText(text, language) {
         langCode = "hi-IN";
     } else if (language === "Marathi") {
         langCode = "mr-IN";
+    } else if (language === "Gujarati") {
+        langCode = "gu-IN";
     }
 
     const voices = speechSynthesis.getVoices();
@@ -862,6 +874,8 @@ async function startListening() {
         recognition.lang = "hi-IN";
     } else if (language === "Marathi") {
         recognition.lang = "mr-IN";
+    } else if (language === "Gujarati") {
+        recognition.lang = "gu-IN";
     } else {
         recognition.lang = "en-US";
     }
@@ -926,44 +940,113 @@ async function startListening() {
     }
 }
 
-// ===============================
+// ================================================================
 // IMAGE OCR UPLOAD
-// ===============================
+// ================================================================
 async function uploadImage() {
+    if (chatRequestPending) return;
     const fileInput = document.getElementById("imageInput");
-    const file = fileInput.files[0];
+    const file = fileInput?.files?.[0];
 
     if (!file) {
-        alert(t("pleaseSelectImage"));
+        alert(typeof t === "function" ? t("pleaseSelectImage") : "Please select an image first.");
         return;
     }
 
+    // Show uploading state
+    _appendMsg("user", `<p>📷 <em>Uploading image: ${escapeHtml(file.name)}</em></p>`);
+    _setTyping(true);
+    _setBusy(true);
+
     const formData = new FormData();
     formData.append("file", file);
-
-    const answerBox = document.getElementById("answer");
-    answerBox.innerText = t("extractingImage") || "Extracting text from image...";
+    formData.append("language", document.getElementById("language")?.value || "English");
+    const uploadUserId = getCurrentUserId();
+    if (uploadUserId) formData.append("user_id", String(uploadUserId));
+    const imageQuestion = document.getElementById("question")?.value?.trim();
+    if (imageQuestion) formData.append("question", imageQuestion);
 
     try {
         const response = await fetch(`${API_URL}/upload-image/`, {
             method: "POST",
-            body: formData
+            body: formData,
         });
 
+        _setTyping(false);
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            _appendMsg("bot", `<p>${escapeHtml(errData.detail || "Image upload failed. Please try again.")}</p>`);
+            return;
+        }
+
         const data = await response.json();
-        document.getElementById("question").value = data.extracted_text;
-        updateAnswerPresentation(data.llm_response);
-    } catch (error) {
-        hideAnswerIntro();
-        answerBox.innerText = t("errorUploadingImage");
-        console.error(error);
+
+        // Show extracted text in textarea so user can edit before asking
+        const qEl = document.getElementById("question");
+        if (qEl && data.extracted_text) qEl.value = data.extracted_text;
+
+        if (data.extracted_text) {
+            _appendMsg("user", `<p><strong>Extracted text:</strong><br>${escapeHtml(data.extracted_text)}</p>`);
+        }
+        const answerData = {
+            ...data,
+            answer: data.answer || data.llm_response || "No information found for this image.",
+            confidence: data.confidence || 0,
+            source_type: data.source_type || "documents",
+            references: data.references || [],
+            follow_up_questions: data.follow_up_questions || [],
+        };
+        _appendMsg("bot", _buildBotHtml(answerData));
+
+        // Reset file input
+        if (fileInput) fileInput.value = "";
+    } catch (err) {
+        _setTyping(false);
+        _appendMsg("bot", `<p>Image upload failed. Please check your connection and try again.</p>`);
+        console.error("uploadImage error:", err);
+    } finally {
+        _setBusy(false);
     }
 }
 
+
 window.runProfitCalculator = runProfitCalculator;
-window.runDecisionEngine = runDecisionEngine;
+// The crop decision page provides its own engine.
 window.runCompareDecisions = runCompareDecisions;
 window.handleExpertConnect = handleExpertConnect;
 window.saveGoogleMapsApiKey = saveGoogleMapsApiKey;
 window.setEcosystemType = setEcosystemType;
 window.loadNearbyEcosystemMap = loadNearbyEcosystemMap;
+window.askFollowUp = askFollowUp;
+window.uploadImage = uploadImage;
+window.explainLatestAnswer = explainLatestAnswer;
+window.askQuestion = askQuestion;
+window.startListening = startListening;
+
+// Mic button active-state visual feedback
+const _origStartListening = window.startListening;
+window.startListening = async function () {
+    const micBtn = document.getElementById("micBtn");
+    if (micBtn) micBtn.classList.add("mic-active");
+    try {
+        await _origStartListening();
+    } finally {
+        if (micBtn) micBtn.classList.remove("mic-active");
+    }
+};
+
+// A deliberate answer-language selection overrides automatic script detection.
+document.addEventListener('DOMContentLoaded', () => {
+    const select = document.getElementById('language');
+    const input = document.getElementById('question');
+    if (!select) return;
+    const saved = localStorage.getItem('chatAnswerLanguage');
+    select.value = ['Auto','English','Hindi','Marathi','Gujarati'].includes(saved) ? saved : 'Auto';
+    const update = () => {
+        localStorage.setItem('chatAnswerLanguage', select.value);
+        if (input) input.placeholder = select.value === 'Gujarati' ? 'તમારો ખેતી સંબંધિત પ્રશ્ન લખો અથવા બોલો...' : 'Type or speak your agriculture question...';
+    };
+    select.addEventListener('change', update);
+    update();
+});

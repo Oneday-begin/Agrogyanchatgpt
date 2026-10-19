@@ -1,25 +1,23 @@
-# Knowledge Base Workflow
+# Knowledge base workflow
 
-This folder stores state-wise HTML knowledge pages used by the chatbot.
+The active chatbot indexes PDF files directly from `backend/knowledge_imports`.
+The old generated state HTML pages are excluded to avoid duplicate PDF content.
+Curated HTML references and legacy CSV Q&A may supplement the PDFs.
 
-## Current structure
+1. Ensure Ollama and Tesseract are available.
+2. Run `python -m backend.setup_rag` once to obtain the configured models and
+   Gujarati/English OCR language data.
+3. Place PDFs in the appropriate folders under `backend/knowledge_imports`.
+4. Run `python -m backend.build_vector_index` and restart the backend.
 
-- `states/gujarat.html`
-- `states/punjab.html`
-- `states/maharashtra_research_units.html`
+Text is extracted per page. Scanned pages use OCR, and results are cached.
+Chunks overlap and preserve filename, page, extraction method, character span,
+and source fingerprint. There is no 120-section truncation in the active importer.
 
-## How to add more state files later
+Embeddings and metadata persist in `vectors.sqlite3`; model/content fingerprints
+reuse unchanged embeddings and rebuild changed ones. Generated databases and OCR
+weights are ignored by Git and can be regenerated with the setup/index commands.
 
-1. Put new PDFs or source documents inside a state folder under `backend/knowledge_imports/`.
-2. Re-run:
-
-```powershell
-python backend\build_knowledge_base.py
-```
-
-3. Restart the backend so `load_documents()` reloads the updated HTML pages.
-
-## Notes
-
-- The chatbot now reads these generated HTML pages first, then falls back to legacy CSV Q&A rows.
-- Each HTML file is meant to group one state's imported source material so future scaling stays simple.
+`/health?deep=true` reports page coverage, errors, vectors and model availability.
+Citations open the original PDFs at the quoted page. Extracted text and LLM
+answers still require source and OCR quality checks.

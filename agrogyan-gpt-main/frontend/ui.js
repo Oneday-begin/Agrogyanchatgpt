@@ -36,7 +36,7 @@ const INDIA_LOCATIONS = {
     "Lakshadweep": ["Agatti", "Amini", "Kavaratti", "Minicoy"],
     "Puducherry": ["Karaikal", "Mahe", "Puducherry", "Yanam"]
 };
-const ADMIN_EMAIL = "harsh@07gmail.com";
+
 const AGRO_FARM_STORAGE_KEYS = {
     crop: "crop_name",
     land: "land_size",
@@ -172,7 +172,7 @@ function isAdminUser() {
     const currentUser = localStorage.getItem("user");
     const role = (localStorage.getItem("userRole") || "").toLowerCase();
     const email = (localStorage.getItem("userEmail") || "").toLowerCase();
-    return Boolean(currentUser) && (role === "admin" || email === ADMIN_EMAIL);
+    return Boolean(currentUser) && (role === "admin");
 }
 
 function goToAdminPanel() {
@@ -183,7 +183,8 @@ function goToAdminPanel() {
     window.location.href = "admin.html";
 }
 
-function logout() {
+async function logout() {
+    try { await fetch(`${window.AGRO_API_URL}/auth/logout`, {method: "POST"}); } catch (_) {}
     [
         "user",
         "userId",
@@ -257,12 +258,13 @@ function renderUnifiedHeader() {
     topBar.classList.add("clean-top-bar");
     topBar.innerHTML = `
         <div class="brand-left">
-            <a class="brand-mark clean-brand-mark brand-home-link" href="index.html" aria-label="Go to home">AgroGyanGPT</a>
+            <a class="brand-mark clean-brand-mark brand-home-link" href="index.html" aria-label="Go to Home">AgroGyanGPT</a>
             <div id="welcomeUser" class="welcome-text">${subtitle}</div>
         </div>
         <div class="top-actions clean-top-actions">
             <nav class="clean-nav" aria-label="Primary">
                 <a class="clean-nav-link ${activeHome ? "active" : ""}" href="index.html">Home</a>
+                <a class="clean-nav-link ${pageKey === "chat" ? "active" : ""}" href="chat.html">AgroGyanGPT</a>
                 <details class="nav-dropdown">
                     <summary class="clean-nav-link">Farmer Setup</summary>
                     <div class="dropdown-panel">
@@ -488,7 +490,7 @@ function injectAssistantOrb() {
             const question = document.getElementById("question");
             if (question) question.focus();
         } else {
-            window.location.href = "index.html#assistantHub";
+            window.location.href = "chat.html";
         }
     });
 
@@ -518,9 +520,26 @@ function initLoginIntro() {
 
 document.addEventListener("DOMContentLoaded", () => {
     renderUnifiedHeader();
+    const authButton = document.getElementById("authButton");
+    if (authButton) {
+        authButton.removeAttribute("data-i18n");
+        authButton.textContent = localStorage.getItem("user") ? "Logout" : "Login / Register";
+        authButton.onclick = () => localStorage.getItem("user") ? logout() : window.location.assign("login.html");
+    }
+    fetch(`${window.AGRO_API_URL}/auth/me`).then(async response => {
+        if (response.status === 401) {
+            const hadUser = localStorage.getItem("userId");
+            ["user", "userId", "userRole", "isAdmin"].forEach(key => localStorage.removeItem(key));
+            if (hadUser) window.dispatchEvent(new Event("agro-auth-changed"));
+            if (authButton) authButton.textContent = "Login / Register";
+            const history = document.getElementById("historyList");
+            if (history) history.textContent = "Log in to view your private chat history.";
+            if (typeof updateAuthState === "function") updateAuthState();
+        }
+    }).catch(() => {});
     populateIndiaLocationSelectors();
     initLoginIntro();
-    injectAssistantOrb();
+    if (localStorage.getItem("showAssistantWidget") === "yes") injectAssistantOrb();
     applyAmbientTheme();
     injectAdminNavButton();
     prefetchCorePages();

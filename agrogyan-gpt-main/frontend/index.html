@@ -1,397 +1,182 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AgroGyanGPT | Home</title>
-    <link rel="stylesheet" href="style.css">
-    <script defer src="ui.js"></script>
-    <script defer src="api-config.js"></script>
-    <script defer src="i18n.js"></script>
-    <script defer src="script.js"></script>
-    <script defer src="farmer-pages.js"></script>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>AgroGyanGPT | Home</title>
+<link href="style.css?v=home-chat-2" rel="stylesheet"/>
+<script defer="" src="ui.js?v=home-chat-2"></script>
+<script defer="" src="api-config.js?v=home-chat-2"></script>
+<script defer="" src="i18n.js?v=home-chat-2"></script>
+<script defer="" src="script.js?v=home-chat-2"></script>
+<script defer="" src="farmer-pages.js?v=home-chat-2"></script>
 </head>
 <body class="dashboard-page" data-page="home">
 <div class="page-shell">
-    <header class="top-bar clean-top-bar">
-        <div class="brand-left">
-            <a class="brand-mark clean-brand-mark" href="index.html" data-i18n="appName">AgroGyanGPT</a>
-            <div id="welcomeUser" class="welcome-text">Your daily farming control room</div>
-        </div>
+<header class="top-bar clean-top-bar">
+<div class="brand-left">
+<a class="brand-mark clean-brand-mark" data-i18n="appName" href="index.html">AgroGyanGPT</a>
+<div class="welcome-text" id="welcomeUser">Your daily farming control room</div>
+</div>
+<div class="top-actions clean-top-actions">
+<nav aria-label="Primary" class="clean-nav">
+<a class="clean-nav-link active" href="index.html">Home</a><a class="clean-nav-link" href="chat.html">AgroGyanGPT</a>
+<details class="nav-dropdown">
+<summary class="clean-nav-link">Farmer Setup</summary>
+<div class="dropdown-panel">
+<a href="my-farm.html">My Farm</a>
+<a href="crop-care.html">Crop Care</a>
+<a href="market.html">Market</a>
+</div>
+</details>
+<details class="nav-dropdown">
+<summary class="clean-nav-link">More</summary>
+<div class="dropdown-panel">
+<a href="schemes.html">Schemes</a>
+<a href="community.html">Community</a>
+<a href="profile.html">Profile</a>
+</div>
+</details>
+</nav>
+<div class="header-utility">
+<select aria-label="UI Language" class="lang-select clean-select" id="uiLanguage">
+<option value="English">English</option>
+<option value="Hindi">Hindi</option>
+<option value="Marathi">Marathi</option>
+</select>
+<button class="nav-btn clean-primary-btn" data-i18n="logout" id="authButton" onclick="logout()" type="button">Logout</button>
+</div>
+</div>
+</header>
 
-        <div class="top-actions clean-top-actions">
-            <nav class="clean-nav" aria-label="Primary">
-                <a class="clean-nav-link active" href="index.html">Home</a>
-                <details class="nav-dropdown">
-                    <summary class="clean-nav-link">Farmer Setup</summary>
-                    <div class="dropdown-panel">
-                        <a href="my-farm.html">My Farm</a>
-                        <a href="crop-care.html">Crop Care</a>
-                        <a href="market.html">Market</a>
-                    </div>
-                </details>
-                <details class="nav-dropdown">
-                    <summary class="clean-nav-link">More</summary>
-                    <div class="dropdown-panel">
-                        <a href="schemes.html">Schemes</a>
-                        <a href="community.html">Community</a>
-                        <a href="profile.html">Profile</a>
-                    </div>
-                </details>
-            </nav>
-            <div class="header-utility">
-                <select id="uiLanguage" class="lang-select clean-select" aria-label="UI Language">
-                    <option value="English">English</option>
-                    <option value="Hindi">Hindi</option>
-                    <option value="Marathi">Marathi</option>
-                </select>
-                <button id="authButton" class="nav-btn clean-primary-btn" type="button" onclick="logout()" data-i18n="logout">Logout</button>
-            </div>
-        </div>
-    </header>
+<section class="hero-panel premium-hero clean-home-hero">
+<div class="hero-copy">
+<p class="eyebrow" data-i18n="homeDashboard">Home dashboard</p>
+<h1 class="main-title" data-i18n="homeHeroTitle">Simple farming help for today’s most important decisions.</h1>
+<p class="subtitle" data-i18n="homeHeroSubtitle">Check today’s weather, ask AgroGyanGPT, and jump into crop care or market tools without getting lost in too many sections.</p>
+<div class="hero-meta-row">
+<span class="hero-chip" id="heroLocationLabel">Set your farm location</span>
+<span class="hero-chip" id="liveDateTicker">Loading live date...</span>
+</div>
 
-    <div class="trust-strip">
-        <span>Daily farmer essentials first</span>
-        <span>Weather + mandi + AI guidance in one screen</span>
-        <span>Heavy planning tools moved into focused pages</span>
-    </div>
+<div class="hero-cta-row">
+<a class="primary-btn clean-primary-btn large-cta-btn" href="chat.html">Ask AgroGyanGPT</a>
+<a class="nav-btn clean-secondary-btn" href="my-farm.html">Open My Farm</a>
+</div>
+<div class="clean-support-grid">
+<a class="quick-link-card compact-card" href="crop-care.html">
+<span class="quick-link-kicker">Protection</span>
+<strong>Crop Care</strong>
+<p>Disease checks, crop doctor, and action guidance.</p>
+</a>
+<a class="quick-link-card compact-card" href="market.html">
+<span class="quick-link-kicker">Selling</span>
+<strong>Market Desk</strong>
+<p>Rates, mandi trends, and selling signals.</p>
+</a>
+</div>
 
-    <section class="hero-panel premium-hero clean-home-hero">
-        <div class="hero-copy">
-            <p class="eyebrow" data-i18n="homeDashboard">Home dashboard</p>
-            <h1 class="main-title" data-i18n="homeHeroTitle">Simple farming help for today’s most important decisions.</h1>
-            <p class="subtitle" data-i18n="homeHeroSubtitle">Check today’s weather, ask AgroGyanGPT, and jump into crop care or market tools without getting lost in too many sections.</p>
-            <div class="hero-meta-row">
-                <span class="hero-chip" id="heroLocationLabel">Pune, Maharashtra</span>
-                <span class="hero-chip" id="liveDateTicker">Loading live date...</span>
-            </div>
+</div>
+<aside class="hero-side">
+<div class="forecast-card live-weather-card" id="heroWeatherCard">
+<div aria-hidden="true" class="weather-visuals">
+<span class="sun-glow"></span>
+<span class="cloud cloud-a"></span>
+<span class="cloud cloud-b"></span>
+<span class="wind-line line-a"></span>
+<span class="wind-line line-b"></span>
+<span class="rain-glow rain-a"></span>
+<span class="rain-glow rain-b"></span>
+</div>
+<div class="weather-top-row">
+<div>
+<span class="meta-label">Weather today</span>
+<span class="weather-location-label" id="weatherLocationLabel">Loading location...</span>
+</div>
+<span class="weather-ai-pill">AI field mode</span>
+</div>
+<div aria-label="Farm photograph" class="weather-story-card" id="weatherStoryCard">
+<div class="weather-slides" id="weatherSlides"></div>
+<div aria-hidden="true" class="weather-slide-dots" id="weatherSlideDots"></div>
+</div>
+<div class="weather-main-row">
+<div class="weather-temp-stack">
+<div class="forecast-temp" id="weatherTemp">Unavailable</div>
+<p class="subnote weather-note" id="weatherAdvice">Fetching weather advice...</p>
+<div class="weather-detail-row">
+<span class="weather-detail-pill">Best spray window: Morning</span>
+<span class="weather-detail-pill">Crop risk: Low</span>
+</div>
+<div class="weather-live-monitor">
+<span class="monitor-dot"></span>
+<span id="weatherMonitorStatus">Starting live location monitor...</span>
+</div>
+</div>
+<div aria-hidden="true" class="weather-ai-badge-box">
+<span class="weather-ai-core"></span>
+<span class="weather-ai-ring ring-one"></span>
+<span class="weather-ai-ring ring-two"></span>
+<span class="weather-ai-label">AI</span>
+</div>
+</div>
+<div class="weather-summary-card">
+<div class="weather-summary-head">
+<div>
+<span class="weather-story-kicker">Farm climate</span>
+<strong id="weatherCondition">Set your location to load weather.</strong>
+</div>
+<span class="weather-badge" id="weatherBadge">Spray safe</span>
+</div>
+<div class="weather-story-mini">
+<span>Live field scan</span>
+<span>AI-ready advisory</span>
+<span>Rain forecast: check live data</span>
+</div>
+</div>
+<div class="forecast-meta weather-hero-meta weather-stats-grid">
+<div class="weather-stat-box">
+<span class="weather-stat-label">Humidity</span>
+<strong id="weatherHumidity">Unavailable</strong>
+</div>
+<div class="weather-stat-box">
+<span class="weather-stat-label">Wind</span>
+<strong id="weatherWind">Unavailable</strong>
+</div>
+</div>
+</div>
+</aside>
+</section>
 
-            <div class="voice-workflow-strip">
-                <span class="workflow-label">Voice in your language</span>
-                <button class="nav-btn workflow-btn" type="button" onclick="setExperienceLanguage('English')">English</button>
-                <button class="nav-btn workflow-btn" type="button" onclick="setExperienceLanguage('Hindi')">Hindi</button>
-                <button class="nav-btn workflow-btn" type="button" onclick="setExperienceLanguage('Marathi')">Marathi</button>
-                <button class="primary-btn workflow-btn" type="button" onclick="launchVoiceWorkflow()">Start voice</button>
-            </div>
 
-            <div class="hero-cta-row">
-                <a class="primary-btn clean-primary-btn large-cta-btn" href="#assistantHub">Ask AgroGyanGPT</a>
-                <a class="nav-btn clean-secondary-btn" href="my-farm.html">Open My Farm</a>
-            </div>
 
-            <div class="clean-support-grid">
-                <a class="quick-link-card compact-card" href="crop-care.html">
-                    <span class="quick-link-kicker">Protection</span>
-                    <strong>Crop Care</strong>
-                    <p>Disease checks, crop doctor, and action guidance.</p>
-                </a>
-                <a class="quick-link-card compact-card" href="market.html">
-                    <span class="quick-link-kicker">Selling</span>
-                    <strong>Market Desk</strong>
-                    <p>Rates, mandi trends, and selling signals.</p>
-                </a>
-            </div>
+<section class="dashboard-widgets home-secondary-grid">
 
-            <div class="hero-stats compact-hero-stats">
-                <div class="stat-card compact-stat-card">
-                    <span class="stat-label">Primary crop</span>
-                    <span class="stat-value" id="topCropValue">Wheat</span>
-                </div>
-                <div class="stat-card compact-stat-card">
-                    <span class="stat-label">Market mood</span>
-                    <span class="stat-value" id="marketMoodValue">Stable</span>
-                </div>
-                <div class="stat-card compact-stat-card">
-                    <span class="stat-label">Voice mode</span>
-                    <span class="stat-value" id="voiceModeStatus">Ready</span>
-                </div>
-            </div>
-        </div>
+<div class="timeline-card">
+<div class="market-widget">
+<div class="market-widget-header">
+<div>
+<p class="eyebrow compact-eyebrow">Selling desk</p>
+<h3>Market Price</h3>
+</div>
+<span class="market-header-chip">Live mandi board</span>
+</div>
+<div class="market-list market-list-compact" id="marketGrid"></div>
+</div>
+</div>
+<div class="advisory-card">
+<p class="eyebrow">Smart weather alerts</p>
+<h3>Field warnings</h3>
+<div class="timeline-list" id="weatherAlertsList"></div>
+</div>
+<div class="timeline-card">
+<p class="eyebrow">AI daily summary</p>
+<h3 id="briefingHeadline">Loading your briefing...</h3>
+<div class="timeline-list" id="briefingTasks"></div>
+</div>
+</section>
 
-        <aside class="hero-side">
-            <div class="forecast-card live-weather-card" id="heroWeatherCard">
-                <div class="weather-visuals" aria-hidden="true">
-                    <span class="sun-glow"></span>
-                    <span class="cloud cloud-a"></span>
-                    <span class="cloud cloud-b"></span>
-                    <span class="wind-line line-a"></span>
-                    <span class="wind-line line-b"></span>
-                    <span class="rain-glow rain-a"></span>
-                    <span class="rain-glow rain-b"></span>
-                </div>
-                <div class="weather-top-row">
-                    <div>
-                        <span class="meta-label">Weather today</span>
-                        <span class="weather-location-label" id="weatherLocationLabel">Loading location...</span>
-                    </div>
-                    <span class="weather-ai-pill">AI field mode</span>
-                </div>
 
-                <div class="weather-story-card" id="weatherStoryCard" aria-label="Live farm photo slideshow">
-                    <div class="weather-slides" id="weatherSlides"></div>
-                    <div class="weather-slide-dots" id="weatherSlideDots" aria-hidden="true"></div>
-                </div>
-
-                <div class="weather-main-row">
-                    <div class="weather-temp-stack">
-                        <div class="forecast-temp" id="weatherTemp">28&deg;C</div>
-                        <p class="subnote weather-note" id="weatherAdvice">Fetching weather advice...</p>
-                        <div class="weather-detail-row">
-                            <span class="weather-detail-pill">Best spray window: Morning</span>
-                            <span class="weather-detail-pill">Crop risk: Low</span>
-                        </div>
-                        <div class="weather-live-monitor">
-                            <span class="monitor-dot"></span>
-                            <span id="weatherMonitorStatus">Starting live location monitor...</span>
-                        </div>
-                    </div>
-                    <div class="weather-ai-badge-box" aria-hidden="true">
-                        <span class="weather-ai-core"></span>
-                        <span class="weather-ai-ring ring-one"></span>
-                        <span class="weather-ai-ring ring-two"></span>
-                        <span class="weather-ai-label">AI</span>
-                    </div>
-                </div>
-
-                <div class="weather-summary-card">
-                    <div class="weather-summary-head">
-                        <div>
-                            <span class="weather-story-kicker">Farm climate</span>
-                            <strong id="weatherCondition">Partly sunny</strong>
-                        </div>
-                        <span id="weatherBadge" class="weather-badge">Spray safe</span>
-                    </div>
-                    <div class="weather-story-mini">
-                        <span>Live field scan</span>
-                        <span>AI-ready advisory</span>
-                        <span>Rain chance: 12%</span>
-                    </div>
-                </div>
-
-                <div class="forecast-meta weather-hero-meta weather-stats-grid">
-                    <div class="weather-stat-box">
-                        <span class="weather-stat-label">Humidity</span>
-                        <strong id="weatherHumidity">Humidity 68%</strong>
-                    </div>
-                    <div class="weather-stat-box">
-                        <span class="weather-stat-label">Wind</span>
-                        <strong id="weatherWind">Wind 10 km/h</strong>
-                    </div>
-                </div>
-            </div>
-        </aside>
-    </section>
-
-    <section class="dashboard-grid">
-        <div class="chat-container full-span chatbot-spotlight" id="assistantHub">
-            <div class="section-header">
-                <div>
-                    <p class="eyebrow">Assistant</p>
-                    <h2 class="section-title" data-i18n="askAgro">Ask AgroGyanGPT</h2>
-                    <p class="subnote" data-i18n="dailyHelpText">This is the main space of the website. Ask anything about crop care, weather timing, mandi prices, farming decisions, or government support.</p>
-                </div>
-                <div class="hero-actions">
-                    <button class="nav-btn" type="button" onclick="renderHistory()">Refresh feed</button>
-                </div>
-            </div>
-
-            <div class="assistant-shell chatbot-stage">
-                <div class="chat-shell chatbot-main-shell" id="assistantShell">
-                    <div class="typing-scan" aria-hidden="true"></div>
-                    <div class="assistant-panel-head">
-                        <div>
-                            <p class="eyebrow" data-i18n="mainAiWorkspace">Main AI workspace</p>
-                            <h3 class="panel-title">Ask in text, voice, or image</h3>
-                        </div>
-                        <div id="voicePill" class="voice-pill">Voice farmer mode ready</div>
-                    </div>
-
-                    <textarea
-                        id="question"
-                        class="question-input"
-                        data-i18n-placeholder="questionPlaceholder"
-                        placeholder="Type or speak your agriculture question..."
-                    ></textarea>
-
-                    <div class="image-upload">
-                        <input type="file" id="imageInput" accept="image/*">
-                        <button class="icon-btn" type="button" onclick="uploadImage()" title="Upload image">OCR</button>
-                    </div>
-
-                    <div class="controls">
-                        <div class="left-controls">
-                            <button class="primary-btn" type="button" onclick="askQuestion()" data-i18n="ask">Ask</button>
-                            <button class="nav-btn" type="button" onclick="startListening()">Mic</button>
-                            <button class="nav-btn" type="button" onclick="explainLatestAnswer()">Explain Simply</button>
-                        </div>
-                        <div class="right-controls">
-                            <select id="language" aria-label="Answer language">
-                                <option value="English">English</option>
-                                <option value="Hindi">Hindi</option>
-                                <option value="Marathi">Marathi</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="answer-box">
-                        <h3 data-i18n="answerTitle">Answer</h3>
-                        <p id="answerIntro" class="answer-intro hidden">Based on your query and field profile, here is the best next step.</p>
-                        <p id="answer" data-i18n="answerWaiting">Waiting for your question...</p>
-                        <p id="confidence"></p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <section class="dashboard-widgets home-feature-band">
-        <div class="timeline-card">
-            <p class="eyebrow" data-i18n="todayActions">What should I do today?</p>
-            <h3 data-i18n="todayCardSummary">Top actions for your farm today</h3>
-            <div id="todayActionBody" class="timeline-list"></div>
-        </div>
-        <div class="timeline-card voice-first-card">
-            <p class="eyebrow" data-i18n="voiceAssistant">Voice-first chatbot</p>
-            <h3 id="voiceLeadText">Tap the large mic button and ask in your own language.</h3>
-            <button id="voiceHeroButton" class="primary-btn voice-hero-btn" type="button" onclick="startListening()">Start voice mode</button>
-            <div id="voicePromptList" class="timeline-list"></div>
-        </div>
-    </section>
-
-    <section class="dashboard-widgets command-center-grid">
-        <div class="timeline-card">
-            <p class="eyebrow">Farm identity</p>
-            <h3>Your farm snapshot</h3>
-            <div id="farmIdentityList" class="timeline-list"></div>
-        </div>
-        <div class="timeline-card">
-            <p class="eyebrow">Decision board</p>
-            <h3>What matters right now</h3>
-            <div id="todayDecisionBoard" class="timeline-list"></div>
-        </div>
-        <div class="timeline-card">
-            <p class="eyebrow">Commerce and trust</p>
-            <h3>Cart, order, and scheme pulse</h3>
-            <div id="commerceStatusBoard" class="timeline-list"></div>
-        </div>
-        <div class="timeline-card">
-            <p class="eyebrow">Farm plan</p>
-            <h3>Season budget and bundle plan</h3>
-            <div id="farmPlanBoard" class="timeline-list"></div>
-        </div>
-    </section>
-
-    <section class="dashboard-widgets home-secondary-grid">
-        <div class="timeline-card">
-            <div class="weather-widget" id="weatherWidget">
-                <div class="widget-card weather-primary">
-                    <div class="widget-icon sun-icon"></div>
-                    <div>
-                        <div class="widget-label">Weather Today</div>
-                        <div class="widget-value" id="weatherTempCard">28&deg;C</div>
-                        <div class="widget-subtext" id="weatherConditionCard">Partly sunny</div>
-                    </div>
-                </div>
-                <div class="widget-card weather-detail">
-                    <div class="widget-icon humidity-icon"></div>
-                    <div>
-                        <div class="widget-label">Humidity</div>
-                        <div class="widget-subtext" id="weatherHumidityCard">68%</div>
-                    </div>
-                </div>
-                <div class="widget-card weather-detail">
-                    <div class="widget-icon wind-icon"></div>
-                    <div>
-                        <div class="widget-label">Wind</div>
-                        <div class="widget-subtext" id="weatherWindCard">10 km/h</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-card">
-            <div class="market-widget">
-                <div class="market-widget-header">
-                    <div>
-                        <p class="eyebrow compact-eyebrow">Selling desk</p>
-                        <h3>Market Price</h3>
-                    </div>
-                    <span class="market-header-chip">Live mandi board</span>
-                </div>
-                <div id="marketGrid" class="market-list market-list-compact"></div>
-            </div>
-        </div>
-
-        <div class="advisory-card">
-            <p class="eyebrow">Smart weather alerts</p>
-            <h3>Field warnings</h3>
-            <div id="weatherAlertsList" class="timeline-list"></div>
-        </div>
-
-        <div class="timeline-card">
-            <p class="eyebrow">AI daily summary</p>
-            <h3 id="briefingHeadline">Loading your briefing...</h3>
-            <div id="briefingTasks" class="timeline-list"></div>
-        </div>
-    </section>
-
-    <section class="dashboard-widgets command-center-grid">
-        <div class="timeline-card">
-            <p class="eyebrow">Daily return reasons</p>
-            <h3>Alerts and reminders</h3>
-            <div id="retentionAlertBoard" class="timeline-list"></div>
-        </div>
-        <div class="timeline-card">
-            <p class="eyebrow">Why this stands out</p>
-            <h3>Farmer-first promise</h3>
-            <div class="timeline-list">
-                <div class="timeline-item"><h4>Hyper-personal</h4><p>Recommendations follow crop, land, season, soil, irrigation, village, and budget context.</p></div>
-                <div class="timeline-item"><h4>Decision shop</h4><p>Products explain fit, quantity, alternatives, and risk instead of just showing a price.</p></div>
-                <div class="timeline-item"><h4>Voice-first support</h4><p>Farmers can ask in local languages and return daily for advisory, alerts, and planning.</p></div>
-            </div>
-        </div>
-    </section>
-
-    <section class="dashboard-widgets">
-        <div class="timeline-card progress-panel">
-            <p class="eyebrow">Farmer streak</p>
-            <h3>Your AI progress</h3>
-            <div class="progress-layout">
-                <div class="progress-ring" id="streakRing">
-                    <span id="streakDays">1</span>
-                </div>
-                <div class="progress-copy">
-                    <p id="streakMessage">Keep using the assistant daily to unlock more badges.</p>
-                    <div class="badge-row" id="badgeRow"></div>
-                </div>
-            </div>
-        </div>
-
-        <div class="timeline-card">
-            <p class="eyebrow">Recent questions</p>
-            <h3>Community feed</h3>
-            <div id="historyList" class="history-list"></div>
-        </div>
-
-        <div class="timeline-card">
-            <p class="eyebrow">Quick actions</p>
-            <h3>Open the right page fast</h3>
-            <div class="timeline-list">
-                <div class="timeline-item">
-                    <h4><a href="my-farm.html">My Farm</a></h4>
-                    <p>Update crop, land, soil, season, village, and planner details.</p>
-                </div>
-                <div class="timeline-item">
-                    <h4><a href="crop-care.html">Crop Care</a></h4>
-                    <p>Check disease risk, run crop doctor, and compare decisions.</p>
-                </div>
-                <div class="timeline-item">
-                    <h4><a href="market.html">Market Desk</a></h4>
-                    <p>Track prices, profit, selling signals, and nearby agri support.</p>
-                </div>
-            </div>
-        </div>
-    </section>
 </div>
 </body>
 </html>
