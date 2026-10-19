@@ -1,9 +1,0 @@
-Tell your teammates:
-
-Install Python 3.10+
-
-Install Tesseract (Add to PATH)
-
-Install Ollama
-
-Double-click start_agrogyan.bat

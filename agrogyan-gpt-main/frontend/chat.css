@@ -1,0 +1,403 @@
+/* ============================================================
+   AgroGyanGPT — Chat UI Design System
+   Layered on top of style.css; overrides only the assistant hub.
+   All colours use the existing :root tokens from style.css.
+   ============================================================ */
+
+/* ── Shell ──────────────────────────────────────────────── */
+.agro-chat-shell {
+    display: flex;
+    flex-direction: column;
+    background: var(--panel-strong, #fffcf6);
+    border: 1.5px solid var(--line, rgba(211,180,96,.55));
+    border-radius: var(--radius-lg, 22px);
+    overflow: hidden;
+    box-shadow: var(--shadow-soft, 0 16px 32px rgba(62,56,25,.1));
+    max-width: 860px;
+    margin: 0 auto 2rem;
+}
+
+/* ── Message list ───────────────────────────────────────── */
+.agro-chat-messages {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem 1.5rem 0.5rem;
+    min-height: 200px;
+    max-height: 420px;
+    overflow-y: auto;
+    scroll-behavior: auto;
+    overscroll-behavior: contain;
+    /* Custom scrollbar */
+    scrollbar-width: thin;
+    scrollbar-color: var(--gold, #d3b86f) transparent;
+}
+.agro-chat-messages::-webkit-scrollbar { width: 5px; }
+.agro-chat-messages::-webkit-scrollbar-thumb {
+    background: var(--gold-soft, #f1dfab);
+    border-radius: 4px;
+}
+
+/* ── Individual message ─────────────────────────────────── */
+.agro-msg {
+    display: flex;
+    gap: 0.625rem;
+    align-items: flex-start;
+}
+.agro-msg--user { flex-direction: row-reverse; }
+
+.agro-msg-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: var(--gold-soft, #f1dfab);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 6px rgba(0,0,0,.08);
+}
+.agro-msg--user .agro-msg-avatar {
+    background: var(--green, #2c642f);
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--body-font, sans-serif);
+}
+
+.agro-msg-bubble {
+    max-width: 75%;
+    background: var(--panel, rgba(255,252,242,.86));
+    border: 1px solid var(--line, rgba(211,180,96,.4));
+    border-radius: 18px 18px 18px 4px;
+    padding: 0.75rem 1rem;
+    font-family: var(--body-font, sans-serif);
+    font-size: 0.925rem;
+    line-height: 1.6;
+    color: var(--text, #2c2a1f);
+    word-break: break-word;
+    white-space: pre-wrap;
+}
+.agro-msg--user .agro-msg-bubble {
+    background: var(--green, #2c642f);
+    color: #f7f5ee;
+    border-color: transparent;
+    border-radius: 18px 18px 4px 18px;
+}
+.agro-msg-bubble p { margin: 0 0 0.5rem; }
+.agro-msg-bubble p:last-child { margin-bottom: 0; }
+.agro-msg-bubble ul, .agro-msg-bubble ol {
+    margin: 0.5rem 0 0;
+    padding-left: 1.3rem;
+}
+.agro-msg-bubble li { margin-bottom: 0.25rem; }
+
+/* Source badge inside bot bubble */
+.agro-msg-source {
+    display: inline-block;
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    padding: 0.18rem 0.55rem;
+    border-radius: 20px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+.agro-source--documents {
+    background: rgba(44,100,47,.12);
+    color: var(--green, #2c642f);
+    border: 1px solid rgba(44,100,47,.25);
+}
+.agro-source--general {
+    background: rgba(211,184,111,.18);
+    color: #7a5e20;
+    border: 1px solid rgba(211,184,111,.4);
+}
+.agro-source--none {
+    background: rgba(180,60,40,.1);
+    color: #8a2a1a;
+    border: 1px solid rgba(180,60,40,.2);
+}
+
+/* Follow-up chips */
+.agro-followup-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+}
+.agro-followup-chip {
+    background: var(--gold-soft, #f1dfab);
+    border: 1px solid var(--line-strong, rgba(224,195,118,.8));
+    border-radius: 20px;
+    padding: 0.28rem 0.75rem;
+    font-size: 0.78rem;
+    font-family: var(--body-font, sans-serif);
+    color: var(--text, #2c2a1f);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.agro-followup-chip:hover {
+    background: var(--green, #2c642f);
+    color: #fff;
+    border-color: var(--green, #2c642f);
+}
+
+/* References footnote */
+.agro-references {
+    margin-top: 0.75rem;
+    font-size: 0.75rem;
+    color: var(--text-soft, rgba(56,47,34,.72));
+    border-top: 1px solid var(--line, rgba(211,180,96,.35));
+    padding-top: 0.45rem;
+    line-height: 1.5;
+}
+.agro-references strong { color: var(--text, #2c2a1f); }
+
+/* ── Typing indicator ───────────────────────────────────── */
+.agro-typing {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.4rem 1.5rem 0.6rem;
+}
+.agro-typing[hidden] { display: none; }
+.agro-request-status {
+    flex: 1;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-soft, #514d3f);
+}
+.agro-stop-btn { flex-shrink: 0; }
+.agro-stop-btn[hidden] { display: none; }
+.agro-typing-dots {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--panel, rgba(255,252,242,.86));
+    border: 1px solid var(--line, rgba(211,180,96,.4));
+    border-radius: 18px 18px 18px 4px;
+    padding: 0.55rem 0.85rem;
+}
+.agro-typing-dots span {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green, #2c642f);
+    display: block;
+    animation: agro-bounce 1.1s infinite ease-in-out both;
+}
+.agro-typing-dots span:nth-child(2) { animation-delay: 0.17s; }
+.agro-typing-dots span:nth-child(3) { animation-delay: 0.34s; }
+
+/* ── Input bar ──────────────────────────────────────────── */
+.agro-chat-inputbar {
+    padding: 0.75rem 1rem 1rem;
+    background: var(--panel-strong, rgba(255,253,246,.97));
+    border-top: 1px solid var(--line, rgba(211,180,96,.45));
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.agro-chat-attachrow {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.agro-icon-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    border: 1.5px solid var(--line, rgba(211,180,96,.55));
+    background: var(--panel, rgba(255,252,242,.86));
+    color: var(--green, #2c642f);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+    flex-shrink: 0;
+}
+.agro-icon-btn:hover {
+    background: var(--green, #2c642f);
+    color: #fff;
+    border-color: var(--green, #2c642f);
+    transform: scale(1.06);
+}
+.agro-icon-btn:active { transform: scale(0.96); }
+.agro-icon-btn.mic-active {
+    background: #b73224;
+    border-color: #b73224;
+    color: #fff;
+    animation: agro-pulse 0.9s infinite;
+}
+
+.agro-voice-pill {
+    font-size: 0.73rem;
+    font-family: var(--body-font, sans-serif);
+    color: var(--text-soft, rgba(56,47,34,.7));
+    background: var(--gold-soft, #f1dfab);
+    border-radius: 20px;
+    padding: 0.18rem 0.6rem;
+    border: 1px solid var(--line, rgba(211,180,96,.45));
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.agro-lang-wrap { margin-left: auto; }
+.agro-lang-select {
+    border: 1.5px solid var(--line, rgba(211,180,96,.6));
+    background: var(--panel, rgba(255,252,242,.9));
+    color: var(--text, #2c2a1f);
+    border-radius: 8px;
+    padding: 0.25rem 0.55rem;
+    font-size: 0.82rem;
+    font-family: var(--body-font, sans-serif);
+    cursor: pointer;
+    outline-offset: 2px;
+}
+.agro-lang-select:focus { outline: 2px solid var(--green, #2c642f); }
+
+.agro-chat-textrow {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+.agro-chat-textarea {
+    flex: 1;
+    resize: none;
+    border: 1.5px solid var(--line, rgba(211,180,96,.6));
+    border-radius: 14px;
+    padding: 0.65rem 0.9rem;
+    font-family: var(--body-font, sans-serif);
+    font-size: 0.95rem;
+    color: var(--text, #2c2a1f);
+    background: #fff;
+    line-height: 1.55;
+    min-height: 44px;
+    max-height: 130px;
+    overflow-y: auto;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    field-sizing: content; /* auto-grow in modern browsers */
+}
+.agro-chat-textarea::placeholder { color: var(--text-soft, rgba(56,47,34,.5)); }
+.agro-chat-textarea:focus {
+    outline: none;
+    border-color: var(--green, #2c642f);
+    box-shadow: 0 0 0 3px rgba(44,100,47,.12);
+}
+
+.agro-send-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    border: none;
+    background: var(--green, #2c642f);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s, transform 0.1s;
+    box-shadow: 0 4px 12px rgba(44,100,47,.3);
+}
+.agro-send-btn:hover { background: var(--green-strong, #173d1e); transform: scale(1.05); }
+.agro-send-btn:active { transform: scale(0.95); }
+.agro-send-btn:disabled {
+    background: var(--line, rgba(211,180,96,.6));
+    cursor: wait;
+    box-shadow: none;
+}
+
+.agro-explain-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 0.15rem;
+    flex-wrap: wrap;
+}
+.agro-chip-btn {
+    border: 1.5px solid var(--line, rgba(211,180,96,.6));
+    background: var(--panel, rgba(255,252,242,.86));
+    color: var(--text, #2c2a1f);
+    border-radius: 20px;
+    padding: 0.28rem 0.85rem;
+    font-size: 0.78rem;
+    font-family: var(--body-font, sans-serif);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+.agro-chip-btn:hover:not(:disabled) {
+    background: var(--gold-soft, #f1dfab);
+    border-color: var(--gold, #d3b86f);
+}
+.agro-chip-btn:disabled { opacity: 0.45; cursor: default; }
+
+.agro-confidence-label {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-soft, rgba(56,47,34,.65));
+    font-family: var(--body-font, sans-serif);
+    overflow-wrap: anywhere;
+}
+
+/* ── Animations ─────────────────────────────────────────── */
+#assistantHub { scroll-margin-top: 9rem; }
+@keyframes agro-slide-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes agro-bounce {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+    40%            { transform: scale(1); opacity: 1; }
+}
+@keyframes agro-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(183,50,36,.4); }
+    50%       { box-shadow: 0 0 0 6px rgba(183,50,36,.0); }
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
+@media (max-width: 600px) {
+    .agro-chat-messages { max-height: 52vh; }
+    .agro-msg-bubble { max-width: 88%; font-size: 0.875rem; }
+    .agro-chat-shell { border-radius: var(--radius-md, 16px); }
+    .agro-voice-pill { display: none; }
+    .agro-typing { padding-inline: 1rem; flex-wrap: wrap; }
+    .agro-confidence-label { margin-left: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .agro-chat-shell *, .agro-chat-shell *::before, .agro-chat-shell *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+}
+
+/* ── Dark mode ──────────────────────────────────────────── */
+body.dark-mode .agro-chat-shell {
+    background: rgba(21,40,23,.9);
+    border-color: rgba(80,120,60,.45);
+}
+body.dark-mode .agro-msg-bubble {
+    background: rgba(30,55,30,.85);
+    color: #e8e4d8;
+    border-color: rgba(80,120,60,.35);
+}
+body.dark-mode .agro-msg--user .agro-msg-bubble {
+    background: var(--green-strong, #173d1e);
+    color: #dff0da;
+}
+body.dark-mode .agro-chat-inputbar {
+    background: rgba(18,35,18,.92);
+    border-color: rgba(80,120,60,.35);
+}
+body.dark-mode .agro-chat-textarea {
+    background: rgba(28,50,28,.85);
+    color: #e0ddd5;
+    border-color: rgba(80,120,60,.45);
+}
+body.dark-mode .agro-chat-textarea::placeholder { color: rgba(220,215,195,.4); }

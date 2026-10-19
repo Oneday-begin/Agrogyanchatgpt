@@ -1,0 +1,392 @@
+{
+  "agrogyan-gpt-main/ans.json": {
+    "mtime": 1787726249.7147017,
+    "seen": 1792176553.7107422,
+    "ast_hash": "c1697d119f376f57bf5272e0062b4ae8",
+    "semantic_hash": "c1697d119f376f57bf5272e0062b4ae8"
+  },
+  "agrogyan-gpt-main/backend/__init__.py": {
+    "mtime": 1775936554.7243416,
+    "seen": 1792176553.7107422,
+    "ast_hash": "d41d8cd98f00b204e9800998ecf8427e",
+    "semantic_hash": "d41d8cd98f00b204e9800998ecf8427e"
+  },
+  "agrogyan-gpt-main/backend/build_knowledge_base.py": {
+    "mtime": 1781332954.3850164,
+    "seen": 1792176553.7107422,
+    "ast_hash": "ee069ae4663998308fbd259e8bcb43a0",
+    "semantic_hash": "ee069ae4663998308fbd259e8bcb43a0"
+  },
+  "agrogyan-gpt-main/backend/build_vector_index.py": {
+    "mtime": 1791295869.5092418,
+    "seen": 1792176553.7107422,
+    "ast_hash": "2ff2710dd3a87a2b7de5b5c7d0ce8e18",
+    "semantic_hash": "2ff2710dd3a87a2b7de5b5c7d0ce8e18"
+  },
+  "agrogyan-gpt-main/backend/data_loader.py": {
+    "mtime": 1791295470.7745273,
+    "seen": 1792176553.7107422,
+    "ast_hash": "51800dcca29e2e76a25dca54042ed006",
+    "semantic_hash": "51800dcca29e2e76a25dca54042ed006"
+  },
+  "agrogyan-gpt-main/backend/database.py": {
+    "mtime": 1791225080.039664,
+    "seen": 1792176553.7107422,
+    "ast_hash": "c213fad669de383c49edf990ad970e3b",
+    "semantic_hash": "c213fad669de383c49edf990ad970e3b"
+  },
+  "agrogyan-gpt-main/backend/intelligence.py": {
+    "mtime": 1775936554.745363,
+    "seen": 1792176553.7107422,
+    "ast_hash": "cb08a9db58a00f2602f98e1b808ce3f0",
+    "semantic_hash": "cb08a9db58a00f2602f98e1b808ce3f0"
+  },
+  "agrogyan-gpt-main/backend/main.py": {
+    "mtime": 1791296794.31966,
+    "seen": 1792176553.7107422,
+    "ast_hash": "f9645b792fc4760c2436a47b9441b99d",
+    "semantic_hash": "f9645b792fc4760c2436a47b9441b99d"
+  },
+  "agrogyan-gpt-main/backend/models.py": {
+    "mtime": 1781332955.0411592,
+    "seen": 1792176553.7107422,
+    "ast_hash": "5a57132a07e364cf0048f5f8f7fd93cb",
+    "semantic_hash": "5a57132a07e364cf0048f5f8f7fd93cb"
+  },
+  "agrogyan-gpt-main/backend/pdf_ingestion.py": {
+    "mtime": 1791296188.1919806,
+    "seen": 1792176553.7107422,
+    "ast_hash": "40e1cc76e052a438762d311ee7fd7ccd",
+    "semantic_hash": "40e1cc76e052a438762d311ee7fd7ccd"
+  },
+  "agrogyan-gpt-main/backend/rag.py": {
+    "mtime": 1791315238.051389,
+    "seen": 1792176553.7107422,
+    "ast_hash": "5d938c0796ff8ce80ec084d379b15f1e",
+    "semantic_hash": "5d938c0796ff8ce80ec084d379b15f1e"
+  },
+  "agrogyan-gpt-main/backend/retriever.py": {
+    "mtime": 1791296279.1212728,
+    "seen": 1792176553.7107422,
+    "ast_hash": "c35e2042c3a6959b285f961067cdc765",
+    "semantic_hash": "c35e2042c3a6959b285f961067cdc765"
+  },
+  "agrogyan-gpt-main/backend/setup_rag.py": {
+    "mtime": 1791296097.5185819,
+    "seen": 1792176553.7107422,
+    "ast_hash": "1557e62aa811f4229ea9a55b927651ab",
+    "semantic_hash": "1557e62aa811f4229ea9a55b927651ab"
+  },
+  "agrogyan-gpt-main/backend/translation.py": {
+    "mtime": 1791286867.535083,
+    "seen": 1792176553.7107422,
+    "ast_hash": "010a8d04b25acf19876b72208e3af7fd",
+    "semantic_hash": "010a8d04b25acf19876b72208e3af7fd"
+  },
+  "agrogyan-gpt-main/backend/vector_store.py": {
+    "mtime": 1791296352.4328392,
+    "seen": 1792176553.7107422,
+    "ast_hash": "3c368c4170f11bd025dfa58eec56a6e0",
+    "semantic_hash": "3c368c4170f11bd025dfa58eec56a6e0"
+  },
+  "agrogyan-gpt-main/docs.json": {
+    "mtime": 1787725966.26104,
+    "seen": 1792176553.7107422,
+    "ast_hash": "79bbb2c06f4abee09b7529386cfd1f59",
+    "semantic_hash": "79bbb2c06f4abee09b7529386cfd1f59"
+  },
+  "agrogyan-gpt-main/frontend/api-config.js": {
+    "mtime": 1791286643.425555,
+    "seen": 1792176553.7107422,
+    "ast_hash": "edcd9a7b6b4ad5665c5d20c8a1521549",
+    "semantic_hash": "edcd9a7b6b4ad5665c5d20c8a1521549"
+  },
+  "agrogyan-gpt-main/frontend/auth.js": {
+    "mtime": 1781332955.1163027,
+    "seen": 1792176553.7107422,
+    "ast_hash": "9519680ef2fe85787457c6cf8435a72c",
+    "semantic_hash": "9519680ef2fe85787457c6cf8435a72c"
+  },
+  "agrogyan-gpt-main/frontend/farmer-pages.js": {
+    "mtime": 1781332955.2454655,
+    "seen": 1792176553.7107422,
+    "ast_hash": "da759bedec636eec528e9c5bc5527f11",
+    "semantic_hash": "da759bedec636eec528e9c5bc5527f11"
+  },
+  "agrogyan-gpt-main/frontend/i18n.js": {
+    "mtime": 1781332955.2820559,
+    "seen": 1792176553.7107422,
+    "ast_hash": "21472fd0efed95e9f1d7ba9a6c5c4e06",
+    "semantic_hash": "21472fd0efed95e9f1d7ba9a6c5c4e06"
+  },
+  "agrogyan-gpt-main/frontend/script.js": {
+    "mtime": 1791315204.353917,
+    "seen": 1792176553.7107422,
+    "ast_hash": "0940e19094e2adbd4ad43893f76797fd",
+    "semantic_hash": "0940e19094e2adbd4ad43893f76797fd"
+  },
+  "agrogyan-gpt-main/frontend/shop-catalog.js": {
+    "mtime": 1781332955.5109005,
+    "seen": 1792176553.7107422,
+    "ast_hash": "2f516c68bafcead860562f5526d24657",
+    "semantic_hash": "2f516c68bafcead860562f5526d24657"
+  },
+  "agrogyan-gpt-main/frontend/ui.js": {
+    "mtime": 1781332955.6195846,
+    "seen": 1792176553.7107422,
+    "ast_hash": "7c45d387ade81127bda506ef9c3dc684",
+    "semantic_hash": "7c45d387ade81127bda506ef9c3dc684"
+  },
+  "agrogyan-gpt-main/tests/test_chatbot.py": {
+    "mtime": 1791296794.3211684,
+    "seen": 1792176553.7107422,
+    "ast_hash": "6392d9282ffdecdbf0ddc05bcab0f39c",
+    "semantic_hash": "6392d9282ffdecdbf0ddc05bcab0f39c"
+  },
+  "agrogyan-gpt-main/tests/test_rag.py": {
+    "mtime": 1791315139.7065508,
+    "seen": 1792176553.7107422,
+    "ast_hash": "39b11970eca3e9431f059789e3dbf043",
+    "semantic_hash": "39b11970eca3e9431f059789e3dbf043"
+  },
+  "README.md": {
+    "mtime": 1781332954.3307729,
+    "seen": 1792176553.7107422,
+    "ast_hash": "30a9cf36e9a359671731fea13ecb95e9",
+    "semantic_hash": "30a9cf36e9a359671731fea13ecb95e9"
+  },
+  "agrogyan-gpt-main/BACKEND_REPORT.md": {
+    "mtime": 1791315238.0523913,
+    "seen": 1792176553.7107422,
+    "ast_hash": "8556e84ca7b797963c42ced51f0e7969",
+    "semantic_hash": "8556e84ca7b797963c42ced51f0e7969"
+  },
+  "agrogyan-gpt-main/DEPLOYMENT.md": {
+    "mtime": 1781332954.3590066,
+    "seen": 1792176553.7107422,
+    "ast_hash": "f6f7eb03c9350a2e171a11f83829d476",
+    "semantic_hash": "f6f7eb03c9350a2e171a11f83829d476"
+  },
+  "agrogyan-gpt-main/Instruction to start.txt": {
+    "mtime": 1775936554.7193544,
+    "seen": 1792176553.7107422,
+    "ast_hash": "fc6f11695be268b5e850ea623a1bf03e",
+    "semantic_hash": "fc6f11695be268b5e850ea623a1bf03e"
+  },
+  "agrogyan-gpt-main/README.md": {
+    "mtime": 1791296729.971057,
+    "seen": 1792176553.7107422,
+    "ast_hash": "6ac4076f3275f340aa0757cf25f75224",
+    "semantic_hash": "6ac4076f3275f340aa0757cf25f75224"
+  },
+  "agrogyan-gpt-main/backend/knowledge/README.md": {
+    "mtime": 1791296414.760394,
+    "seen": 1792176553.7107422,
+    "ast_hash": "59ef670792f3ba8f90eeadc12ac15d3b",
+    "semantic_hash": "59ef670792f3ba8f90eeadc12ac15d3b"
+  },
+  "agrogyan-gpt-main/backend/knowledge/states/gujarat.html": {
+    "mtime": 1781332954.4624116,
+    "seen": 1792176553.7107422,
+    "ast_hash": "83eecd1f800134ba06cd85807b748304",
+    "semantic_hash": "83eecd1f800134ba06cd85807b748304"
+  },
+  "agrogyan-gpt-main/backend/knowledge/states/maharashtra_research_units.html": {
+    "mtime": 1781332954.488673,
+    "seen": 1792176553.7107422,
+    "ast_hash": "da6cb3db28b52ce42a8d8a39860c3014",
+    "semantic_hash": "da6cb3db28b52ce42a8d8a39860c3014"
+  },
+  "agrogyan-gpt-main/backend/knowledge/states/punjab.html": {
+    "mtime": 1781332954.513827,
+    "seen": 1792176553.7107422,
+    "ast_hash": "733b1dcd6eb5d50471ca3d5ce20e04ed",
+    "semantic_hash": "733b1dcd6eb5d50471ca3d5ce20e04ed"
+  },
+  "agrogyan-gpt-main/backend/knowledge/states/soil_basics.html": {
+    "mtime": 1791294826.139679,
+    "seen": 1792176553.7107422,
+    "ast_hash": "fe4599b126b5cc0decff197ac2df9aa3",
+    "semantic_hash": "fe4599b126b5cc0decff197ac2df9aa3"
+  },
+  "agrogyan-gpt-main/frontend/admin.html": {
+    "mtime": 1781332955.094301,
+    "seen": 1792176553.7107422,
+    "ast_hash": "365591144ea006322163a94dbcded8c3",
+    "semantic_hash": "365591144ea006322163a94dbcded8c3"
+  },
+  "agrogyan-gpt-main/frontend/cart.html": {
+    "mtime": 1781332955.1474025,
+    "seen": 1792176553.7107422,
+    "ast_hash": "a53bc4bac6148bfd37ec39f032b78058",
+    "semantic_hash": "a53bc4bac6148bfd37ec39f032b78058"
+  },
+  "agrogyan-gpt-main/frontend/checkout.html": {
+    "mtime": 1781332955.1494167,
+    "seen": 1792176553.7107422,
+    "ast_hash": "a5f9ea6891067474ccb5f43ae843aafa",
+    "semantic_hash": "a5f9ea6891067474ccb5f43ae843aafa"
+  },
+  "agrogyan-gpt-main/frontend/community.html": {
+    "mtime": 1781332955.1811693,
+    "seen": 1792176553.7107422,
+    "ast_hash": "8365f042d5640b15d679a3ecd230de3a",
+    "semantic_hash": "8365f042d5640b15d679a3ecd230de3a"
+  },
+  "agrogyan-gpt-main/frontend/crop-care.html": {
+    "mtime": 1781332955.2085817,
+    "seen": 1792176553.7107422,
+    "ast_hash": "e0e83e7433a156e38b57747327fafd2e",
+    "semantic_hash": "e0e83e7433a156e38b57747327fafd2e"
+  },
+  "agrogyan-gpt-main/frontend/dashboard.html": {
+    "mtime": 1781332955.2410524,
+    "seen": 1792176553.7107422,
+    "ast_hash": "806e982143a7f68103580c1af06cedc6",
+    "semantic_hash": "806e982143a7f68103580c1af06cedc6"
+  },
+  "agrogyan-gpt-main/frontend/index.html": {
+    "mtime": 1791287077.0117874,
+    "seen": 1792176553.7107422,
+    "ast_hash": "56ec1c92210f599cc520b2128a060ef2",
+    "semantic_hash": "56ec1c92210f599cc520b2128a060ef2"
+  },
+  "agrogyan-gpt-main/frontend/login.html": {
+    "mtime": 1791284791.60067,
+    "seen": 1792176553.7107422,
+    "ast_hash": "f4260eddb3406a3e4595f824f5c7b66e",
+    "semantic_hash": "f4260eddb3406a3e4595f824f5c7b66e"
+  },
+  "agrogyan-gpt-main/frontend/market.html": {
+    "mtime": 1781332955.3366797,
+    "seen": 1792176553.7107422,
+    "ast_hash": "e65a4409a60f171908a738e384ba6ca7",
+    "semantic_hash": "e65a4409a60f171908a738e384ba6ca7"
+  },
+  "agrogyan-gpt-main/frontend/my-farm.html": {
+    "mtime": 1781332955.3666906,
+    "seen": 1792176553.7107422,
+    "ast_hash": "062a44c99b8bbbd874be0bc6d9af1306",
+    "semantic_hash": "062a44c99b8bbbd874be0bc6d9af1306"
+  },
+  "agrogyan-gpt-main/frontend/profile.html": {
+    "mtime": 1781332955.3986108,
+    "seen": 1792176553.7107422,
+    "ast_hash": "2e343a6e3a85c486de5a2927b0592d2e",
+    "semantic_hash": "2e343a6e3a85c486de5a2927b0592d2e"
+  },
+  "agrogyan-gpt-main/frontend/schemes.html": {
+    "mtime": 1781332955.4357882,
+    "seen": 1792176553.7107422,
+    "ast_hash": "ebd9b1d3e2b0224b616d0760741e2d79",
+    "semantic_hash": "ebd9b1d3e2b0224b616d0760741e2d79"
+  },
+  "agrogyan-gpt-main/frontend/sell-crops.html": {
+    "mtime": 1781332955.4863915,
+    "seen": 1792176553.7107422,
+    "ast_hash": "bc0242df42991ad28db74b90eecd7cd9",
+    "semantic_hash": "bc0242df42991ad28db74b90eecd7cd9"
+  },
+  "agrogyan-gpt-main/frontend/shop.html": {
+    "mtime": 1781332955.5783238,
+    "seen": 1792176553.7107422,
+    "ast_hash": "7e819573ff4c70b92b3c9664b46c2bd3",
+    "semantic_hash": "7e819573ff4c70b92b3c9664b46c2bd3"
+  },
+  "agrogyan-gpt-main/render.yaml": {
+    "mtime": 1781332955.647902,
+    "seen": 1792176553.7107422,
+    "ast_hash": "e3a6f91bb4695d2a60571f778f6c48c8",
+    "semantic_hash": "e3a6f91bb4695d2a60571f778f6c48c8"
+  },
+  "agrogyan-gpt-main/requirements-dev.txt": {
+    "mtime": 1791286800.2563038,
+    "seen": 1792176553.7107422,
+    "ast_hash": "accdd007db95504edeaadc3a01bde457",
+    "semantic_hash": "accdd007db95504edeaadc3a01bde457"
+  },
+  "agrogyan-gpt-main/requirements.txt": {
+    "mtime": 1791295729.1409926,
+    "seen": 1792176553.7107422,
+    "ast_hash": "82eeae4c4fa0c832357a35020e5503d1",
+    "semantic_hash": "82eeae4c4fa0c832357a35020e5503d1"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/1.pdf": {
+    "mtime": 1781332954.539853,
+    "seen": 1792176553.7107422,
+    "ast_hash": "c332128f7b772bb4f1f944f5d11c8543",
+    "semantic_hash": "c332128f7b772bb4f1f944f5d11c8543"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/10.pdf": {
+    "mtime": 1781332954.578593,
+    "seen": 1792176553.7107422,
+    "ast_hash": "d4da0dcf5d06a22b3acf8a397655af55",
+    "semantic_hash": "d4da0dcf5d06a22b3acf8a397655af55"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/2.pdf": {
+    "mtime": 1781332954.6075969,
+    "seen": 1792176553.7107422,
+    "ast_hash": "d896ba8de4d72f21904729b4fb2e90e6",
+    "semantic_hash": "d896ba8de4d72f21904729b4fb2e90e6"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/3.pdf": {
+    "mtime": 1781332954.6359205,
+    "seen": 1792176553.7107422,
+    "ast_hash": "e0abc9f9acb8069ad83e668f4d93ae58",
+    "semantic_hash": "e0abc9f9acb8069ad83e668f4d93ae58"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/4.pdf": {
+    "mtime": 1781332954.6681228,
+    "seen": 1792176553.7107422,
+    "ast_hash": "b74a25f73562f074e7256d2744dc893a",
+    "semantic_hash": "b74a25f73562f074e7256d2744dc893a"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/5.pdf": {
+    "mtime": 1781332954.705386,
+    "seen": 1792176553.7107422,
+    "ast_hash": "b573bfe3e2e6410d90ab82ef958fdcc9",
+    "semantic_hash": "b573bfe3e2e6410d90ab82ef958fdcc9"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/6.pdf": {
+    "mtime": 1781332954.7404008,
+    "seen": 1792176553.7107422,
+    "ast_hash": "b37efc398fee5b2a3318e370f7d8b630",
+    "semantic_hash": "b37efc398fee5b2a3318e370f7d8b630"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/7.pdf": {
+    "mtime": 1781332954.773406,
+    "seen": 1792176553.7107422,
+    "ast_hash": "a6a94e8db96a572477703a306e366c5e",
+    "semantic_hash": "a6a94e8db96a572477703a306e366c5e"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/8.pdf": {
+    "mtime": 1781332954.8023982,
+    "seen": 1792176553.7107422,
+    "ast_hash": "be6020d5182d05bf54f3f166538c4203",
+    "semantic_hash": "be6020d5182d05bf54f3f166538c4203"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (guju)/9.pdf": {
+    "mtime": 1781332954.8356986,
+    "seen": 1792176553.7107422,
+    "ast_hash": "21cb7221571d36a2ab633b368e0bee14",
+    "semantic_hash": "21cb7221571d36a2ab633b368e0bee14"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/GR (punjab)/msp.pdf": {
+    "mtime": 1781332954.8741417,
+    "seen": 1792176553.7107422,
+    "ast_hash": "d7d1e672638dd20e376bf9e58a178b2a",
+    "semantic_hash": "d7d1e672638dd20e376bf9e58a178b2a"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/farming units/Farming_Research_Units_Maharashtra.pdf": {
+    "mtime": 1781332954.949561,
+    "seen": 1792176553.7107422,
+    "ast_hash": "50fd77777cd38441e2795e78f69c1154",
+    "semantic_hash": "50fd77777cd38441e2795e78f69c1154"
+  },
+  "agrogyan-gpt-main/backend/knowledge_imports/farming units/PROB STATEMENT 2.pdf": {
+    "mtime": 1781332954.9779704,
+    "seen": 1792176553.7107422,
+    "ast_hash": "1cbe3d5cdbbd73b4e76ba388cf0cb0c7",
+    "semantic_hash": "1cbe3d5cdbbd73b4e76ba388cf0cb0c7"
+  }
+}

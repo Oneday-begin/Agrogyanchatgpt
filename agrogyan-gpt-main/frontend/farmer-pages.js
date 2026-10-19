@@ -1012,14 +1012,14 @@ function buildFarmCommandCenter(data, profile = getFarmProfileSnapshot()) {
             data.farm_plan?.tasks?.[0] ? `${data.farm_plan.tasks[0].stage}: ${data.farm_plan.tasks[0].task}` : "Season plan will appear here.",
             budget ? `Input budget target: ${formatShopCurrency(budget)}` : "Input budget target: add a farm budget",
             `Expected cost now: ${count ? formatShopCurrency(total) : "Build cart to estimate cost"}`,
-            `Expected yield: ${expectedYield}`,
+            "Expected yield: requires local crop and field records",
             `Buy-all bundle: ${formatShopCurrency(getRecommendedBundle(profile).total)} starter kit available`
         ],
         retention: [
             data.daily_briefing?.headline || "Daily advisory will appear here.",
             "Crop stage reminder: check leaves and moisture before the next spray.",
             topMarket ? `Mandi alert: watch ${topMarket.crop} trend before bulk sale.` : "Mandi alert: rate signals will appear here.",
-            /rain|storm/i.test(data.weather?.condition || "") ? "Rain alert: protect spray timing and harvest drying." : "Rain alert: low immediate risk",
+            /rain|storm/i.test(data.weather?.condition || "") ? "Rain alert: protect spray timing and harvest drying." : "Rain risk: check the current district forecast",
             count ? "Shop alert: saved items are ready for checkout or comparison." : "Shop alert: add key products to start price tracking."
         ]
     };
@@ -2073,31 +2073,13 @@ function initWeatherSlideshow() {
     const dotHost = document.getElementById("weatherSlideDots");
     if (!slideHost || !dotHost) return;
 
-    if (!slideHost.dataset.ready) {
-        slideHost.innerHTML = WEATHER_SLIDES.map((slide, index) => `
-            <div class="weather-slide ${index === 0 ? "active" : ""}" style="background-image: linear-gradient(180deg, rgba(8, 20, 11, 0.1), rgba(8, 20, 11, 0.32)), linear-gradient(135deg, rgba(10, 22, 12, 0.3), rgba(10, 22, 12, 0.08)), url('${slide.image}')"></div>
-        `).join("");
-        dotHost.innerHTML = WEATHER_SLIDES.map((_, index) => `<span class="weather-slide-dot ${index === 0 ? "active" : ""}"></span>`).join("");
-        slideHost.dataset.ready = "true";
-    }
-
-    const slides = Array.from(slideHost.querySelectorAll(".weather-slide"));
-    const dots = Array.from(dotHost.querySelectorAll(".weather-slide-dot"));
-    let currentIndex = Number.parseInt(slideHost.dataset.index || "0", 10) || 0;
-
-    const renderSlide = (index) => {
-        const safeIndex = (index + WEATHER_SLIDES.length) % WEATHER_SLIDES.length;
-        slides.forEach((slide, slideIndex) => slide.classList.toggle("active", slideIndex === safeIndex));
-        dots.forEach((dot, dotIndex) => dot.classList.toggle("active", dotIndex === safeIndex));
-        slideHost.dataset.index = String(safeIndex);
-        currentIndex = safeIndex;
-    };
-
-    renderSlide(currentIndex);
+    // A static farm image keeps the weather card light while typing and scrolling.
     if (weatherSlideshowTimer) window.clearInterval(weatherSlideshowTimer);
-    weatherSlideshowTimer = window.setInterval(() => {
-        renderSlide(currentIndex + 1);
-    }, 3000);
+    weatherSlideshowTimer = null;
+    if (slideHost.dataset.ready) return;
+    slideHost.innerHTML = `<div class="weather-slide active" style="background-image: linear-gradient(180deg, rgba(8, 20, 11, 0.1), rgba(8, 20, 11, 0.32)), url('${WEATHER_SLIDES[0].image}')"></div>`;
+    dotHost.replaceChildren();
+    slideHost.dataset.ready = "true";
 }
 
 function getFarmAddressFields() {
@@ -2408,7 +2390,7 @@ function updateAuthState() {
             window.location.href = "login.html";
         };
     } else {
-        authButton.innerText = typeof t === "function" ? t("logout") : "Logout";
+        authButton.innerText = "Login / Register";
         authButton.onclick = () => {
             window.location.href = "login.html";
         };
@@ -2422,13 +2404,16 @@ function applySavedLanguage() {
     const uiLanguage = document.getElementById("uiLanguage");
     const answerLanguage = document.getElementById("language");
     if (uiLanguage) uiLanguage.value = preferred;
-    if (answerLanguage) answerLanguage.value = preferred;
+    if (answerLanguage) {
+      const savedAnswerLanguage = localStorage.getItem("chatAnswerLanguage");
+      answerLanguage.value = ["Auto", "English", "Hindi", "Marathi", "Gujarati"].includes(savedAnswerLanguage) ? savedAnswerLanguage : "Auto";
+    }
 }
 
 function getLocationLabel() {
-    const district = localStorage.getItem("userDistrict") || "Pune";
-    const state = localStorage.getItem("userState") || "Maharashtra";
-    return `${district}, ${state}`;
+    const district = localStorage.getItem("userDistrict") || "";
+    const state = localStorage.getItem("userState") || "";
+    return [district, state].filter(Boolean).join(", ") || "Set your farm location";
 }
 
 function setWeatherMonitorStatus(text, active = true) {
@@ -2440,7 +2425,7 @@ function setWeatherMonitorStatus(text, active = true) {
 
 function formatLiveTemperature(value) {
     const temp = Number(value);
-    if (!Number.isFinite(temp)) return "28&deg;C";
+    if (!Number.isFinite(temp)) return "Unavailable";
     return `${Math.round(temp)}&deg;C`;
 }
 
@@ -2499,6 +2484,7 @@ async function fetchLiveWeatherForCoordinates(latitude, longitude) {
 
 function requestLiveWeatherByLocation() {
     if (document.body.dataset.page !== "home") return;
+    if (document.hidden) return;
     if (!("geolocation" in navigator)) {
         setWeatherMonitorStatus("Live monitor uses saved farm location. Browser location is unavailable.", false);
         return;
@@ -2522,12 +2508,29 @@ function requestLiveWeatherByLocation() {
             setWeatherMonitorStatus("Live monitor is on, but weather feed could not refresh.", false);
         }
     }, () => {
-        setWeatherMonitorStatus("Allow location to show exact real-time farm weather.", false);
+        refreshSavedDistrictWeather();
     }, {
         enableHighAccuracy: false,
         timeout: 9000,
         maximumAge: 10 * 60 * 1000
     });
+}
+
+async function refreshSavedDistrictWeather() {
+    const district = localStorage.getItem("userDistrict");
+    if (!district) { setWeatherMonitorStatus("Set your farm district or allow location.", false); return; }
+    try {
+        setWeatherMonitorStatus("Refreshing weather for your saved district...");
+        const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(district)}&count=10&language=en&format=json&countryCode=IN`);
+        if (!response.ok) throw new Error("Location lookup unavailable");
+        const data = await response.json();
+        const state = localStorage.getItem("userState");
+        const place = (data.results || []).find(p => p.country_code === "IN" && (!state || p.admin1 === state));
+        if (!place) throw new Error("District could not be located");
+        const weather = await fetchLiveWeatherForCoordinates(place.latitude, place.longitude);
+        renderWeatherBlock(weather);
+        setWeatherMonitorStatus(`Live district weather: ${district} | ${weather.observed_at}`);
+    } catch (_) { setWeatherMonitorStatus("District weather unavailable. Try refreshing later.", false); }
 }
 
 function startLiveWeatherMonitoring() {
@@ -2664,23 +2667,19 @@ function buildDocumentChecklist() {
 function buildDashboardFallback() {
     const savedFarm = typeof window.getAgroFarmSnapshot === "function" ? window.getAgroFarmSnapshot() : {};
     return {
-        weather: { temp: "28&deg;C", condition: "Partly sunny", advice: "Good conditions for normal field work in the first half of the day.", humidity: "Humidity 68%", wind: "Wind 10 km/h" },
-        markets: [
-            { crop: savedFarm.crop || "Wheat", price: "Rs 2425", trend: "Stable arrivals and steady buyer interest" },
-            { crop: "Paddy", price: "Rs 2180", trend: "Moisture quality affecting premium lots" },
-            { crop: "Cotton", price: "Rs 6940", trend: "Mild upside support from mill demand" }
-        ],
+        weather: {temp:"Unavailable",condition:"Weather unavailable",advice:"Set your district or allow location to fetch weather.",status:"unavailable"},
+        markets: [],
         daily_briefing: {
             headline: "Today, focus on field inspection, weather timing, and mandi movement.",
             top_tasks: ["Check leaves for early pest signals before irrigation.", "Use the chatbot for crop-specific questions before spending on input."]
         },
         farm_plan: { title: "This week's planner", tasks: [{ stage: "Field", task: "Inspect crop health and remove damaged foliage." }, { stage: "Water", task: "Align irrigation with weather outlook." }] },
         scheme_matches: [{ name: "PM-KISAN", reason: "Income support often relevant for active farmers." }],
-        market_prediction: { sell_window: "Watch the next 3-5 days", trend: "Stable to slightly positive", insight: "Keep watching local mandi rates before making a bulk sale." },
-        pest_risk: { risk: "Medium", likely_issue: "Leaf spot monitoring", reason: "Humidity and local conditions can trigger spread if ignored." },
+        market_prediction: {sell_window:"Not predicted",trend:"No forecast available",insight:"Use verified mandi observations."},
+        pest_risk: {risk:"Not assessed",likely_issue:"Not diagnosed",reason:"Consult a local crop expert."},
         chat_memory: { summary: "Building your farm memory", preferences: ["Language and crop choices will appear here as you use the app."] },
         map_context: { title: "Nearby agri context", nearby_layers: ["Mandis, fertilizer shops, and farm support points can be explored here."] },
-        live_alerts: [{ title: "Weather signal", body: "Watch for afternoon wind before spraying." }],
+        live_alerts: [],
         farm_profile: {
             farm_name: savedFarm.farmName || localStorage.getItem("farm_name") || "",
             primary_crop: savedFarm.crop || localStorage.getItem("crop_name") || "Wheat",
@@ -2695,7 +2694,7 @@ function buildDashboardFallback() {
 async function fetchDashboardOverview() {
     const userId = localStorage.getItem("userId");
     const url = userId ? `${AGRO_API_URL}/dashboard-overview?user_id=${userId}` : `${AGRO_API_URL}/dashboard-overview`;
-    const cached = readCachedJson("agroDashboardCache", null);
+    const cached = readCachedJson(`agroDashboardCacheV2:${localStorage.getItem("userId") || "guest"}`, null);
     const fallback = buildDashboardFallback();
 
     try {
@@ -2709,7 +2708,7 @@ async function fetchDashboardOverview() {
         if (remoteFeedStatus) {
             localStorage.setItem("agroLiveFeedStatus", JSON.stringify(remoteFeedStatus));
         }
-        localStorage.setItem("agroDashboardCache", JSON.stringify({
+        localStorage.setItem(`agroDashboardCacheV2:${localStorage.getItem("userId") || "guest"}`, JSON.stringify({
             ...data,
             cached_at: new Date().toISOString()
         }));
@@ -2780,7 +2779,7 @@ function renderOfflineStatusBoard() {
     const host = document.getElementById("offlineStatusBoard");
     if (!host) return;
 
-    const dashboardCache = readCachedJson("agroDashboardCache", null);
+    const dashboardCache = readCachedJson(`agroDashboardCacheV2:${localStorage.getItem("userId") || "guest"}`, null);
     const productCache = getShopProductCache();
     const liveStatus = remoteFeedStatus || readCachedJson("agroLiveFeedStatus", null);
     host.innerHTML = [
@@ -2846,12 +2845,12 @@ async function runCropDoctor() {
 }
 
 function renderWeatherBlock(weather = {}) {
-    const temp = weather.temp || "28&deg;C";
-    const condition = weather.condition || "Partly sunny";
+    const temp = weather.temp || "Unavailable";
+    const condition = weather.condition || "Weather unavailable";
     const advice = weather.advice || fc("weatherGuidance");
-    const humidity = weather.humidity || "Humidity 68%";
-    const wind = weather.wind || "Wind 10 km/h";
-    const badge = /rain|humid/i.test(condition) ? fc("rainWatch") : fc("spraySafe");
+    const humidity = weather.humidity || "Humidity unavailable";
+    const wind = weather.wind || "Wind unavailable";
+    const badge = weather.status || weather.source || "Unavailable";
     const weatherState = /rain|humid/i.test(condition) ? "rain" : /cloud/i.test(condition) ? "cloudy" : "sunny";
 
     const ids = {
@@ -2876,8 +2875,8 @@ function renderWeatherBlock(weather = {}) {
     const badgeElement = document.getElementById("weatherBadge");
     if (badgeElement) badgeElement.innerText = badge;
     const detailPills = document.querySelectorAll(".weather-detail-pill");
-    if (detailPills[0]) detailPills[0].innerText = /rain|storm|thunder/i.test(condition) ? "Best spray window: Wait" : "Best spray window: Morning";
-    if (detailPills[1]) detailPills[1].innerText = `Crop risk: ${/rain|humid|storm|thunder/i.test(`${condition} ${advice}`) ? "Watch" : "Low"}`;
+    if (detailPills[0]) detailPills[0].innerText = "Check wind and rainfall before spraying";
+    if (detailPills[1]) detailPills[1].innerText = weather.observed_at ? `Observed: ${weather.observed_at}` : "Observation unavailable";
     const heroWeatherCard = document.getElementById("heroWeatherCard");
     if (heroWeatherCard) heroWeatherCard.dataset.weatherState = weatherState;
     initWeatherSlideshow();
@@ -2888,7 +2887,7 @@ function renderMarketBoard(markets = []) {
     if (marketGrid) {
         marketGrid.innerHTML = markets.map((item) => `
             <div class="market-row">
-                <div><div class="market-crop">${item.crop}</div><div class="market-trend">${item.trend}</div></div>
+                <div><div class="market-crop">${item.crop}</div><div class="market-trend">${sanitizeText(item.trend)} · ${sanitizeText(item.status || "Reference benchmark")} · ${sanitizeText(item.source || "Unverified source")}</div></div>
                 <div class="market-price-compact">${item.price}${String(item.price).includes("/qtl") ? "" : "/qtl"}</div>
             </div>
         `).join("") || `<div class="timeline-item"><p>${fc("marketPricesSoon")}</p></div>`;
@@ -2985,7 +2984,6 @@ function renderHomePage(data) {
     const heroLocationLabel = document.getElementById("heroLocationLabel");
     if (heroLocationLabel) heroLocationLabel.innerText = profile.village || localStorage.getItem("userDistrict") || "Your farm location";
     if (typeof window.renderGamification === "function") window.renderGamification();
-    if (typeof window.renderHistory === "function") window.renderHistory();
 }
 
 function fillMyFarmForm(data) {
@@ -3427,20 +3425,22 @@ async function initFarmerPage() {
 
     try {
         attachMyFarmActionButtons();
-        latestFarmerPageData = readCachedJson("agroDashboardCache", null) || buildDashboardFallback();
+        latestFarmerPageData = readCachedJson(`agroDashboardCacheV2:${localStorage.getItem("userId") || "guest"}`, null) || buildDashboardFallback();
         rerenderCurrentPage();
     } catch (error) {
         console.error("local page init error", error);
     }
 
-    Promise.allSettled([
-            syncLiveFeeds(false),
-            loadFeedStatus(),
-            loadRemoteInventory(),
-            loadRemoteOrders(),
-            syncMarketAlertsFromServer(),
-            loadProduceListings()
-    ]).catch((error) => {
+    // Only request data used by this page; the dashboard already includes feed status.
+    const page = document.body.dataset.page;
+    const pageTasks = [];
+    if (["shop", "cart", "checkout"].includes(page)) pageTasks.push(loadRemoteInventory());
+    if (["shop", "cart", "checkout", "home"].includes(page) && getCurrentUserId()) pageTasks.push(loadRemoteOrders());
+    if (page === "market") pageTasks.push(syncLiveFeeds(false), syncMarketAlertsFromServer());
+    if (page === "sell-produce") pageTasks.push(loadProduceListings());
+    Promise.allSettled(pageTasks).then(() => {
+        if (["shop", "cart", "checkout", "sell-produce", "market"].includes(page)) rerenderCurrentPage();
+    }).catch((error) => {
         console.error("live sync init error", error);
     });
 

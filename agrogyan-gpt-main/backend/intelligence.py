@@ -87,82 +87,23 @@ def simplify_text(text: str) -> str:
 
 
 def build_weather_overview(profile: dict[str, Any]) -> dict[str, str]:
-    crop = profile.get("crop_name", "Wheat")
-    season = profile.get("season", "Rabi")
-    weather = {
-        "temp": "28&deg;C",
-        "condition": "Partly sunny",
-        "humidity": "Humidity 68%",
-        "wind": "Wind 10 km/h",
-        "advice": f"Good field window for {crop.lower()} monitoring before evening moisture rises.",
-    }
-    if season.lower() == "kharif":
-        weather["condition"] = "Humid with rain chance"
-        weather["humidity"] = "Humidity 78%"
-        weather["wind"] = "Wind 14 km/h"
-        weather["advice"] = f"Delay spraying unless skies stay clear for 6 hours around your {crop.lower()} field."
-    return weather
+    return {"temp":"Unavailable", "condition":"Weather unavailable", "advice":"Use live weather for your farm location.", "humidity":"Unavailable", "wind":"Unavailable", "status":"unavailable"}
 
 
 def build_market_prices(profile: dict[str, Any]) -> list[dict[str, str]]:
-    crop = profile.get("crop_name", "Wheat")
-    prices = [
-        {"crop": "Wheat", "price": "Rs 2425", "trend": "Stable arrivals and steady buyer interest"},
-        {"crop": "Paddy", "price": "Rs 2180", "trend": "Moisture quality affecting premium lots"},
-        {"crop": "Cotton", "price": "Rs 6940", "trend": "Mild upside support from mill demand"},
-        {"crop": "Soybean", "price": "Rs 4860", "trend": "Oil demand keeping sentiment positive"},
-    ]
-    for item in prices:
-        if item["crop"].lower() == crop.lower():
-            item["trend"] = "Top crop for your profile with good nearby mandi visibility"
-    return prices
+    return []
 
 
 def market_prediction(profile: dict[str, Any]) -> dict[str, Any]:
-    crop = profile.get("crop_name", "Wheat")
-    trend = "Stable to mildly positive"
-    sell_window = "Best sell window: next 3-5 days in morning mandi hours"
-    if crop.lower() == "cotton":
-        trend = "Short-term upside possible"
-        sell_window = "Best sell window: hold 2-3 days unless urgent cash need"
-    elif crop.lower() == "paddy":
-        trend = "Quality-dependent"
-        sell_window = "Best sell window: after drying and cleaning for better lot price"
-    return {
-        "crop": crop,
-        "trend": trend,
-        "sell_window": sell_window,
-        "insight": f"{crop} price movement is currently driven by arrivals, quality, and regional buyer demand.",
-    }
+    return {"sell_window":"Not predicted", "trend":"No verified forecast", "insight":"Compare dated mandi observations and your costs before selling.", "series":[], "confidence":0, "source":"unavailable"}
 
 
 def weather_alerts(profile: dict[str, Any]) -> list[str]:
-    crop = profile.get("crop_name", "Wheat")
-    season = profile.get("season", "Rabi")
-    alerts = [
-        f"Spray window looks better before late afternoon for your {crop.lower()} crop.",
-        "Irrigation is safer in early morning to reduce evaporation loss.",
-    ]
-    if season.lower() == "kharif":
-        alerts.append("Fungus risk may increase after humid nights, inspect lower leaves tomorrow morning.")
-    else:
-        alerts.append("Cooler night conditions support moisture retention, avoid overwatering.")
-    return alerts
+    return ["Check live weather for your district; no field-specific alert is verified here."]
 
 
 def pest_outbreak_risk(profile: dict[str, Any]) -> dict[str, str]:
-    crop = profile.get("crop_name", "Wheat")
-    humidity = 68
-    risk = "Medium"
-    reason = "Humidity and crop stage suggest regular scouting is needed."
-    likely_issue = "Leaf spot / sucking pests"
-    if crop.lower() == "cotton":
-        likely_issue = "Whitefly / bollworm"
-        risk = "Medium to high"
-    elif crop.lower() == "paddy":
-        likely_issue = "Blast / stem borer"
-        risk = "High" if humidity > 70 else "Medium"
-    return {"risk": risk, "likely_issue": likely_issue, "reason": reason}
+    return {"risk":"Not assessed", "likely_issue":"Not diagnosed", "reason":"Local pest observations are required.", "action":"Contact your local KVK with crop symptoms."}
 
 
 def scheme_eligibility(profile: dict[str, Any]) -> list[dict[str, str]]:
@@ -277,37 +218,7 @@ def community_insights(posts: list[Any]) -> dict[str, Any]:
 
 
 def analyze_leaf_image(contents: bytes) -> dict[str, str]:
-    image = Image.open(BytesIO(contents)).convert("RGB")
-    resized = image.resize((120, 120))
-    stat = ImageStat.Stat(resized)
-    r, g, b = stat.mean
-    severity = "Low"
-    disease = "Healthy / mild stress"
-    cause = "Leaf color balance looks mostly stable."
-    treatment = "Continue scouting, maintain balanced irrigation, and monitor for spots or curling."
-
-    if r > g + 18:
-        disease = "Possible leaf blight / nutrient stress"
-        cause = "Higher red-brown tone may indicate scorching, blight, or deficiency stress."
-        severity = "Medium"
-        treatment = "Inspect affected leaves, remove heavily damaged parts, and consult a local agri expert before spraying."
-    elif g < 90:
-        disease = "Possible chlorosis / deficiency"
-        cause = "Low green intensity can suggest nutrient deficiency or weak leaf health."
-        severity = "Medium"
-        treatment = "Check nitrogen and micronutrient plan, and inspect roots plus moisture pattern."
-    elif b > g:
-        disease = "Possible fungal moisture stress"
-        cause = "Cool-toned leaf image may align with excess moisture or fungal pressure."
-        severity = "Medium"
-        treatment = "Improve airflow, avoid overwatering, and monitor for fungal spread tomorrow morning."
-
-    return {
-        "disease": disease,
-        "likely_cause": cause,
-        "severity": severity,
-        "next_step_treatment": treatment,
-    }
+    return {"disease":"Not diagnosed", "confidence":"unavailable", "next_step_treatment":"Automated diagnosis is not configured. Ask your local KVK to inspect the crop before selecting treatment."}
 
 
 def analyze_document_text(text: str) -> dict[str, Any]:
