@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import csv
-import json
 import html
 import re
 from pathlib import Path
@@ -168,63 +167,3 @@ def load_documents(csv_path: str | Path = DEFAULT_CSV_PATH, knowledge_dir: str |
     documents = html_documents + csv_documents
     print(f"Loaded {len(documents)} knowledge documents ({len(html_documents)} HTML chunks, {len(csv_documents)} legacy Q&A rows)")
     return documents
-
-
-def load_farming_references(path=None):
-    """Small reviewed Q&A entries with source URLs; indexed alongside GR pages."""
-    path = Path(path) if path else BASE_DIR / "backend" / "knowledge" / "farming_reference.json"
-    if not path.exists():
-        return []
-    records = json.loads(path.read_text(encoding="utf-8"))
-    if isinstance(records, dict):
-        records = records["entries"]
-    documents = []
-    for item in records:
-        content = item.get("content") or item.get("answer")
-        if not content or not item.get("question") or not item.get("source_url", "").startswith("https://"):
-            raise ValueError("Farming references need a question, answer and HTTPS source")
-        documents.append({**item, "id": "reference-" + item["id"],
-                          "doc_type": "reviewed_reference", "content": content,
-                          "section": item["question"], "source_name": path.name,
-                          "state": item.get("state", ""), "source_path": str(path),
-                          "retrieval_aliases": " ".join(item.get("aliases", [])),
-                          "provenance": "reviewed_summary"})
-    return documents
-
-
-def load_corpus():
-    """Load PDFs directly, plus curated HTML/CSV, without duplicate PDF exports."""
-    from backend.pdf_ingestion import IMPORT_DIR, load_pdf_documents
-    from backend.build_knowledge_base import STATE_MAP
-    from backend.import_maharashtra_grs import load_gr_documents
-    pdf_docs, report = load_pdf_documents()
-    exclusions_path = BASE_DIR / "backend" / "knowledge" / "source_exclusions.json"
-    exclusions = json.loads(exclusions_path.read_text(encoding="utf-8")) if exclusions_path.exists() else {}
-    from backend.gr_scope import farming_scope
-    subjects = {}
-    for doc in pdf_docs:
-        subjects.setdefault(doc["source_file"], doc["content"])
-    for source, text in subjects.items():
-        subject = re.split(r"The Government of Maharashtra|Government of Maharashtra|ગુજરાત\s+સરકાર|महाराष्ट्र\s+शासन", text, maxsplit=1, flags=re.I)[0][:400]
-        allowed, reason = farming_scope(subject)
-        if not allowed:
-            exclusions.setdefault(source, reason)
-    report["excluded_sources"] = exclusions
-    pdf_docs = [doc for doc in pdf_docs if doc.get("source_file") not in exclusions]
-    report["active_pdf_chunks"] = len(pdf_docs)
-    generated = {STATE_MAP.get(folder.name, ("", slugify(folder.name)))[1] + ".html"
-                 for folder in IMPORT_DIR.iterdir() if folder.is_dir() and list(folder.glob("*.pdf"))} if IMPORT_DIR.exists() else set()
-    curated = [d for d in load_html_documents(DEFAULT_KNOWLEDGE_DIR) if d["source_name"] not in generated]
-    for doc in curated:
-        if doc['source_name'] == 'soil_basics.html':
-            doc.update(doc_type='reviewed_reference', question='What is soil?', scope='general education',
-                       aliases=['soil', 'soil meaning', 'माती म्हणजे काय?', 'माती काय आहे?',
-                                'मिट्टी क्या है?', 'માટી શું છે?', 'માટી એટલે શું?',
-                                'mitti kya hai', 'mati mhanje kay', 'mati shu che'])
-    gr_docs, gr_report = load_gr_documents()
-    references = load_farming_references()
-    documents = pdf_docs + curated + references + load_csv_documents(DEFAULT_CSV_PATH) + gr_docs
-    report["reviewed_references"] = len(references)
-    report["repository_grs"] = gr_report
-    report["total_chunks"] = len(documents)
-    return documents, report

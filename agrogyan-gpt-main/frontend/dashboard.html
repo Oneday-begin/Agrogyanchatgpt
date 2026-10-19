@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - AgroGyanGPT</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="ui.js"></script>
+  <script defer src="api-config.js"></script>
+</head>
+<body data-page="dashboard">
+<script>
+  if (!localStorage.getItem("user")) {
+    window.location.href = "login.html";
+  }
+</script>
+
+<div class="page-shell">
+  <header class="top-bar">
+    <div class="brand-left">
+      <div class="brand-mark">AgroGyanGPT</div>
+      <div class="welcome-text">Full dashboard view</div>
+    </div>
+    <div class="top-actions">
+      <button class="nav-btn" onclick="window.location.href='index.html'" type="button">Open Main App</button>
+      <button class="nav-btn" onclick="logout()" type="button">Logout</button>
+    </div>
+  </header>
+
+  <section class="hero-panel">
+    <div class="hero-copy">
+      <p class="eyebrow">Workspace shell</p>
+      <h1 class="main-title">Dashboard</h1>
+      <p class="subtitle">This view keeps a dedicated full-page frame for the main app while matching the upgraded green-and-gold experience.</p>
+    </div>
+    <aside class="hero-side">
+      <div class="forecast-card">
+        <span class="meta-label">Signed in as</span>
+        <div class="forecast-temp" id="userName">Farmer</div>
+        <div class="hero-status-kicker">Session active</div>
+        <p class="hero-status-copy">Open the main app in a full dashboard frame while keeping your login session ready.</p>
+        <div class="hero-status-list">
+          <span>Main app embedded below</span>
+          <span>Quick return to home workspace</span>
+          <span>Logout control available in the header</span>
+        </div>
+        <div class="hero-status-actions">
+          <a class="primary-btn" href="index.html">Open Main App</a>
+          <button class="nav-btn" onclick="logout()" type="button">Logout</button>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <div class="dashboard-frame-card">
+    <iframe src="index.html" class="dashboard-frame" title="AgroGyanGPT main app"></iframe>
+  </div>
+</div>
+
+<script>
+  document.getElementById("userName").innerText = localStorage.getItem("user") || "Farmer";
+
+  function logout() {
+    localStorage.removeItem("user");
+    localStorage.removeItem("userId");
+    window.location.href = "login.html";
+  }
+</script>
+</body>
+</html>

@@ -1,39 +1,28 @@
 from __future__ import annotations
 
-import asyncio
-import httpx
-import secrets
 import hashlib
 import io
 import json
-import logging
 import os
 import random
-import re
-import time
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, File, Form, HTTPException, Query, Request, Response, UploadFile
-from fastapi.exceptions import RequestValidationError
+from deep_translator import GoogleTranslator
+from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
-from PIL import Image, UnidentifiedImageError
-from pydantic import BaseModel, Field, field_validator
+from fastapi.responses import FileResponse
+from PIL import Image
+from pydantic import BaseModel
 import requests
 from sqlalchemy import func
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 from starlette.staticfiles import StaticFiles
-from starlette.concurrency import run_in_threadpool
 
-from dotenv import load_dotenv
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
-
-from backend.data_loader import load_corpus
-from backend.database import Base, SessionLocal, check_database, engine, get_session
+from backend.data_loader import load_documents
+from backend.database import Base, SessionLocal, engine
 from backend.intelligence import (
     analyze_document_text,
     analyze_leaf_image,
@@ -51,7 +40,6 @@ from backend.intelligence import (
     weather_alerts,
 )
 from backend.models import (
-    Comment,
     AlertRecord,
     DemandSignal,
     FarmerProduceListing,
@@ -68,11 +56,7 @@ from backend.models import (
     User,
     WeatherSnapshot,
 )
-from backend.rag import RAGRetriever
-from backend.document_processing import DocumentError, MAX_UPLOAD_BYTES, image_text, document_text
-from backend.translation import translate_cached, translation_status, detect_language
-from backend import passwords
-from backend.security import authorize, issue_session, revoke
+from backend.retriever import Retriever
 
 try:
     import pytesseract
@@ -80,64 +64,23 @@ except Exception:  # pragma: no cover
     pytesseract = None
 
 
-logging.basicConfig(
-    level=os.getenv("LOG_LEVEL", "INFO").upper(),
-    format="%(asctime)s %(levelname)-7s %(name)s: %(message)s",
-)
-logger = logging.getLogger("agrogyan.api")
-
-app = FastAPI(title="AgroGyan API", version="2.0", dependencies=[Depends(authorize)])
+app = FastAPI()
 Base.metadata.create_all(bind=engine)
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 
-# Browsers reject `Access-Control-Allow-Origin: *` together with credentials,
-# so origins are listed explicitly. Any localhost/127.0.0.1 port is allowed for
-# development (VS Code Live Server, python -m http.server, etc.).
-_extra_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_extra_origins,
-    allow_origin_regex=r"https?://(localhost|127\.0\.0\.1)(:\d+)?$",
+    allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-@app.middleware("http")
-async def log_requests(request: Request, call_next):
-    started = time.perf_counter()
-    response = await call_next(request)
-    response.headers["Cache-Control"] = "no-store"
-    if not request.url.path.endswith((".js", ".css", ".png", ".jpg", ".svg", ".ico", ".html")):
-        logger.info("%s %s -> %s (%.0f ms)", request.method, request.url.path,
-                    response.status_code, (time.perf_counter() - started) * 1000)
-    return response
-
-
-@app.exception_handler(RequestValidationError)
-async def validation_error_handler(_request: Request, exc: RequestValidationError):
-    first = exc.errors()[0] if exc.errors() else {}
-    field = ".".join(str(p) for p in first.get("loc", [])[1:]) or "request"
-    return JSONResponse(status_code=422, content={"detail": f"Invalid {field}: {first.get('msg', 'bad value')}"})
-
-
-@app.exception_handler(SQLAlchemyError)
-async def database_error_handler(request: Request, exc: SQLAlchemyError):
-    logger.exception("Database error on %s", request.url.path)
-    return JSONResponse(status_code=503, content={"detail": "The database is temporarily unavailable. Please try again."})
-
-
-@app.exception_handler(Exception)
-async def unhandled_error_handler(request: Request, exc: Exception):
-    logger.exception("Unhandled error on %s", request.url.path)
-    return JSONResponse(status_code=500, content={"detail": "Something went wrong on our side. Please try again."})
-
-
-documents, ingestion_report = load_corpus()
-repository_source_ids = {d["source_id"] for d in documents if d.get("doc_type") == "repository_gr"}
-retriever = RAGRetriever(documents)
+documents = load_documents()
+retriever = Retriever(documents)
+comments_db: dict[int, list[dict[str, str]]] = {}
 OTP_EXPIRY_MINUTES = 10
 OTP_RESEND_SECONDS = 45
 OTP_BRAND_NAME = "AgroGyanGPT"
@@ -154,9 +97,9 @@ PHASE_THREE_MODULES = [
     {"id": "call-assistant", "label": "Voice call assistant for low-literacy users", "status": "scaffolded"},
     {"id": "commerce", "label": "Inputs marketplace and partner ecosystem", "status": "scaffolded"},
 ]
-ADMIN_EMAIL = os.getenv("ADMIN_EMAIL", "").strip().lower()
-ADMIN_PASSWORD_HASH = os.getenv("ADMIN_PASSWORD_HASH", "")
-ADMIN_NAME = os.getenv("ADMIN_NAME", "Administrator")
+ADMIN_EMAIL = "harsh@07gmail.com"
+ADMIN_PASSWORD = "harsh@07"
+ADMIN_NAME = "Harsh Admin"
 TRACKED_CROPS = [
     "tomato",
     "capsicum",
@@ -263,15 +206,15 @@ DEFAULT_PRODUCE_LISTINGS = [
 
 
 def hash_password(password: str) -> str:
-    return passwords.hash_password(password)
+    return hashlib.sha256(password.encode()).hexdigest()
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    return passwords.verify_password(plain_password, hashed_password)
+    return hashlib.sha256(plain_password.encode()).hexdigest() == hashed_password
 
 
 def is_admin_credentials(email: str, password: str) -> bool:
-    return (email or "").strip().lower() == ADMIN_EMAIL and bool(ADMIN_PASSWORD_HASH) and verify_password(password, ADMIN_PASSWORD_HASH)
+    return (email or "").strip().lower() == ADMIN_EMAIL and password == ADMIN_PASSWORD
 
 
 def is_admin_email(email: str) -> bool:
@@ -287,7 +230,7 @@ def normalize_email(email: str) -> str:
 
 
 def now_utc() -> datetime:
-    return datetime.now(timezone.utc).replace(tzinfo=None)
+    return datetime.utcnow()
 
 
 def is_recent(timestamp: Optional[datetime], minutes: int = LIVE_CACHE_MINUTES) -> bool:
@@ -308,20 +251,14 @@ def coerce_price_number(value: Any) -> Optional[int]:
     return int(digits) if digits else None
 
 
-async def fetch_json(url: str, *, params=None):
-    async with httpx.AsyncClient(timeout=REQUEST_TIMEOUT_SECONDS) as client:
-        response = await client.get(url, params=params)
-        response.raise_for_status()
-        return response.json()
-
-
-def fetch_json_sync(url: str, *, params=None):
-    # Existing database handlers run in FastAPI's worker pool, not its event loop.
-    return asyncio.run(fetch_json(url, params=params))
+def fetch_json(url: str, *, params: Optional[dict[str, Any]] = None) -> Any:
+    response = requests.get(url, params=params, timeout=REQUEST_TIMEOUT_SECONDS)
+    response.raise_for_status()
+    return response.json()
 
 
 def generate_otp() -> str:
-    return f"{100000 + secrets.randbelow(900000)}"
+    return f"{random.randint(100000, 999999)}"
 
 
 def normalize_indian_phone_number(phone_number: str) -> str:
@@ -356,26 +293,16 @@ def build_otp_message(otp_code: str) -> str:
     )
 
 
-LANGUAGE_CODES = {"English":"en", "Hindi":"hi", "Marathi":"mr", "Gujarati":"gu"}
-
-
-def translate_text(text: str, language: str, *, source: str = "auto") -> str:
-    """Translate text, returning the original if translation is unavailable.
-
-    Translation uses the configured local/API service; a timeout must never
-    turn a good answer into a server error.
-    """
-    target = LANGUAGE_CODES.get(language or "English", "en")
-    if not text or (target == "en" and source in {"auto", "en"} and not re.search(r'[\u0900-\u0aff]', text)):
-        return text
-    try:
-        chunks = [text[i:i + 4500] for i in range(0, len(text), 4500)]
-        return "".join(translate_cached(chunk, target, source) for chunk in chunks)
-    except Exception:
-        logger.warning("Translation to %s failed; returning untranslated text", language)
+def translate_text(text: str, language: str) -> str:
+    if language == "English":
         return text
 
+    lang_map = {"Hindi": "hi", "Marathi": "mr"}
+    return GoogleTranslator(source="auto", target=lang_map.get(language, "en")).translate(text)
 
+
+def get_db() -> Session:
+    return SessionLocal()
 
 
 def get_user_by_id(db: Session, user_id: Optional[int]) -> Optional[User]:
@@ -387,18 +314,15 @@ def get_user_by_id(db: Session, user_id: Optional[int]) -> Optional[User]:
 def save_memory(db: Session, user_id: Optional[int], question: str, answer: str, language: str, context_tag: str = "assistant") -> None:
     if not user_id:
         return
-    try:
-        db.add(QueryMemory(
-            user_id=user_id,
-            question=question[:2000],
-            answer=answer,
-            language=language,
-            context_tag=context_tag,
-        ))
-        db.commit()
-    except SQLAlchemyError:
-        db.rollback()
-        logger.exception("Could not save chat memory for user %s", user_id)
+    memory = QueryMemory(
+        user_id=user_id,
+        question=question,
+        answer=answer,
+        language=language,
+        context_tag=context_tag,
+    )
+    db.add(memory)
+    db.commit()
 
 
 def extract_crop_mentions(text: str) -> list[str]:
@@ -582,7 +506,11 @@ def merge_farm_profile_context(profile: dict, farm_profile: FarmProfile | None) 
 
 
 def ensure_inventory_seed(db: Session) -> None:
-    return
+    if db.query(InventoryItem).first():
+        return
+    for item in DEFAULT_INVENTORY:
+        db.add(InventoryItem(**item, price_source="catalog", source="seed"))
+    db.commit()
 
 
 def ensure_scheme_snapshots(db: Session, user: User | None = None) -> None:
@@ -591,7 +519,7 @@ def ensure_scheme_snapshots(db: Session, user: User | None = None) -> None:
 
     if SCHEME_FEED_URL:
         try:
-            payload = fetch_json_sync(SCHEME_FEED_URL, params={"state": target_state or "", "crop": target_crop or ""})
+            payload = fetch_json(SCHEME_FEED_URL, params={"state": target_state or "", "crop": target_crop or ""})
             rows = payload.get("schemes") if isinstance(payload, dict) else payload
             if isinstance(rows, list) and rows:
                 if target_state:
@@ -620,7 +548,11 @@ def ensure_scheme_snapshots(db: Session, user: User | None = None) -> None:
 
 
 def ensure_produce_listing_seed(db: Session) -> None:
-    return
+    if db.query(FarmerProduceListing).first():
+        return
+    for item in DEFAULT_PRODUCE_LISTINGS:
+        db.add(FarmerProduceListing(**item, is_active=True))
+    db.commit()
 
 
 def resolve_profile_coordinates(
@@ -635,8 +567,8 @@ def resolve_profile_coordinates(
 
     query = ", ".join(part for part in [district, state, "India"] if part)
     try:
-        payload = fetch_json_sync(OPEN_METEO_GEOCODE_URL, params={"name": district, "count": 10, "countryCode": "IN", "language": "en", "format": "json"})
-        result = next((r for r in payload.get("results", []) if r.get("country_code") == "IN" and (not state or r.get("admin1", "").casefold() == state.casefold())), None)
+        payload = fetch_json(OPEN_METEO_GEOCODE_URL, params={"name": query, "count": 1, "language": "en", "format": "json"})
+        result = (payload.get("results") or [None])[0]
         if result:
             return safe_float(result.get("latitude")), safe_float(result.get("longitude")), "open-meteo-geocoding"
     except Exception:
@@ -649,7 +581,7 @@ def fetch_live_weather_snapshot(state: str, district: str, crop: str, profile: F
     if lat is None or lng is None:
         return None
 
-    payload = fetch_json_sync(
+    payload = fetch_json(
         OPEN_METEO_FORECAST_URL,
         params={
             "latitude": lat,
@@ -719,13 +651,13 @@ def normalize_market_rows(
 
 def fetch_live_market_prices(state: str, district: str, crop: str) -> Optional[list[dict[str, str]]]:
     if MARKET_FEED_URL:
-        payload = fetch_json_sync(MARKET_FEED_URL, params={"state": state, "district": district, "crop": crop})
+        payload = fetch_json(MARKET_FEED_URL, params={"state": state, "district": district, "crop": crop})
         rows = payload.get("records") if isinstance(payload, dict) else payload
         if isinstance(rows, list):
             return normalize_market_rows(rows, state=state, district=district, crop=crop, source="custom-market-feed")
 
     if DATA_GOV_API_KEY and AGMARKNET_RESOURCE_ID:
-        payload = fetch_json_sync(
+        payload = fetch_json(
             f"https://api.data.gov.in/resource/{AGMARKNET_RESOURCE_ID}",
             params={
                 "api-key": DATA_GOV_API_KEY,
@@ -753,14 +685,22 @@ def sync_order_timeline(db: Session, order: OrderRecord) -> None:
         row.status
         for row in db.query(OrderStatusEvent).filter(OrderStatusEvent.order_code == order.order_code).all()
     }
-    timeline = [("Order placed", "Order received; awaiting verified fulfillment updates.")]
+    elapsed_hours = (now_utc() - order.created_at.replace(tzinfo=None)).total_seconds() / 3600 if order.created_at else 0
+    timeline = [("Order placed", "Order received and queued.")]
+    if elapsed_hours >= 0.05:
+        timeline.append(("Packed", "Items packed and ready for dispatch."))
+    if elapsed_hours >= 0.12:
+        timeline.append(("Shipped", "Shipment handed to delivery partner."))
+    if elapsed_hours >= 0.2:
+        timeline.append(("Out for delivery", "Delivery partner is heading to the farm address."))
+    if elapsed_hours >= 0.3:
+        timeline.append(("Delivered", "Order marked as delivered."))
 
     for status, note in timeline:
         if status in existing:
             continue
         db.add(OrderStatusEvent(order_code=order.order_code, status=status, note=note, source="system"))
-        if not order.status:
-            order.status = status
+        order.status = status
 
 
 def serialize_order(db: Session, order: OrderRecord) -> dict[str, Any]:
@@ -799,8 +739,8 @@ def refresh_live_operating_data(db: Session, user: User | None, force: bool = Fa
             "schemes": {"state": "ready", "source": "rules"},
         }
 
-    state = user.state or ""
-    district = user.district or ""
+    state = user.state or "Maharashtra"
+    district = user.district or "Pune"
     crop = user.crop_name or "Wheat"
     profile = get_or_create_farm_profile(db, user.id)
 
@@ -828,7 +768,7 @@ def refresh_live_operating_data(db: Session, user: User | None, force: bool = Fa
                 db.add(WeatherSnapshot(**live_weather))
                 weather_status = {"state": "live", "source": live_weather["source"]}
         except Exception:
-            weather_status["state"] = "cached" if weather_row else "unavailable"
+            weather_status["state"] = "cached" if weather_row else "seed"
 
     if force or not is_recent(getattr(market_row, "captured_at", None)):
         try:
@@ -837,16 +777,16 @@ def refresh_live_operating_data(db: Session, user: User | None, force: bool = Fa
                 replace_market_rows(db, state, district, live_market_rows)
                 market_status = {"state": "live", "source": live_market_rows[0]["source"]}
         except Exception:
-            market_status["state"] = "cached" if market_row else "unavailable"
+            market_status["state"] = "cached" if market_row else "seed"
 
     weather_exists = db.query(WeatherSnapshot).filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district).first()
     mandi_exists = db.query(MandiPrice).filter(MandiPrice.state == state, MandiPrice.district == district).first()
     if not weather_exists or not mandi_exists:
         ensure_seed_operating_data(db, user)
         if not weather_exists:
-            weather_status = {"state": "unavailable", "source": "none"}
+            weather_status = {"state": "seed", "source": "seed"}
         if not mandi_exists:
-            market_status = {"state": "unavailable", "source": "none"}
+            market_status = {"state": "seed", "source": "seed"}
     else:
         db.commit()
 
@@ -959,7 +899,7 @@ def build_seed_markets(state: str, district: str, crop: str) -> list[dict[str, s
 
 
 def build_seed_alerts(user: User | None) -> list[dict[str, str]]:
-    district = getattr(user, "district", None) or ""
+    district = getattr(user, "district", None) or "Pune"
     crop = getattr(user, "crop_name", None) or "Wheat"
     return [
         {
@@ -978,9 +918,77 @@ def build_seed_alerts(user: User | None) -> list[dict[str, str]]:
 
 
 def ensure_seed_operating_data(db: Session, user: User | None) -> None:
-    if user:
-        get_or_create_farm_profile(db, user.id)
-        db.commit()
+    if not user:
+        return
+
+    state = user.state or "Maharashtra"
+    district = user.district or "Pune"
+    crop = user.crop_name or "Wheat"
+
+    weather_exists = (
+        db.query(WeatherSnapshot)
+        .filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district)
+        .first()
+    )
+    if not weather_exists:
+        weather = build_seed_weather(state, district, crop)
+        db.add(
+            WeatherSnapshot(
+                state=weather["state"],
+                district=weather["district"],
+                condition=weather["condition"],
+                temperature=weather["temperature"],
+                humidity=weather["humidity"],
+                wind=weather["wind"],
+                rain_probability=weather["rain_probability"],
+                advisory=weather["advisory"],
+                source="seed",
+            )
+        )
+
+    mandi_exists = (
+        db.query(MandiPrice)
+        .filter(MandiPrice.state == state, MandiPrice.district == district)
+        .first()
+    )
+    if not mandi_exists:
+        for item in build_seed_markets(state, district, crop):
+            db.add(
+                MandiPrice(
+                    state=item["state"],
+                    district=item["district"],
+                    mandi_name=item["mandi_name"],
+                    crop=item["crop"],
+                    variety=item["variety"],
+                    price=item["price"],
+                    trend=item["trend"],
+                    source="seed",
+                )
+            )
+
+    alert_exists = (
+        db.query(AlertRecord)
+        .filter(AlertRecord.user_id == user.id)
+        .first()
+    )
+    if not alert_exists:
+        for item in build_seed_alerts(user):
+            db.add(
+                AlertRecord(
+                    user_id=user.id,
+                    state=state,
+                    district=district,
+                    crop=crop,
+                    severity=item["severity"],
+                    title=item["title"],
+                    body=item["body"],
+                    category=item["category"],
+                    source="seed",
+                )
+            )
+
+    get_or_create_farm_profile(db, user.id)
+    db.commit()
 
 
 def send_otp_via_provider(phone_number: str, otp_code: str, channel: str) -> dict[str, str]:
@@ -1057,14 +1065,14 @@ def register_verified_user(db: Session, payload: dict, channel: str, phone_verif
     new_user = User(
         name=payload["name"],
         email=normalize_email(payload["email"]),
-        password=payload["password_hash"] if payload.get("password_hash") else hash_password(payload["password"]),
+        password=hash_password(payload["password"]),
         mobile_number=normalize_indian_phone_number(payload["mobile_number"]),
         date_of_birth=payload["date_of_birth"],
         state=payload["state"],
         district=payload["district"],
         preferred_language=payload.get("preferred_language") or "English",
         simple_mode="off",
-        role=payload.get("role") if payload.get("role") in {"farmer", "advisor", "buyer"} else "farmer",
+        role=payload.get("role") or "farmer",
         phone_verified=phone_verified,
         otp_channel=channel,
     )
@@ -1093,31 +1101,16 @@ def update_user_profile(user: User, payload: "ProfileUpdateRequest") -> None:
 
 
 class QuestionRequest(BaseModel):
-    question: str = Field(min_length=1, max_length=2000)
-    language: str = "English"
-    user_id: Optional[int] = Field(default=None, gt=0)
+    question: str
+    language: str
+    user_id: Optional[int] = None
     explain_simply: bool = False
-
-    @field_validator("question")
-    @classmethod
-    def validate_question(cls, value: str) -> str:
-        value = value.strip()
-        if not value:
-            raise ValueError("Please enter a question")
-        return value
-
-    @field_validator("language")
-    @classmethod
-    def validate_language(cls, value: str) -> str:
-        if value not in LANGUAGE_CODES and value != "Auto":
-            raise ValueError("Unsupported language")
-        return value
 
 
 class RegisterRequest(BaseModel):
     name: str
     email: str
-    password: str = Field(min_length=6, max_length=72)
+    password: str
     mobile_number: str
     date_of_birth: str
     state: str
@@ -1129,7 +1122,7 @@ class RegisterRequest(BaseModel):
 
 class LoginRequest(BaseModel):
     email: str
-    password: str = Field(min_length=6, max_length=72)
+    password: str
 
 
 class PostCreate(BaseModel):
@@ -1156,14 +1149,7 @@ class PostDelete(BaseModel):
 class CommentCreate(BaseModel):
     post_id: int
     user_id: int
-    text: str = Field(min_length=1, max_length=5000)
-
-    @field_validator("text")
-    @classmethod
-    def readable_comment(cls, value):
-        if not value.strip():
-            raise ValueError("Comment cannot be blank")
-        return value.strip()
+    text: str
 
 
 class ProfileUpdateRequest(BaseModel):
@@ -1308,101 +1294,34 @@ def merge_request_profile(db: Session, request: IntelligenceRequest) -> dict:
 
 
 @app.post("/register")
-def register_user(req: RegisterRequest, db: Session = Depends(get_session)):
-    normalized_email = normalize_email(req.email)
-    existing_user = db.query(User).filter(User.email == normalized_email).first()
-    if existing_user:
-        raise HTTPException(409, "User already registered with this email.")
-    return {"message": "Use OTP verification flow.", "requires_otp": True}
+def register_user(req: RegisterRequest):
+    db = get_db()
+    try:
+        normalized_email = normalize_email(req.email)
+        existing_user = db.query(User).filter(User.email == normalized_email).first()
+        if existing_user:
+            return {"message": "User already registered with this email."}
+        return {"message": "Use OTP verification flow.", "requires_otp": True}
+    finally:
+        db.close()
 
 
 @app.post("/auth/send-registration-otp")
-def send_registration_otp(req: OtpSendRequest, db: Session = Depends(get_session)):
-    normalized_email = normalize_email(req.email)
-    normalized_mobile = normalize_indian_phone_number(req.mobile_number)
-    mobile_candidates = phone_lookup_values(req.mobile_number)
-    existing_user = (
-        db.query(User)
-        .filter((User.email == normalized_email) | (User.mobile_number.in_(mobile_candidates)))
-        .first()
-    )
-    if existing_user:
-        raise HTTPException(409, "User already registered with this email or phone number.")
-
-    latest_session = (
-        db.query(OtpSession)
-        .filter(
-            OtpSession.phone_number.in_(mobile_candidates),
-            OtpSession.email == normalized_email,
-            OtpSession.purpose == "register",
+def send_registration_otp(req: OtpSendRequest):
+    db = get_db()
+    try:
+        normalized_email = normalize_email(req.email)
+        normalized_mobile = normalize_indian_phone_number(req.mobile_number)
+        mobile_candidates = phone_lookup_values(req.mobile_number)
+        existing_user = (
+            db.query(User)
+            .filter((User.email == normalized_email) | (User.mobile_number.in_(mobile_candidates)))
+            .first()
         )
-        .order_by(OtpSession.created_at.desc())
-        .first()
-    )
-    if latest_session and latest_session.created_at:
-        retry_after = latest_session.created_at + timedelta(seconds=OTP_RESEND_SECONDS)
-        if latest_session.status == "sent" and retry_after > now_utc():
-            wait_seconds = int((retry_after - now_utc()).total_seconds())
-            raise HTTPException(429, "Please wait before requesting another OTP.", headers={"Retry-After": str(max(wait_seconds, 1))})
+        if existing_user:
+            return {"message": "User already registered with this email or phone number."}
 
-    otp_code = generate_otp()
-    payload = req.model_dump()
-    payload["password_hash"] = hash_password(payload.pop("password"))
-    payload["email"] = normalized_email
-    payload["mobile_number"] = normalized_mobile
-    if req.otp_channel == "manual":
-        raise HTTPException(503, "Phone verification requires a configured SMS or WhatsApp provider.")
-    provider_status = send_otp_via_provider(req.mobile_number, otp_code, req.otp_channel)
-    resolved_channel = req.otp_channel
-    manual_fallback = False
-    otp_session = OtpSession(
-        phone_number=normalized_mobile,
-        email=normalized_email,
-        purpose="register",
-        channel=resolved_channel,
-        otp_hash=hash_otp(otp_code),
-        pending_payload=json.dumps(payload),
-        status="sent",
-        provider_reference=provider_status.get("provider_reference"),
-        provider_message=provider_status.get("provider_message"),
-        expires_at=now_utc() + timedelta(minutes=OTP_EXPIRY_MINUTES),
-    )
-    db.add(otp_session)
-    db.commit()
-    db.refresh(otp_session)
-
-    response = {
-        "message": manual_fallback
-        and "Temporary verification code is ready. Phone verification will stay pending until SMS is connected."
-        or f"OTP sent to {normalized_mobile} via {req.otp_channel}.",
-        "otp_session_id": otp_session.id,
-        "channel": resolved_channel,
-        "expires_in_seconds": OTP_EXPIRY_MINUTES * 60,
-        "provider_status": provider_status.get("status"),
-        "provider_message": provider_status.get("provider_message"),
-    }
-    return response
-
-
-@app.post("/auth/verify-registration-otp")
-def verify_registration_otp(req: OtpVerifyRequest, response: Response, db: Session = Depends(get_session)):
-    normalized_email = normalize_email(req.email)
-    normalized_mobile = normalize_indian_phone_number(req.phone_number)
-    mobile_candidates = phone_lookup_values(req.phone_number)
-    entered_otp = (req.otp or "").strip()
-    otp_session = (
-        db.query(OtpSession)
-        .filter(
-            OtpSession.phone_number.in_(mobile_candidates),
-            OtpSession.email == normalized_email,
-            OtpSession.purpose == "register",
-            OtpSession.channel == req.otp_channel,
-        )
-        .order_by(OtpSession.created_at.desc())
-        .first()
-    )
-    if not otp_session:
-        otp_session = (
+        latest_session = (
             db.query(OtpSession)
             .filter(
                 OtpSession.phone_number.in_(mobile_candidates),
@@ -1412,60 +1331,157 @@ def verify_registration_otp(req: OtpVerifyRequest, response: Response, db: Sessi
             .order_by(OtpSession.created_at.desc())
             .first()
         )
-    if not otp_session:
-        raise HTTPException(404, "OTP session not found.")
-    if otp_session.channel == "manual":
-        raise HTTPException(400, "Request a new code through a phone provider.")
-    if otp_session.status == "verified":
-        raise HTTPException(409, "This OTP has already been used.")
-    if otp_session.expires_at < now_utc():
-        otp_session.status = "expired"
+        if latest_session and latest_session.created_at:
+            retry_after = latest_session.created_at + timedelta(seconds=OTP_RESEND_SECONDS)
+            if latest_session.status == "sent" and retry_after > now_utc():
+                wait_seconds = int((retry_after - now_utc()).total_seconds())
+                return {"message": f"Please wait {max(wait_seconds, 1)} seconds before requesting another OTP.", "cooldown_seconds": max(wait_seconds, 1)}
+
+        otp_code = generate_otp()
+        payload = req.model_dump()
+        payload["email"] = normalized_email
+        payload["mobile_number"] = normalized_mobile
+        provider_status = {
+            "status": "queued",
+            "provider_reference": None,
+            "provider_message": f"Verification code prepared for {req.otp_channel}.",
+        }
+        resolved_channel = req.otp_channel
+        manual_fallback = False
+        try:
+            if req.otp_channel == "manual":
+                manual_fallback = True
+                provider_status = {
+                    "status": "manual-fallback",
+                    "provider_reference": "manual-preview",
+                    "provider_message": "Temporary verification code generated in-app because phone OTP is unavailable.",
+                }
+            else:
+                provider_status = send_otp_via_provider(req.mobile_number, otp_code, req.otp_channel)
+        except HTTPException:
+            if not ALLOW_MANUAL_OTP_FALLBACK:
+                raise
+            manual_fallback = True
+            resolved_channel = "manual"
+            provider_status = {
+                "status": "manual-fallback",
+                "provider_reference": "manual-preview",
+                "provider_message": "SMS/WhatsApp OTP is unavailable right now. Use the temporary verification code shown in-app.",
+            }
+
+        otp_session = OtpSession(
+            phone_number=normalized_mobile,
+            email=normalized_email,
+            purpose="register",
+            channel=resolved_channel,
+            otp_hash=hash_otp(otp_code),
+            pending_payload=json.dumps(payload),
+            status="sent",
+            provider_reference=provider_status.get("provider_reference"),
+            provider_message=provider_status.get("provider_message"),
+            expires_at=now_utc() + timedelta(minutes=OTP_EXPIRY_MINUTES),
+        )
+        db.add(otp_session)
         db.commit()
-        raise HTTPException(400, "OTP expired. Please request a new OTP.")
+        db.refresh(otp_session)
 
-    if (otp_session.attempt_count or 0) >= 5:
-        raise HTTPException(429, "Too many incorrect codes. Request a new OTP.")
-    otp_session.attempt_count = (otp_session.attempt_count or 0) + 1
-    if otp_session.otp_hash != hash_otp(entered_otp):
+        response = {
+            "message": manual_fallback
+            and "Temporary verification code is ready. Phone verification will stay pending until SMS is connected."
+            or f"OTP sent to {normalized_mobile} via {req.otp_channel}.",
+            "otp_session_id": otp_session.id,
+            "channel": resolved_channel,
+            "expires_in_seconds": OTP_EXPIRY_MINUTES * 60,
+            "provider_status": provider_status.get("status"),
+            "provider_message": provider_status.get("provider_message"),
+        }
+        if manual_fallback:
+            response["fallback_mode"] = "manual"
+            response["development_otp"] = otp_code
+        return response
+    finally:
+        db.close()
+
+
+@app.post("/auth/verify-registration-otp")
+def verify_registration_otp(req: OtpVerifyRequest):
+    db = get_db()
+    try:
+        normalized_email = normalize_email(req.email)
+        normalized_mobile = normalize_indian_phone_number(req.phone_number)
+        mobile_candidates = phone_lookup_values(req.phone_number)
+        entered_otp = (req.otp or "").strip()
+        otp_session = (
+            db.query(OtpSession)
+            .filter(
+                OtpSession.phone_number.in_(mobile_candidates),
+                OtpSession.email == normalized_email,
+                OtpSession.purpose == "register",
+                OtpSession.channel == req.otp_channel,
+            )
+            .order_by(OtpSession.created_at.desc())
+            .first()
+        )
+        if not otp_session:
+            otp_session = (
+                db.query(OtpSession)
+                .filter(
+                    OtpSession.phone_number.in_(mobile_candidates),
+                    OtpSession.email == normalized_email,
+                    OtpSession.purpose == "register",
+                )
+                .order_by(OtpSession.created_at.desc())
+                .first()
+            )
+        if not otp_session:
+            return {"message": "OTP session not found."}
+        if otp_session.status == "verified":
+            return {"message": "This OTP has already been used."}
+        if otp_session.expires_at < now_utc():
+            otp_session.status = "expired"
+            db.commit()
+            return {"message": "OTP expired. Please request a new OTP."}
+
+        otp_session.attempt_count = (otp_session.attempt_count or 0) + 1
+        if otp_session.otp_hash != hash_otp(entered_otp):
+            db.commit()
+            return {"message": "Invalid OTP. Please try again."}
+
+        pending_payload = json.loads(otp_session.pending_payload or "{}")
+        existing_user = (
+            db.query(User)
+            .filter((User.email == normalized_email) | (User.mobile_number.in_(mobile_candidates)))
+            .first()
+        )
+        if existing_user:
+            return {"message": "User already registered with this email or phone number."}
+
+        phone_verified = otp_session.channel != "manual"
+        new_user = register_verified_user(db, pending_payload, otp_session.channel, phone_verified=phone_verified)
+        otp_session.status = "verified"
+        otp_session.verified_at = now_utc()
         db.commit()
-        raise HTTPException(400, "Invalid OTP. Please try again.")
 
-    pending_payload = json.loads(otp_session.pending_payload or "{}")
-    existing_user = (
-        db.query(User)
-        .filter((User.email == normalized_email) | (User.mobile_number.in_(mobile_candidates)))
-        .first()
-    )
-    if existing_user:
-        raise HTTPException(409, "User already registered with this email or phone number.")
-
-    phone_verified = otp_session.channel != "manual"
-    new_user = register_verified_user(db, pending_payload, otp_session.channel, phone_verified=phone_verified)
-    otp_session.status = "verified"
-    otp_session.pending_payload = None
-    otp_session.verified_at = now_utc()
-    db.commit()
-
-    issue_session(response, new_user.id, new_user.role)
-    return {
-        "message": "Registration successful!",
-        "user_id": new_user.id,
-        "user": new_user.name,
-        "email": new_user.email,
-        "mobile_number": new_user.mobile_number,
-        "state": new_user.state,
-        "district": new_user.district,
-        "phone_verified": new_user.phone_verified,
-        "role": new_user.role,
-    }
+        return {
+            "message": "Registration successful!",
+            "user_id": new_user.id,
+            "user": new_user.name,
+            "email": new_user.email,
+            "mobile_number": new_user.mobile_number,
+            "state": new_user.state,
+            "district": new_user.district,
+            "phone_verified": new_user.phone_verified,
+            "role": new_user.role,
+        }
+    finally:
+        db.close()
 
 
 @app.post("/login")
-def login_user(req: LoginRequest, response: Response, db: Session = Depends(get_session)):
+def login_user(req: LoginRequest):
     normalized_email = normalize_email(req.email)
 
     if is_admin_credentials(normalized_email, req.password):
-        issue_session(response, 0, "admin")
         return {
             "message": "Login successful!",
             "user": ADMIN_NAME,
@@ -1486,461 +1502,55 @@ def login_user(req: LoginRequest, response: Response, db: Session = Depends(get_
             "role": "admin",
         }
 
-    user = db.query(User).filter(User.email == normalized_email).first()
-    if not user or not verify_password(req.password, user.password):
-        raise HTTPException(401, "Invalid email or password.")
-    if not user.password.startswith("bcrypt_sha256$"):
-        user.password = hash_password(req.password)
-        db.commit()
+    db = get_db()
+    try:
+        user = db.query(User).filter(User.email == normalized_email).first()
+        if not user or not verify_password(req.password, user.password):
+            return {"message": "Invalid email or password."}
 
-    issue_session(response, user.id, user.role)
-    return {
-        "message": "Login successful!",
-        "user": user.name,
-        "user_id": user.id,
-        "email": user.email,
-        "mobile_number": user.mobile_number,
-        "date_of_birth": user.date_of_birth,
-        "state": user.state,
-        "district": user.district,
-        "crop_name": user.crop_name,
-        "land_size": user.land_size,
-        "soil_type": user.soil_type,
-        "season": user.season,
-        "village": user.village,
-        "preferred_language": user.preferred_language,
-        "simple_mode": user.simple_mode,
-        "phone_verified": user.phone_verified,
-        "role": user.role,
-    }
-
+        return {
+            "message": "Login successful!",
+            "user": user.name,
+            "user_id": user.id,
+            "email": user.email,
+            "mobile_number": user.mobile_number,
+            "date_of_birth": user.date_of_birth,
+            "state": user.state,
+            "district": user.district,
+            "crop_name": user.crop_name,
+            "land_size": user.land_size,
+            "soil_type": user.soil_type,
+            "season": user.season,
+            "village": user.village,
+            "preferred_language": user.preferred_language,
+            "simple_mode": user.simple_mode,
+            "phone_verified": user.phone_verified,
+            "role": user.role,
+        }
+    finally:
+        db.close()
 
 
 @app.get("/admin/analytics")
-def get_admin_analytics(user_email: str = Query(""), timeframe: str = Query("all"), db: Session = Depends(get_session)):
+def get_admin_analytics(user_email: str = Query(...), timeframe: str = Query("all")):
+    if not is_admin_email(user_email):
+        raise HTTPException(status_code=403, detail="Admin access required")
 
-    return build_admin_analytics(db, timeframe)
-
+    db = get_db()
+    try:
+        return build_admin_analytics(db, timeframe)
+    finally:
+        db.close()
 
 
 @app.get("/profile/{user_id}")
-def get_profile(user_id: int, db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "User not found")
+def get_profile(user_id: int):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, user_id)
+        if not user:
+            return {"message": "User not found"}
 
-    memory_rows = (
-        db.query(QueryMemory)
-        .filter(QueryMemory.user_id == user_id)
-        .order_by(QueryMemory.timestamp.desc())
-        .limit(10)
-        .all()
-    )
-
-    farm_profile = db.query(FarmProfile).filter(FarmProfile.user_id == user_id).first()
-    return {
-        "profile": merge_farm_profile_context(merge_profile(user), farm_profile),
-        "farm_profile": serialize_farm_profile(farm_profile),
-        "memory": [
-            {
-                "question": row.question,
-                "answer": row.answer,
-                "language": row.language,
-                "context_tag": row.context_tag,
-                "timestamp": str(row.timestamp),
-            }
-            for row in memory_rows
-        ],
-    }
-
-
-@app.post("/profile/preferences")
-def update_profile_preferences(req: ProfileUpdateRequest, db: Session = Depends(get_session)):
-    user = get_user_by_id(db, req.user_id)
-    if not user:
-        raise HTTPException(404, "User not found")
-    update_user_profile(user, req)
-    ensure_seed_operating_data(db, user)
-    db.commit()
-    return {"message": "Profile preferences updated", "profile": merge_profile(user)}
-
-
-@app.get("/farm-profile/{user_id}")
-def get_farm_profile(user_id: int, db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "User not found")
-    profile = get_or_create_farm_profile(db, user_id)
-    return {"farm_profile": serialize_farm_profile(profile)}
-
-
-@app.post("/farm-profile")
-def save_farm_profile(req: FarmProfileRequest, db: Session = Depends(get_session)):
-    user = get_user_by_id(db, req.user_id)
-    if not user:
-        raise HTTPException(404, "User not found")
-    profile = get_or_create_farm_profile(db, req.user_id)
-    for field in ["farm_name", "primary_crop", "irrigation_type", "livestock", "taluka", "pin_code", "lat", "lng"]:
-        value = getattr(req, field, None)
-        if value is not None:
-            setattr(profile, field, value)
-    if req.primary_crop:
-        user.crop_name = req.primary_crop
-    db.commit()
-    ensure_seed_operating_data(db, user)
-    return {"message": "Farm profile saved", "farm_profile": serialize_farm_profile(profile)}
-
-
-@app.post("/ops/live-sync")
-def sync_live_feeds(user_id: Optional[int] = Query(default=None), force: bool = Query(default=False), db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    status = refresh_live_operating_data(db, user, force=force)
-    if user:
-        create_market_alert_notifications(db, user.state or "Maharashtra", user.district or "Pune")
-        db.commit()
-    return {"message": "Live feed sync complete", "data_status": status}
-
-
-@app.get("/ops/feed-status")
-def get_feed_status(user_id: Optional[int] = Query(default=None), db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    state = getattr(user, "state", None) or ""
-    district = getattr(user, "district", None) or ""
-    weather_row = (
-        db.query(WeatherSnapshot)
-        .filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district)
-        .order_by(WeatherSnapshot.captured_at.desc())
-        .first()
-    )
-    market_row = (
-        db.query(MandiPrice)
-        .filter(MandiPrice.state == state, MandiPrice.district == district)
-        .order_by(MandiPrice.captured_at.desc())
-        .first()
-    )
-    latest_scheme = db.query(SchemeSnapshot).order_by(SchemeSnapshot.captured_at.desc()).first()
-    return {
-        "weather": {
-            "source": getattr(weather_row, "source", "none"),
-            "captured_at": str(getattr(weather_row, "captured_at", "")),
-            "status": "demo" if getattr(weather_row, "source", "") == "seed" else ("fresh" if is_recent(getattr(weather_row, "captured_at", None)) else "stale"),
-        },
-        "market": {
-            "source": getattr(market_row, "source", "none"),
-            "captured_at": str(getattr(market_row, "captured_at", "")),
-            "status": "demo" if getattr(market_row, "source", "") == "seed" else ("fresh" if is_recent(getattr(market_row, "captured_at", None)) else "stale"),
-        },
-        "schemes": {
-            "source": getattr(latest_scheme, "source", "none"),
-            "captured_at": str(getattr(latest_scheme, "captured_at", "")),
-            "status": ("unverified" if latest_scheme.source == "rules" else ("fresh" if is_recent(latest_scheme.captured_at) else "stale")) if latest_scheme else "missing",
-        },
-    }
-
-
-@app.get("/shop/inventory")
-def get_shop_inventory(db: Session = Depends(get_session)):
-    ensure_inventory_seed(db)
-    items = db.query(InventoryItem).order_by(InventoryItem.updated_at.desc(), InventoryItem.product_name.asc()).all()
-    return {
-        "items": [
-            {
-                "product_id": item.product_id,
-                "product_name": item.product_name,
-                "category": item.category,
-                "seller": item.seller,
-                "stock_count": item.stock_count,
-                "unit": item.unit,
-                "price": item.price,
-                "price_source": item.price_source,
-                "source": item.source,
-                "updated_at": str(item.updated_at),
-            }
-            for item in items
-        ]
-    }
-
-
-@app.post("/admin/inventory/upsert")
-def upsert_inventory_item(req: InventoryUpdateRequest, user_email: str = Query(""), db: Session = Depends(get_session)):
-
-    item = db.query(InventoryItem).filter(InventoryItem.product_id == req.product_id).first()
-    if not item:
-        item = InventoryItem(product_id=req.product_id, product_name=req.product_name)
-        db.add(item)
-    item.product_name = req.product_name
-    item.category = req.category
-    item.seller = req.seller
-    item.stock_count = max(0, req.stock_count)
-    item.unit = req.unit
-    item.price = req.price
-    item.price_source = req.price_source or "admin"
-    item.source = "admin"
-    db.commit()
-    return {"message": "Inventory updated"}
-
-
-
-@app.post("/shop/demand-signal")
-def create_demand_signal(req: DemandSignalRequest, db: Session = Depends(get_session)):
-    db.add(
-        DemandSignal(
-            user_id=req.user_id,
-            product_id=req.product_id,
-            product_name=req.product_name,
-            signal_type=req.signal_type,
-            source="frontend",
-        )
-    )
-    db.commit()
-    return {"message": "Demand signal captured"}
-
-
-@app.get("/admin/commerce-overview")
-def get_commerce_overview(user_email: str = Query(""), db: Session = Depends(get_session)):
-
-    ensure_inventory_seed(db)
-    inventory_rows = db.query(InventoryItem).order_by(InventoryItem.stock_count.asc(), InventoryItem.product_name.asc()).all()
-    demand_rows = (
-        db.query(
-            DemandSignal.product_id,
-            DemandSignal.product_name,
-            func.count(DemandSignal.id).label("count"),
-        )
-        .group_by(DemandSignal.product_id, DemandSignal.product_name)
-        .order_by(func.count(DemandSignal.id).desc(), DemandSignal.product_name.asc())
-        .limit(8)
-        .all()
-    )
-    order_rows = db.query(OrderRecord).order_by(OrderRecord.created_at.desc()).limit(10).all()
-    return {
-        "inventory": [
-            {
-                "product_id": row.product_id,
-                "product_name": row.product_name,
-                "stock_count": row.stock_count,
-                "seller": row.seller,
-                "price": row.price,
-                "updated_at": str(row.updated_at),
-            }
-            for row in inventory_rows
-        ],
-        "demand": [
-            {
-                "product_id": row.product_id,
-                "product_name": row.product_name or row.product_id,
-                "count": row.count,
-            }
-            for row in demand_rows
-        ],
-        "orders": [serialize_order(db, row) for row in order_rows],
-    }
-
-
-
-@app.post("/shop/orders")
-def create_shop_order(req: OrderCreateRequest, db: Session = Depends(get_session)):
-    ensure_inventory_seed(db)
-    order_code = f"AG-{int(datetime.now(timezone.utc).timestamp())}-{random.randint(100, 999)}"
-    order = OrderRecord(
-        order_code=order_code,
-        user_id=req.user_id,
-        customer_name=req.customer_name,
-        customer_phone=req.customer_phone,
-        delivery_address=req.delivery_address,
-        payment_method=req.payment_method,
-        item_summary=", ".join(f"{item.name} x{item.qty}" for item in req.items),
-        item_count=sum(max(0, item.qty) for item in req.items),
-        total=str(round(req.total, 2)),
-        status="Order placed",
-        source="shop",
-    )
-    db.add(order)
-    decrement_inventory_for_order(db, req.items)
-    for item in req.items:
-        db.add(DemandSignal(user_id=req.user_id, product_id=item.product_id, product_name=item.name, signal_type="ordered", source="order"))
-    db.flush()
-    sync_order_timeline(db, order)
-    db.commit()
-    return {"message": "Order created", "order": serialize_order(db, order)}
-
-
-@app.get("/shop/orders")
-def list_shop_orders(user_id: Optional[int] = Query(default=None), db: Session = Depends(get_session)):
-    query = db.query(OrderRecord)
-    if user_id:
-        query = query.filter(OrderRecord.user_id == user_id)
-    rows = query.order_by(OrderRecord.created_at.desc()).limit(12).all()
-    payload = [serialize_order(db, row) for row in rows]
-    db.commit()
-    return {"orders": payload}
-
-
-@app.post("/shop/orders/status")
-def update_shop_order_status(req: OrderStatusUpdateRequest, user_email: str = Query(""), db: Session = Depends(get_session)):
-
-    order = db.query(OrderRecord).filter(OrderRecord.order_code == req.order_code).first()
-    if not order:
-        raise HTTPException(status_code=404, detail="Order not found")
-    order.status = req.status
-    db.add(OrderStatusEvent(order_code=req.order_code, status=req.status, note=req.note or "", source="admin"))
-    db.commit()
-    return {"message": "Order status updated", "order": serialize_order(db, order)}
-
-
-
-@app.post("/market-alerts")
-def create_market_alert(req: MarketAlertRequest, db: Session = Depends(get_session)):
-    db.add(
-        MarketAlertSubscription(
-            user_id=req.user_id,
-            crop=req.crop,
-            target_price=req.target_price,
-            district=req.district,
-            state=req.state,
-            channel=req.channel or "in_app",
-            is_active=True,
-        )
-    )
-    if req.state and req.district:
-        create_market_alert_notifications(db, req.state, req.district)
-    db.commit()
-    return {"message": "Market alert saved"}
-
-
-@app.get("/market-alerts")
-def list_market_alerts(user_id: Optional[int] = Query(default=None), db: Session = Depends(get_session)):
-    subscriptions = db.query(MarketAlertSubscription)
-    notifications = db.query(AlertRecord).filter(AlertRecord.category == "market-alert")
-    if user_id:
-        subscriptions = subscriptions.filter(MarketAlertSubscription.user_id == user_id)
-        notifications = notifications.filter(AlertRecord.user_id == user_id)
-    return {
-        "subscriptions": [
-            {
-                "crop": row.crop,
-                "target_price": row.target_price,
-                "district": row.district,
-                "state": row.state,
-                "channel": row.channel,
-                "created_at": str(row.created_at),
-            }
-            for row in subscriptions.order_by(MarketAlertSubscription.created_at.desc()).all()
-        ],
-        "notifications": [
-            {
-                "title": row.title,
-                "body": row.body,
-                "severity": row.severity,
-                "created_at": str(row.created_at),
-            }
-            for row in notifications.order_by(AlertRecord.created_at.desc()).limit(10).all()
-        ],
-    }
-
-
-@app.get("/produce/listings")
-def list_farmer_produce_listings(category: Optional[str] = Query(default=None), crop: Optional[str] = Query(default=None), db: Session = Depends(get_session)):
-    ensure_produce_listing_seed(db)
-    query = db.query(FarmerProduceListing).filter(FarmerProduceListing.is_active.is_(True), FarmerProduceListing.available_quantity > 0)
-    if category:
-        query = query.filter(FarmerProduceListing.category == category)
-    if crop:
-        query = query.filter(FarmerProduceListing.crop_name.ilike(f"%{crop}%"))
-    rows = query.order_by(FarmerProduceListing.created_at.desc(), FarmerProduceListing.id.desc()).all()
-    return {
-        "listings": [
-            {
-                "listing_code": row.listing_code,
-                "seller_name": row.seller_name,
-                "seller_phone": row.seller_phone,
-                "seller_location": row.seller_location,
-                "crop_name": row.crop_name,
-                "category": row.category,
-                "quantity": row.quantity,
-                "available_quantity": row.available_quantity,
-                "unit": row.unit,
-                "price_per_unit": row.price_per_unit,
-                "harvest_date": row.harvest_date,
-                "description": row.description,
-                "image_url": row.image_url,
-                "created_at": str(row.created_at),
-            }
-            for row in rows
-        ]
-    }
-
-
-@app.post("/produce/listings")
-def create_farmer_produce_listing(req: ProduceListingRequest, db: Session = Depends(get_session)):
-    listing_code = f"FARM-{int(datetime.now(timezone.utc).timestamp())}-{random.randint(100, 999)}"
-    listing = FarmerProduceListing(
-        listing_code=listing_code,
-        user_id=req.user_id,
-        seller_name=req.seller_name,
-        seller_phone=req.seller_phone,
-        seller_location=req.seller_location,
-        crop_name=req.crop_name,
-        category=req.category or "vegetable",
-        quantity=max(1, req.quantity),
-        available_quantity=max(1, req.quantity),
-        unit=req.unit or "kg",
-        price_per_unit=req.price_per_unit,
-        harvest_date=req.harvest_date,
-        description=req.description,
-        image_url=req.image_url,
-        is_active=True,
-    )
-    db.add(listing)
-    db.commit()
-    return {"message": "Produce listing created", "listing_code": listing_code}
-
-
-@app.post("/produce/orders")
-def create_produce_order(req: ProduceOrderRequest, db: Session = Depends(get_session)):
-    listing = db.query(FarmerProduceListing).filter(FarmerProduceListing.listing_code == req.listing_code, FarmerProduceListing.is_active.is_(True)).first()
-    if not listing:
-        raise HTTPException(status_code=404, detail="Listing not found")
-    if req.quantity <= 0 or req.quantity > (listing.available_quantity or 0):
-        raise HTTPException(status_code=400, detail="Requested quantity is not available")
-
-    unit_price = safe_float(listing.price_per_unit) or 0
-    total = round(unit_price * req.quantity, 2)
-    order_code = f"PM-{int(datetime.now(timezone.utc).timestamp())}-{random.randint(100, 999)}"
-    order = OrderRecord(
-        order_code=order_code,
-        user_id=req.user_id,
-        customer_name=req.buyer_name,
-        customer_phone=req.buyer_phone,
-        delivery_address=req.delivery_address,
-        payment_method=req.payment_method,
-        item_summary=f"{listing.crop_name} x{req.quantity} {listing.unit} from {listing.seller_name}",
-        item_count=req.quantity,
-        total=str(total),
-        status="Order placed",
-        source="produce-market",
-    )
-    listing.available_quantity = max(0, int(listing.available_quantity or 0) - req.quantity)
-    if listing.available_quantity == 0:
-        listing.is_active = False
-    db.add(order)
-    db.flush()
-    sync_order_timeline(db, order)
-    db.commit()
-    return {
-        "message": "Produce order placed",
-        "order": serialize_order(db, order),
-        "seller_name": listing.seller_name,
-        "listing_code": listing.listing_code,
-    }
-
-
-@app.get("/dashboard-overview")
-def dashboard_overview(user_id: Optional[int] = Query(default=None), db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    data_status = refresh_live_operating_data(db, user, force=False)
-    memory_rows = []
-    if user_id:
         memory_rows = (
             db.query(QueryMemory)
             .filter(QueryMemory.user_id == user_id)
@@ -1948,108 +1558,593 @@ def dashboard_overview(user_id: Optional[int] = Query(default=None), db: Session
             .limit(10)
             .all()
         )
-    farm_profile = db.query(FarmProfile).filter(FarmProfile.user_id == user_id).first() if user_id else None
-    merged_profile = merge_farm_profile_context(merge_profile(user), farm_profile)
-    payload = build_dashboard_payload(merged_profile, memory_rows)
-    payload["weather"] = {"temp":"Unavailable", "condition":"Weather not available", "advice":"Refresh live weather for your location.", "humidity":"Unavailable", "wind":"Unavailable", "rain_probability":"Unavailable", "status":"unavailable"}
-    payload["markets"] = []
 
-    state = getattr(user, "state", None) or ""
-    district = getattr(user, "district", None) or ""
-    weather_row = (
-        db.query(WeatherSnapshot)
-        .filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district)
-        .order_by(WeatherSnapshot.captured_at.desc())
-        .first()
-    )
-    mandi_rows = (
-        db.query(MandiPrice)
-        .filter(MandiPrice.state == state, MandiPrice.district == district)
-        .order_by(MandiPrice.captured_at.desc())
-        .limit(6)
-        .all()
-    )
-    alert_rows = (
-        db.query(AlertRecord)
-        .filter((AlertRecord.user_id == user_id) | ((AlertRecord.user_id.is_(None)) & (AlertRecord.district == district)))
-        .order_by(AlertRecord.created_at.desc())
-        .limit(6)
-        .all()
-    )
-    scheme_rows = (
-        db.query(SchemeSnapshot)
-        .filter((SchemeSnapshot.state == state) | (SchemeSnapshot.state.is_(None)))
-        .order_by(SchemeSnapshot.captured_at.desc(), SchemeSnapshot.id.desc())
-        .limit(6)
-        .all()
-    )
-
-    if weather_row and weather_row.source != "seed":
-        payload["weather"] = {
-            "source": weather_row.source,
-            "observed_at": str(weather_row.captured_at),
-            "status": "cached" if not is_recent(weather_row.captured_at) else "live",
-            "temp": weather_row.temperature,
-            "condition": weather_row.condition,
-            "advice": weather_row.advisory or payload["weather"]["advice"],
-            "humidity": f"Humidity {weather_row.humidity or 'unavailable'}",
-            "wind": f"Wind {weather_row.wind or 'unavailable'}",
-            "rain_probability": weather_row.rain_probability or "Unavailable",
+        farm_profile = db.query(FarmProfile).filter(FarmProfile.user_id == user_id).first()
+        return {
+            "profile": merge_farm_profile_context(merge_profile(user), farm_profile),
+            "farm_profile": serialize_farm_profile(farm_profile),
+            "memory": [
+                {
+                    "question": row.question,
+                    "answer": row.answer,
+                    "language": row.language,
+                    "context_tag": row.context_tag,
+                    "timestamp": str(row.timestamp),
+                }
+                for row in memory_rows
+            ],
         }
+    finally:
+        db.close()
 
-    if mandi_rows:
-        payload["markets"] = [
-            {
-                "crop": row.crop,
-                "price": f"Rs {row.price}",
-                "trend": row.trend or "Stable market movement",
-                "source": row.source,
-                "observed_at": str(row.captured_at),
-                "status": "reference" if row.source == "seed" else "cached",
-                "mandi_name": row.mandi_name,
-            }
-            for row in mandi_rows
-        ]
 
-    payload["live_alerts"] = [
-        {
-            "severity": row.severity,
-            "title": row.title,
-            "body": row.body,
-            "category": row.category,
+@app.post("/profile/preferences")
+def update_profile_preferences(req: ProfileUpdateRequest):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, req.user_id)
+        if not user:
+            return {"message": "User not found"}
+        update_user_profile(user, req)
+        ensure_seed_operating_data(db, user)
+        db.commit()
+        return {"message": "Profile preferences updated", "profile": merge_profile(user)}
+    finally:
+        db.close()
+
+
+@app.get("/farm-profile/{user_id}")
+def get_farm_profile(user_id: int):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, user_id)
+        if not user:
+            return {"message": "User not found"}
+        profile = get_or_create_farm_profile(db, user_id)
+        return {"farm_profile": serialize_farm_profile(profile)}
+    finally:
+        db.close()
+
+
+@app.post("/farm-profile")
+def save_farm_profile(req: FarmProfileRequest):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, req.user_id)
+        if not user:
+            return {"message": "User not found"}
+        profile = get_or_create_farm_profile(db, req.user_id)
+        for field in ["farm_name", "primary_crop", "irrigation_type", "livestock", "taluka", "pin_code", "lat", "lng"]:
+            value = getattr(req, field, None)
+            if value is not None:
+                setattr(profile, field, value)
+        if req.primary_crop:
+            user.crop_name = req.primary_crop
+        db.commit()
+        ensure_seed_operating_data(db, user)
+        return {"message": "Farm profile saved", "farm_profile": serialize_farm_profile(profile)}
+    finally:
+        db.close()
+
+
+@app.post("/ops/live-sync")
+def sync_live_feeds(user_id: Optional[int] = Query(default=None), force: bool = Query(default=False)):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, user_id)
+        status = refresh_live_operating_data(db, user, force=force)
+        if user:
+            create_market_alert_notifications(db, user.state or "Maharashtra", user.district or "Pune")
+            db.commit()
+        return {"message": "Live feed sync complete", "data_status": status}
+    finally:
+        db.close()
+
+
+@app.get("/ops/feed-status")
+def get_feed_status(user_id: Optional[int] = Query(default=None)):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, user_id)
+        state = getattr(user, "state", None) or "Maharashtra"
+        district = getattr(user, "district", None) or "Pune"
+        weather_row = (
+            db.query(WeatherSnapshot)
+            .filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district)
+            .order_by(WeatherSnapshot.captured_at.desc())
+            .first()
+        )
+        market_row = (
+            db.query(MandiPrice)
+            .filter(MandiPrice.state == state, MandiPrice.district == district)
+            .order_by(MandiPrice.captured_at.desc())
+            .first()
+        )
+        latest_scheme = db.query(SchemeSnapshot).order_by(SchemeSnapshot.captured_at.desc()).first()
+        return {
+            "weather": {
+                "source": getattr(weather_row, "source", "none"),
+                "captured_at": str(getattr(weather_row, "captured_at", "")),
+                "status": "fresh" if is_recent(getattr(weather_row, "captured_at", None)) else "stale",
+            },
+            "market": {
+                "source": getattr(market_row, "source", "none"),
+                "captured_at": str(getattr(market_row, "captured_at", "")),
+                "status": "fresh" if is_recent(getattr(market_row, "captured_at", None)) else "stale",
+            },
+            "schemes": {
+                "source": getattr(latest_scheme, "source", "none"),
+                "captured_at": str(getattr(latest_scheme, "captured_at", "")),
+                "status": "fresh" if latest_scheme else "missing",
+            },
         }
-        for row in alert_rows if row.source != "seed"
-    ]
-    payload["farm_profile"] = serialize_farm_profile(farm_profile)
-    payload["loan_insurance"] = loan_insurance_assistant(merged_profile)
-    payload["data_status"] = data_status
-    if scheme_rows:
-        payload["scheme_matches"] = [
-            {
-                "name": row.scheme_name,
-                "reason": row.summary,
-                "eligibility": row.eligibility or "",
-                "source": row.source or "rules",
+    finally:
+        db.close()
+
+
+@app.get("/shop/inventory")
+def get_shop_inventory():
+    db = get_db()
+    try:
+        ensure_inventory_seed(db)
+        items = db.query(InventoryItem).order_by(InventoryItem.updated_at.desc(), InventoryItem.product_name.asc()).all()
+        return {
+            "items": [
+                {
+                    "product_id": item.product_id,
+                    "product_name": item.product_name,
+                    "category": item.category,
+                    "seller": item.seller,
+                    "stock_count": item.stock_count,
+                    "unit": item.unit,
+                    "price": item.price,
+                    "price_source": item.price_source,
+                    "source": item.source,
+                    "updated_at": str(item.updated_at),
+                }
+                for item in items
+            ]
+        }
+    finally:
+        db.close()
+
+
+@app.post("/admin/inventory/upsert")
+def upsert_inventory_item(req: InventoryUpdateRequest, user_email: str = Query(...)):
+    if not is_admin_email(user_email):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    db = get_db()
+    try:
+        item = db.query(InventoryItem).filter(InventoryItem.product_id == req.product_id).first()
+        if not item:
+            item = InventoryItem(product_id=req.product_id, product_name=req.product_name)
+            db.add(item)
+        item.product_name = req.product_name
+        item.category = req.category
+        item.seller = req.seller
+        item.stock_count = max(0, req.stock_count)
+        item.unit = req.unit
+        item.price = req.price
+        item.price_source = req.price_source or "admin"
+        item.source = "admin"
+        db.commit()
+        return {"message": "Inventory updated"}
+    finally:
+        db.close()
+
+
+@app.post("/shop/demand-signal")
+def create_demand_signal(req: DemandSignalRequest):
+    db = get_db()
+    try:
+        db.add(
+            DemandSignal(
+                user_id=req.user_id,
+                product_id=req.product_id,
+                product_name=req.product_name,
+                signal_type=req.signal_type,
+                source="frontend",
+            )
+        )
+        db.commit()
+        return {"message": "Demand signal captured"}
+    finally:
+        db.close()
+
+
+@app.get("/admin/commerce-overview")
+def get_commerce_overview(user_email: str = Query(...)):
+    if not is_admin_email(user_email):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    db = get_db()
+    try:
+        ensure_inventory_seed(db)
+        inventory_rows = db.query(InventoryItem).order_by(InventoryItem.stock_count.asc(), InventoryItem.product_name.asc()).all()
+        demand_rows = (
+            db.query(
+                DemandSignal.product_id,
+                DemandSignal.product_name,
+                func.count(DemandSignal.id).label("count"),
+            )
+            .group_by(DemandSignal.product_id, DemandSignal.product_name)
+            .order_by(func.count(DemandSignal.id).desc(), DemandSignal.product_name.asc())
+            .limit(8)
+            .all()
+        )
+        order_rows = db.query(OrderRecord).order_by(OrderRecord.created_at.desc()).limit(10).all()
+        return {
+            "inventory": [
+                {
+                    "product_id": row.product_id,
+                    "product_name": row.product_name,
+                    "stock_count": row.stock_count,
+                    "seller": row.seller,
+                    "price": row.price,
+                    "updated_at": str(row.updated_at),
+                }
+                for row in inventory_rows
+            ],
+            "demand": [
+                {
+                    "product_id": row.product_id,
+                    "product_name": row.product_name or row.product_id,
+                    "count": row.count,
+                }
+                for row in demand_rows
+            ],
+            "orders": [serialize_order(db, row) for row in order_rows],
+        }
+    finally:
+        db.close()
+
+
+@app.post("/shop/orders")
+def create_shop_order(req: OrderCreateRequest):
+    db = get_db()
+    try:
+        ensure_inventory_seed(db)
+        order_code = f"AG-{int(datetime.utcnow().timestamp())}-{random.randint(100, 999)}"
+        order = OrderRecord(
+            order_code=order_code,
+            user_id=req.user_id,
+            customer_name=req.customer_name,
+            customer_phone=req.customer_phone,
+            delivery_address=req.delivery_address,
+            payment_method=req.payment_method,
+            item_summary=", ".join(f"{item.name} x{item.qty}" for item in req.items),
+            item_count=sum(max(0, item.qty) for item in req.items),
+            total=str(round(req.total, 2)),
+            status="Order placed",
+            source="shop",
+        )
+        db.add(order)
+        decrement_inventory_for_order(db, req.items)
+        for item in req.items:
+            db.add(DemandSignal(user_id=req.user_id, product_id=item.product_id, product_name=item.name, signal_type="ordered", source="order"))
+        db.flush()
+        sync_order_timeline(db, order)
+        db.commit()
+        return {"message": "Order created", "order": serialize_order(db, order)}
+    finally:
+        db.close()
+
+
+@app.get("/shop/orders")
+def list_shop_orders(user_id: Optional[int] = Query(default=None)):
+    db = get_db()
+    try:
+        query = db.query(OrderRecord)
+        if user_id:
+            query = query.filter(OrderRecord.user_id == user_id)
+        rows = query.order_by(OrderRecord.created_at.desc()).limit(12).all()
+        payload = [serialize_order(db, row) for row in rows]
+        db.commit()
+        return {"orders": payload}
+    finally:
+        db.close()
+
+
+@app.post("/shop/orders/status")
+def update_shop_order_status(req: OrderStatusUpdateRequest, user_email: str = Query(...)):
+    if not is_admin_email(user_email):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    db = get_db()
+    try:
+        order = db.query(OrderRecord).filter(OrderRecord.order_code == req.order_code).first()
+        if not order:
+            raise HTTPException(status_code=404, detail="Order not found")
+        order.status = req.status
+        db.add(OrderStatusEvent(order_code=req.order_code, status=req.status, note=req.note or "", source="admin"))
+        db.commit()
+        return {"message": "Order status updated", "order": serialize_order(db, order)}
+    finally:
+        db.close()
+
+
+@app.post("/market-alerts")
+def create_market_alert(req: MarketAlertRequest):
+    db = get_db()
+    try:
+        db.add(
+            MarketAlertSubscription(
+                user_id=req.user_id,
+                crop=req.crop,
+                target_price=req.target_price,
+                district=req.district,
+                state=req.state,
+                channel=req.channel or "in_app",
+                is_active=True,
+            )
+        )
+        if req.state and req.district:
+            create_market_alert_notifications(db, req.state, req.district)
+        db.commit()
+        return {"message": "Market alert saved"}
+    finally:
+        db.close()
+
+
+@app.get("/market-alerts")
+def list_market_alerts(user_id: Optional[int] = Query(default=None)):
+    db = get_db()
+    try:
+        subscriptions = db.query(MarketAlertSubscription)
+        notifications = db.query(AlertRecord).filter(AlertRecord.category == "market-alert")
+        if user_id:
+            subscriptions = subscriptions.filter(MarketAlertSubscription.user_id == user_id)
+            notifications = notifications.filter(AlertRecord.user_id == user_id)
+        return {
+            "subscriptions": [
+                {
+                    "crop": row.crop,
+                    "target_price": row.target_price,
+                    "district": row.district,
+                    "state": row.state,
+                    "channel": row.channel,
+                    "created_at": str(row.created_at),
+                }
+                for row in subscriptions.order_by(MarketAlertSubscription.created_at.desc()).all()
+            ],
+            "notifications": [
+                {
+                    "title": row.title,
+                    "body": row.body,
+                    "severity": row.severity,
+                    "created_at": str(row.created_at),
+                }
+                for row in notifications.order_by(AlertRecord.created_at.desc()).limit(10).all()
+            ],
+        }
+    finally:
+        db.close()
+
+
+@app.get("/produce/listings")
+def list_farmer_produce_listings(category: Optional[str] = Query(default=None), crop: Optional[str] = Query(default=None)):
+    db = get_db()
+    try:
+        ensure_produce_listing_seed(db)
+        query = db.query(FarmerProduceListing).filter(FarmerProduceListing.is_active.is_(True), FarmerProduceListing.available_quantity > 0)
+        if category:
+            query = query.filter(FarmerProduceListing.category == category)
+        if crop:
+            query = query.filter(FarmerProduceListing.crop_name.ilike(f"%{crop}%"))
+        rows = query.order_by(FarmerProduceListing.created_at.desc(), FarmerProduceListing.id.desc()).all()
+        return {
+            "listings": [
+                {
+                    "listing_code": row.listing_code,
+                    "seller_name": row.seller_name,
+                    "seller_phone": row.seller_phone,
+                    "seller_location": row.seller_location,
+                    "crop_name": row.crop_name,
+                    "category": row.category,
+                    "quantity": row.quantity,
+                    "available_quantity": row.available_quantity,
+                    "unit": row.unit,
+                    "price_per_unit": row.price_per_unit,
+                    "harvest_date": row.harvest_date,
+                    "description": row.description,
+                    "image_url": row.image_url,
+                    "created_at": str(row.created_at),
+                }
+                for row in rows
+            ]
+        }
+    finally:
+        db.close()
+
+
+@app.post("/produce/listings")
+def create_farmer_produce_listing(req: ProduceListingRequest):
+    db = get_db()
+    try:
+        listing_code = f"FARM-{int(datetime.utcnow().timestamp())}-{random.randint(100, 999)}"
+        listing = FarmerProduceListing(
+            listing_code=listing_code,
+            user_id=req.user_id,
+            seller_name=req.seller_name,
+            seller_phone=req.seller_phone,
+            seller_location=req.seller_location,
+            crop_name=req.crop_name,
+            category=req.category or "vegetable",
+            quantity=max(1, req.quantity),
+            available_quantity=max(1, req.quantity),
+            unit=req.unit or "kg",
+            price_per_unit=req.price_per_unit,
+            harvest_date=req.harvest_date,
+            description=req.description,
+            image_url=req.image_url,
+            is_active=True,
+        )
+        db.add(listing)
+        db.commit()
+        return {"message": "Produce listing created", "listing_code": listing_code}
+    finally:
+        db.close()
+
+
+@app.post("/produce/orders")
+def create_produce_order(req: ProduceOrderRequest):
+    db = get_db()
+    try:
+        listing = db.query(FarmerProduceListing).filter(FarmerProduceListing.listing_code == req.listing_code, FarmerProduceListing.is_active.is_(True)).first()
+        if not listing:
+            raise HTTPException(status_code=404, detail="Listing not found")
+        if req.quantity <= 0 or req.quantity > (listing.available_quantity or 0):
+            raise HTTPException(status_code=400, detail="Requested quantity is not available")
+
+        unit_price = safe_float(listing.price_per_unit) or 0
+        total = round(unit_price * req.quantity, 2)
+        order_code = f"PM-{int(datetime.utcnow().timestamp())}-{random.randint(100, 999)}"
+        order = OrderRecord(
+            order_code=order_code,
+            user_id=req.user_id,
+            customer_name=req.buyer_name,
+            customer_phone=req.buyer_phone,
+            delivery_address=req.delivery_address,
+            payment_method=req.payment_method,
+            item_summary=f"{listing.crop_name} x{req.quantity} {listing.unit} from {listing.seller_name}",
+            item_count=req.quantity,
+            total=str(total),
+            status="Order placed",
+            source="produce-market",
+        )
+        listing.available_quantity = max(0, int(listing.available_quantity or 0) - req.quantity)
+        if listing.available_quantity == 0:
+            listing.is_active = False
+        db.add(order)
+        db.flush()
+        sync_order_timeline(db, order)
+        db.commit()
+        return {
+            "message": "Produce order placed",
+            "order": serialize_order(db, order),
+            "seller_name": listing.seller_name,
+            "listing_code": listing.listing_code,
+        }
+    finally:
+        db.close()
+
+
+@app.get("/dashboard-overview")
+def dashboard_overview(user_id: Optional[int] = Query(default=None)):
+    db = get_db()
+    try:
+        user = get_user_by_id(db, user_id)
+        data_status = refresh_live_operating_data(db, user, force=False)
+        memory_rows = []
+        if user_id:
+            memory_rows = (
+                db.query(QueryMemory)
+                .filter(QueryMemory.user_id == user_id)
+                .order_by(QueryMemory.timestamp.desc())
+                .limit(10)
+                .all()
+            )
+        farm_profile = db.query(FarmProfile).filter(FarmProfile.user_id == user_id).first() if user_id else None
+        merged_profile = merge_farm_profile_context(merge_profile(user), farm_profile)
+        payload = build_dashboard_payload(merged_profile, memory_rows)
+
+        state = getattr(user, "state", None) or "Maharashtra"
+        district = getattr(user, "district", None) or "Pune"
+        weather_row = (
+            db.query(WeatherSnapshot)
+            .filter(WeatherSnapshot.state == state, WeatherSnapshot.district == district)
+            .order_by(WeatherSnapshot.captured_at.desc())
+            .first()
+        )
+        mandi_rows = (
+            db.query(MandiPrice)
+            .filter(MandiPrice.state == state, MandiPrice.district == district)
+            .order_by(MandiPrice.captured_at.desc())
+            .limit(6)
+            .all()
+        )
+        alert_rows = (
+            db.query(AlertRecord)
+            .filter((AlertRecord.user_id == user_id) | ((AlertRecord.user_id.is_(None)) & (AlertRecord.district == district)))
+            .order_by(AlertRecord.created_at.desc())
+            .limit(6)
+            .all()
+        )
+        scheme_rows = (
+            db.query(SchemeSnapshot)
+            .filter((SchemeSnapshot.state == state) | (SchemeSnapshot.state.is_(None)))
+            .order_by(SchemeSnapshot.captured_at.desc(), SchemeSnapshot.id.desc())
+            .limit(6)
+            .all()
+        )
+
+        if weather_row:
+            payload["weather"] = {
+                "temp": weather_row.temperature,
+                "condition": weather_row.condition,
+                "advice": weather_row.advisory or payload["weather"]["advice"],
+                "humidity": f"Humidity {weather_row.humidity or '65%'}",
+                "wind": f"Wind {weather_row.wind or '10 km/h'}",
+                "rain_probability": weather_row.rain_probability or "20%",
             }
-            for row in scheme_rows
+
+        if mandi_rows:
+            payload["markets"] = [
+                {
+                    "crop": row.crop,
+                    "price": f"Rs {row.price}",
+                    "trend": row.trend or "Stable market movement",
+                    "mandi_name": row.mandi_name,
+                }
+                for row in mandi_rows
+            ]
+
+        payload["live_alerts"] = [
+            {
+                "severity": row.severity,
+                "title": row.title,
+                "body": row.body,
+                "category": row.category,
+            }
+            for row in alert_rows
         ]
-    payload["platform_modules"] = {
-        "phase1": [
-            {"id": "otp-auth", "label": "OTP onboarding", "status": "live"},
-            {"id": "farm-profile", "label": "Farm profile", "status": "live"},
-            {"id": "live-weather", "label": "District weather board", "status": "live"},
-            {"id": "mandi-feed", "label": "Mandi price board", "status": "live"},
-        ],
-        "phase2": PHASE_TWO_MODULES,
-        "phase3": PHASE_THREE_MODULES,
-    }
-    return payload
+        payload["farm_profile"] = serialize_farm_profile(farm_profile)
+        payload["loan_insurance"] = loan_insurance_assistant(merged_profile)
+        payload["data_status"] = data_status
+        if scheme_rows:
+            payload["scheme_matches"] = [
+                {
+                    "name": row.scheme_name,
+                    "reason": row.summary,
+                    "eligibility": row.eligibility or "",
+                    "source": row.source or "rules",
+                }
+                for row in scheme_rows
+            ]
+        payload["platform_modules"] = {
+            "phase1": [
+                {"id": "otp-auth", "label": "OTP onboarding", "status": "live"},
+                {"id": "farm-profile", "label": "Farm profile", "status": "live"},
+                {"id": "live-weather", "label": "District weather board", "status": "live"},
+                {"id": "mandi-feed", "label": "Mandi price board", "status": "live"},
+            ],
+            "phase2": PHASE_TWO_MODULES,
+            "phase3": PHASE_THREE_MODULES,
+        }
+        return payload
+    finally:
+        db.close()
 
 
 @app.post("/ai/loan-insurance-assistant")
-def ai_loan_insurance_assistant(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return loan_insurance_assistant(profile)
+def ai_loan_insurance_assistant(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return loan_insurance_assistant(profile)
+    finally:
+        db.close()
 
 
 @app.get("/platform/modules")
@@ -2066,410 +2161,361 @@ def get_platform_modules():
     }
 
 
-@app.get("/health", tags=["ops"])
-def health_check(deep: bool = False):
-    """Report database, vector index and checked model readiness honestly."""
-    db_ok = check_database()
-    knowledge_ok = bool(documents and retriever._idf)
-    vector_status = retriever.status()
-    llm_available = retriever.llm.is_available() if deep else retriever.llm._available
-    ready = db_ok and knowledge_ok
-    body = {
-        "status": "ok" if ready else "degraded",
-        "database": "connected" if db_ok else "unavailable",
-        "chatbot_ready": ready,
-        "answer_capability": "model_assisted" if retriever._cloud_configured() or llm_available else "extractive",
-        "answer_mode": "rag" if retriever.enabled else "extractive",
-        "vector_index": vector_status,
-        "ingestion": ingestion_report if deep else {k: v for k, v in ingestion_report.items() if k != "files"},
-        "knowledge_status": "indexed" if knowledge_ok else "empty",
-        "knowledge_freshness": "unverified",
-        "knowledge_docs": len(documents),
-        "retriever_terms": len(retriever._idf),
-        "llm_available": llm_available,
-        "generation_status": ("available" if llm_available else ("unavailable" if llm_available is False else "unchecked")) if retriever.enabled else "not_required",
-        "llm_model": retriever.llm.model,
-        "llm_required": False,
-        "translation": "configured API" if os.getenv("GOOGLE_TRANSLATE_API_KEY") else "local Ollama; checked on use",
-        "translation_status": translation_status(),
-    }
-    return JSONResponse(status_code=200 if ready else 503, content=body)
-
-
 @app.post("/ask")
-def ask_question(req: QuestionRequest, db: Session = Depends(get_session)):
-    started = time.perf_counter()
-    user = get_user_by_id(db, req.user_id)
-    if req.user_id and user is None:
-        raise HTTPException(status_code=404, detail="Farmer profile not found")
-    profile = {key: getattr(user, key, None) for key in ("state", "crop_name", "district")} if user else None
-    if req.language == "Auto":
-        req.language = detect_language(req.question)
-    retrieval_question = req.question
-    warnings = []
-    # RAG searches native aliases plus audited offline farming vocabulary.
-    # Preserve the actual question; external translation must not be a search
-    # dependency or silently drop its restrictions, names or negation.
-
-    result = retriever.answer(retrieval_question, profile)
-    warnings.extend(result.get("warnings", []))
-    answer = result["answer"]
-    # Keep source wording intact: replacing terms or truncating doses can change
-    # the meaning of an agricultural instruction.
-
-    same_source_language = req.language == "Gujarati" and bool(re.search(r'[\u0a80-\u0aff]', answer))
-    localized = result.get('localized_answers', {}).get(LANGUAGE_CODES.get(req.language))
-    translated_answer = localized or (answer if same_source_language else translate_text(answer, req.language))
-    if req.language != "English" and translated_answer == answer and not same_source_language:
-        warnings.append("Answer translation is unavailable; showing the original source text.")
-    if translated_answer != answer:
-        warnings.append("Translated wording may differ; original source excerpts are included for verification.")
-    translation_ok = same_source_language or translated_answer != answer or (req.language == "English" and not re.search(r'[\u0900-\u0aff]', answer))
-    if req.language == "English" and not translation_ok:
-        warnings.append("English translation is unavailable; original source wording is retained.")
-    display_question = req.question
-    question_translation_status = "not_required"
-    if req.language == "Gujarati" and detect_language(req.question) != "Gujarati":
-        try:
-            display_question = translate_cached(req.question, "gu")
-            question_translation_status = "translated"
-        except RuntimeError:
-            question_translation_status = "unavailable"
-    if req.language == "Gujarati" and not translation_ok:
-        translated_answer = "માફ કરશો, આ જવાબનું ગુજરાતી અનુવાદ હમણાં તૈયાર થઈ શક્યું નથી. કૃપા કરીને ફરી પ્રયાસ કરો. મૂળ સ્રોત નીચે જોઈ શકો છો."
-    save_memory(db, req.user_id, req.question, translated_answer, req.language, "assistant")
-
-    if req.language == "Gujarati":
-        warnings = (["અનુવાદ અને મૂળ સ્રોતની વિગતો સરખાવો; તારીખો, રકમ અને પાત્રતા મૂળ દસ્તાવેજમાં ચકાસો."] if warnings else [])
-        if not translation_ok: warnings.append("ગુજરાતી અનુવાદ ઉપલબ્ધ નથી. કૃપા કરીને ફરી પ્રયાસ કરો.")
-        if question_translation_status == "unavailable": warnings.append("પ્રશ્નનો ગુજરાતી અનુવાદ થઈ શક્યો નથી; તમારો મૂળ પ્રશ્ન જાળવ્યો છે.")
-    source_type = result.get("source_type", "documents")
-    confidence = result["confidence"]
-
-    return {
-        "answer": translated_answer,
-        "original_answer": answer,
-        "display_question": display_question,
-        "original_question": req.question,
-        "question_translation_status": question_translation_status,
-        "answer_language": req.language,
-        "confidence": confidence,
-        "source_type": source_type,
-        "model": result.get("model"),
-        "references": result.get("references", []),
-        "follow_up_questions": (["માટી શું છે?", "સેન્દ્રિય ખેતી શું છે?"] if req.language == "Gujarati" and result.get("source_type") == "conversation" else result.get("follow_up_questions", [])),
-        "matched_documents": result.get("matched_documents", []),
-        "evidence": result.get("evidence", []),
-        "answer_mode": result.get("answer_mode", "extractive"),
-        "confidence_kind": "retrieval_relevance",
-        "freshness": "unverified",
-        "cache_hit": result.get("cache_hit", False),
-        "retrieval_ms": result.get("retrieval_ms", 0),
-        "generation_ms": result.get("generation_ms", 0),
-        "retrieval_method": result.get("retrieval_method"),
-        "context_chunks": result.get("context_chunks", 0),
-        "embedding_model": result.get("embedding_model"),
-        "response_ms": round((time.perf_counter() - started) * 1000, 2),
-        "warnings": warnings,
-        "translation_status": ("unavailable" if not translation_ok else "translated" if translated_answer != answer else
-                               "not_required" if same_source_language or (req.language == "English" and not re.search(r'[\u0900-\u0dff]', answer)) else
-                               "unavailable"),
-    }
-
-
-@app.get("/knowledge/gr/{source_id}")
-def repository_gr_source(source_id: str, page: int = Query(default=1, ge=1)):
-    from backend.import_maharashtra_grs import DEFAULT_CATALOG
-    import sqlite3
-    catalog = Path(os.getenv("GR_CATALOG_PATH", str(DEFAULT_CATALOG))).resolve()
-    if source_id not in repository_source_ids or not catalog.exists():
-        raise HTTPException(status_code=404, detail="GR source not found")
-    from contextlib import closing
-    with closing(sqlite3.connect(catalog.as_uri() + "?mode=ro", uri=True)) as connection:
-        row = connection.execute("SELECT pages FROM gr_documents WHERE json_extract(metadata, '$.source_id')=?", (source_id,)).fetchone()
-        if row:
-            for number, text in json.loads(row[0]):
-                if number == page:
-                    return PlainTextResponse(text)
-    raise HTTPException(status_code=404, detail="GR page not found")
-
-
-@app.get("/knowledge/pdf/{source_id}")
-def knowledge_pdf(source_id: str):
-    paths = {d["source_path"] for d in documents if d.get("source_id") == source_id and d.get("doc_type") == "pdf"}
-    if len(paths) != 1:
-        raise HTTPException(status_code=404, detail="PDF source not found")
-    path = Path(paths.pop()).resolve()
+def ask_question(req: QuestionRequest):
+    db = get_db()
     try:
-        path.relative_to((BASE_DIR / "backend" / "knowledge_imports").resolve())
-    except ValueError:
-        raise HTTPException(status_code=404, detail="PDF source not found")
-    if not path.is_file():
-        raise HTTPException(status_code=404, detail="PDF source not found")
-    return FileResponse(path, media_type="application/pdf")
+        user = get_user_by_id(db, req.user_id)
+        profile = merge_profile(user)
 
+        enriched_question = req.question
+        if user:
+            enriched_question = f"{req.question} Crop: {profile.get('crop_name')}. District: {profile.get('district')}."
 
-@app.get("/knowledge/sources/{source_name}")
-def knowledge_source(source_name: str):
-    # Only indexed files can be read; never accept an arbitrary filesystem path.
-    paths = {str(d.get("source_path")) for d in documents if d.get("source_name") == source_name}
-    if len(paths) != 1:
-        raise HTTPException(status_code=404, detail="Knowledge source not found")
-    path = Path(paths.pop()).resolve()
-    if not path.is_file() or path.suffix.lower() not in {".html", ".csv"}:
-        raise HTTPException(status_code=404, detail="Knowledge source not found")
-    # Render imported markup as text so a source cannot execute scripts.
-    return FileResponse(path, media_type="text/plain; charset=utf-8")
+        result = retriever.answer(enriched_question)
+        answer = result["answer"]
+
+        if req.explain_simply or (user and (user.simple_mode or "").lower() == "on"):
+            answer = simplify_text(answer)
+
+        translated_answer = translate_text(answer, req.language)
+        save_memory(db, req.user_id, req.question, translated_answer, req.language, "assistant")
+
+        return {
+            "answer": translated_answer,
+            "confidence": result["confidence"],
+            "memory_hint": f"Personalized for {profile.get('crop_name')} in {profile.get('district')}",
+            "references": result.get("references", []),
+            "follow_up_questions": result.get("follow_up_questions", []),
+            "matched_documents": result.get("matched_documents", []),
+        }
+    finally:
+        db.close()
 
 
 @app.post("/ai/explain-simply")
 def explain_simply(req: ExplainRequest):
-    # Automated word substitution can strengthen advice or remove a qualifier.
-    return {"answer": translate_text(req.text, req.language),
-            "warnings": ["Source wording is preserved to avoid changing agricultural instructions."]}
+    return {"answer": translate_text(simplify_text(req.text), req.language)}
 
 
 @app.post("/ai/daily-briefing")
-def ai_daily_briefing(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return daily_briefing(profile)
+def ai_daily_briefing(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return daily_briefing(profile)
+    finally:
+        db.close()
 
 
 @app.post("/ai/farm-planner")
-def ai_farm_planner(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return generate_farm_plan(profile, req.horizon or "weekly")
+def ai_farm_planner(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return generate_farm_plan(profile, req.horizon or "weekly")
+    finally:
+        db.close()
 
 
 @app.post("/ai/scheme-eligibility")
-def ai_scheme_eligibility(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return {"matches": scheme_eligibility(profile)}
+def ai_scheme_eligibility(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return {"matches": scheme_eligibility(profile)}
+    finally:
+        db.close()
 
 
 @app.post("/ai/weather-alerts")
-def ai_weather_alerts(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return {"alerts": weather_alerts(profile)}
+def ai_weather_alerts(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return {"alerts": weather_alerts(profile)}
+    finally:
+        db.close()
 
 
 @app.post("/ai/market-prediction")
-def ai_market_prediction(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return market_prediction(profile)
+def ai_market_prediction(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return market_prediction(profile)
+    finally:
+        db.close()
 
 
 @app.post("/ai/pest-risk")
-def ai_pest_risk(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return pest_outbreak_risk(profile)
+def ai_pest_risk(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return pest_outbreak_risk(profile)
+    finally:
+        db.close()
 
 
 @app.post("/ai/map-context")
-def ai_map_context(req: IntelligenceRequest, db: Session = Depends(get_session)):
-    profile = merge_request_profile(db, req)
-    return map_context(profile)
+def ai_map_context(req: IntelligenceRequest):
+    db = get_db()
+    try:
+        profile = merge_request_profile(db, req)
+        return map_context(profile)
+    finally:
+        db.close()
 
 
 @app.get("/ai/chat-memory/{user_id}")
-def ai_chat_memory(user_id: int, db: Session = Depends(get_session)):
-    rows = (
-        db.query(QueryMemory)
-        .filter(QueryMemory.user_id == user_id)
-        .order_by(QueryMemory.timestamp.desc())
-        .limit(20)
-        .all()
-    )
-    return {
-        "items": [
-            {
-                "question": row.question,
-                "answer": row.answer,
-                "language": row.language,
-                "context_tag": row.context_tag,
-                "timestamp": str(row.timestamp),
-            }
-            for row in rows
-        ]
-    }
+def ai_chat_memory(user_id: int):
+    db = get_db()
+    try:
+        rows = (
+            db.query(QueryMemory)
+            .filter(QueryMemory.user_id == user_id)
+            .order_by(QueryMemory.timestamp.desc())
+            .limit(20)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "question": row.question,
+                    "answer": row.answer,
+                    "language": row.language,
+                    "context_tag": row.context_tag,
+                    "timestamp": str(row.timestamp),
+                }
+                for row in rows
+            ]
+        }
+    finally:
+        db.close()
 
 
 @app.get("/questions/feed")
-def get_question_feed(request: Request, limit: int = Query(20, ge=1, le=100), db: Session = Depends(get_session)):
-    rows = (
-        db.query(QueryMemory, User.name)
-        .outerjoin(User, User.id == QueryMemory.user_id)
-        .filter(QueryMemory.user_id == request.state.identity[0])
-        .order_by(QueryMemory.timestamp.desc())
-        .limit(limit)
-        .all()
-    )
-    return {
-        "items": [
-            {
-                "question": row.QueryMemory.question,
-                "answer": row.QueryMemory.answer,
-                "language": row.QueryMemory.language,
-                "timestamp": str(row.QueryMemory.timestamp),
-                "user_id": row.QueryMemory.user_id,
-                "user_name": row.name or "Farmer",
-            }
-            for row in rows
-        ]
-    }
+def get_question_feed(limit: int = 20):
+    db = get_db()
+    try:
+        rows = (
+            db.query(QueryMemory, User.name)
+            .outerjoin(User, User.id == QueryMemory.user_id)
+            .order_by(QueryMemory.timestamp.desc())
+            .limit(limit)
+            .all()
+        )
+        return {
+            "items": [
+                {
+                    "question": row.QueryMemory.question,
+                    "answer": row.QueryMemory.answer,
+                    "language": row.QueryMemory.language,
+                    "timestamp": str(row.QueryMemory.timestamp),
+                    "user_id": row.QueryMemory.user_id,
+                    "user_name": row.name or "Farmer",
+                }
+                for row in rows
+            ]
+        }
+    finally:
+        db.close()
 
 
 @app.post("/community/create-post")
-def create_post(post: PostCreate, db: Session = Depends(get_session)):
-    new_post = Post(content=post.content, user_id=post.user_id)
-    db.add(new_post)
-    db.commit()
-    db.refresh(new_post)
-    return {
-        "message": "Post created successfully",
-        "post": {
-            "id": new_post.id,
-            "content": new_post.content,
-            "timestamp": new_post.timestamp,
-            "user_id": new_post.user_id,
-            "likes": new_post.likes,
-            "dislikes": new_post.dislikes,
-            "reactions": json.loads(new_post.reactions or "{}"),
-        },
-    }
+def create_post(post: PostCreate):
+    db = get_db()
+    try:
+        new_post = Post(content=post.content, user_id=post.user_id)
+        db.add(new_post)
+        db.commit()
+        db.refresh(new_post)
+        return {
+            "message": "Post created successfully",
+            "post": {
+                "id": new_post.id,
+                "content": new_post.content,
+                "timestamp": new_post.timestamp,
+                "user_id": new_post.user_id,
+                "likes": new_post.likes,
+                "dislikes": new_post.dislikes,
+                "reactions": json.loads(new_post.reactions or "{}"),
+            },
+        }
+    finally:
+        db.close()
 
 
 @app.get("/community/posts")
-def get_posts(limit: int = 6, offset: int = 0, search: str = "", db: Session = Depends(get_session)):
-    query = db.query(Post)
-    if search:
-        query = query.filter(Post.content.contains(search))
-    posts = query.order_by(Post.timestamp.desc()).offset(offset).limit(limit).all()
+def get_posts(limit: int = 6, offset: int = 0, search: str = ""):
+    db = get_db()
+    try:
+        query = db.query(Post)
+        if search:
+            query = query.filter(Post.content.contains(search))
+        posts = query.order_by(Post.timestamp.desc()).offset(offset).limit(limit).all()
 
-    result = []
-    for post in posts:
-        user = db.query(User).filter(User.id == post.user_id).first()
+        result = []
+        for post in posts:
+            user = db.query(User).filter(User.id == post.user_id).first()
+            try:
+                reactions = json.loads(post.reactions or "{}")
+            except Exception:
+                reactions = {}
+            result.append(
+                {
+                    "id": post.id,
+                    "content": post.content,
+                    "user_id": post.user_id,
+                    "user_name": user.name if user else "Farmer",
+                    "timestamp": post.timestamp,
+                    "likes": post.likes or 0,
+                    "dislikes": post.dislikes or 0,
+                    "reactions": reactions,
+                }
+            )
+        return result
+    finally:
+        db.close()
+
+
+@app.get("/community/insights")
+def get_community_insights():
+    db = get_db()
+    try:
+        posts = db.query(Post).order_by(Post.timestamp.desc()).limit(25).all()
+        return community_insights(posts)
+    finally:
+        db.close()
+
+
+@app.post("/community/like/{post_id}")
+def like_post(post_id: int):
+    db = get_db()
+    try:
+        post = db.query(Post).filter(Post.id == post_id).first()
+        if post:
+            post.likes = (post.likes or 0) + 1
+            db.commit()
+            return {"message": "liked", "likes": post.likes}
+        return {"message": "Post not found", "likes": 0}
+    finally:
+        db.close()
+
+
+@app.post("/community/dislike/{post_id}")
+def dislike_post(post_id: int):
+    db = get_db()
+    try:
+        post = db.query(Post).filter(Post.id == post_id).first()
+        if post:
+            post.dislikes = (post.dislikes or 0) + 1
+            db.commit()
+            return {"message": "disliked", "dislikes": post.dislikes}
+        return {"message": "Post not found", "dislikes": 0}
+    finally:
+        db.close()
+
+
+@app.post("/community/react")
+def react_to_post(req: ReactionRequest):
+    db = get_db()
+    try:
+        post = db.query(Post).filter(Post.id == req.post_id).first()
+        if not post:
+            return {"message": "Post not found", "reactions": {}}
+
         try:
             reactions = json.loads(post.reactions or "{}")
         except Exception:
             reactions = {}
-        result.append(
-            {
-                "id": post.id,
-                "content": post.content,
-                "user_id": post.user_id,
-                "user_name": user.name if user else "Farmer",
-                "timestamp": post.timestamp,
-                "likes": post.likes or 0,
-                "dislikes": post.dislikes or 0,
-                "reactions": reactions,
-            }
-        )
-    return result
 
-
-@app.get("/community/insights")
-def get_community_insights(db: Session = Depends(get_session)):
-    posts = db.query(Post).order_by(Post.timestamp.desc()).limit(25).all()
-    return community_insights(posts)
-
-
-@app.post("/community/like/{post_id}")
-def like_post(post_id: int, db: Session = Depends(get_session)):
-    post = db.query(Post).filter(Post.id == post_id).first()
-    if post:
-        post.likes = (post.likes or 0) + 1
+        reactions[req.emoji] = reactions.get(req.emoji, 0) + 1
+        post.reactions = json.dumps(reactions)
         db.commit()
-        return {"message": "liked", "likes": post.likes}
-    raise HTTPException(404, "Post not found")
-
-
-@app.post("/community/dislike/{post_id}")
-def dislike_post(post_id: int, db: Session = Depends(get_session)):
-    post = db.query(Post).filter(Post.id == post_id).first()
-    if post:
-        post.dislikes = (post.dislikes or 0) + 1
-        db.commit()
-        return {"message": "disliked", "dislikes": post.dislikes}
-    raise HTTPException(404, "Post not found")
-
-
-@app.post("/community/react")
-def react_to_post(req: ReactionRequest, db: Session = Depends(get_session)):
-    post = db.query(Post).filter(Post.id == req.post_id).first()
-    if not post:
-        raise HTTPException(404, "Post not found")
-
-    try:
-        reactions = json.loads(post.reactions or "{}")
-    except Exception:
-        reactions = {}
-
-    reactions[req.emoji] = reactions.get(req.emoji, 0) + 1
-    post.reactions = json.dumps(reactions)
-    db.commit()
-    return {"message": "reaction added", "reactions": reactions}
+        return {"message": "reaction added", "reactions": reactions}
+    finally:
+        db.close()
 
 
 @app.put("/community/post")
-def edit_post(req: PostUpdate, db: Session = Depends(get_session)):
-    post = db.query(Post).filter(Post.id == req.post_id).first()
-    if not post:
-        raise HTTPException(404, "Post not found")
-    if post.user_id != req.user_id:
-        raise HTTPException(403, "Not authorized to edit this post")
+def edit_post(req: PostUpdate):
+    db = get_db()
+    try:
+        post = db.query(Post).filter(Post.id == req.post_id).first()
+        if not post:
+            return {"message": "Post not found"}
+        if post.user_id != req.user_id:
+            return {"message": "Not authorized to edit this post"}
 
-    post.content = req.content
-    db.commit()
-    return {"message": "Post updated"}
+        post.content = req.content
+        db.commit()
+        return {"message": "Post updated"}
+    finally:
+        db.close()
 
 
 @app.delete("/community/post")
-def delete_post(req: PostDelete, db: Session = Depends(get_session)):
-    post = db.query(Post).filter(Post.id == req.post_id).first()
-    if not post:
-        raise HTTPException(404, "Post not found")
-    if post.user_id != req.user_id:
-        raise HTTPException(403, "Not authorized to delete")
+def delete_post(req: PostDelete):
+    db = get_db()
+    try:
+        post = db.query(Post).filter(Post.id == req.post_id).first()
+        if not post:
+            return {"message": "Post not found"}
+        if post.user_id != req.user_id:
+            return {"message": "Not authorized to delete"}
 
-    db.delete(post)
-    db.commit()
-    return {"message": "Post deleted"}
+        db.delete(post)
+        db.commit()
+        return {"message": "Post deleted"}
+    finally:
+        db.close()
 
 
 @app.post("/community/comment")
-def add_comment(comment: CommentCreate, db: Session = Depends(get_session)):
-    user = db.query(User).filter(User.id == comment.user_id).first()
-    if user is None or db.get(Post, comment.post_id) is None:
-        raise HTTPException(status_code=404, detail="Farmer or post not found")
-    db.add(Comment(post_id=comment.post_id, user_id=user.id, text=comment.text))
-    db.commit()
-    return {"message": "comment added"}
+def add_comment(comment: CommentCreate):
+    db = get_db()
+    try:
+        user = db.query(User).filter(User.id == comment.user_id).first()
+        comments_db.setdefault(comment.post_id, [])
+        comments_db[comment.post_id].append(
+            {
+                "text": comment.text,
+                "user_id": comment.user_id,
+                "user_name": user.name if user else "Guest",
+            }
+        )
+        return {"message": "comment added"}
+    finally:
+        db.close()
 
 
 @app.get("/community/comments/{post_id}")
-def get_comments(post_id: int, db: Session = Depends(get_session)):
-    rows = db.query(Comment, User.name).join(User, Comment.user_id == User.id).filter(Comment.post_id == post_id).order_by(Comment.id).all()
-    return [{"id": row.id, "text": row.text, "user_id": row.user_id, "user_name": name} for row, name in rows]
+def get_comments(post_id: int):
+    return comments_db.get(post_id, [])
 
 
 @app.post("/upload-image/")
-async def upload_image(file: UploadFile = File(...), language: str = Form("English"),
-                       question: str = Form(""), user_id: Optional[int] = Form(None),
-                       db: Session = Depends(get_session)):
-    contents = await file.read(MAX_UPLOAD_BYTES + 1)
-    if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Image too large. Maximum size is 10 MB.")
-    try:
-        extracted_text = await run_in_threadpool(image_text, contents, language)
-        lookup_text = (question.strip() + "\n" + extracted_text).strip()
-        if len(lookup_text) > 2000:
-            raise DocumentError("The image contains too much text for a question. Crop it to the relevant passage.")
-        request = QuestionRequest(question=lookup_text, language=language, user_id=user_id)
-    except (DocumentError, ValueError) as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
-    result = await run_in_threadpool(ask_question, request, db)
-    return {**result, "extracted_text": extracted_text, "llm_response": result["answer"]}
+async def upload_image(file: UploadFile = File(...)):
+    contents = await file.read()
+    image = Image.open(io.BytesIO(contents))
+
+    extracted_text = ""
+    if pytesseract:
+        try:
+            extracted_text = pytesseract.image_to_string(image).strip()
+        except Exception:
+            extracted_text = ""
+
+    lookup_text = extracted_text or "leaf record image"
+    result = retriever.answer(lookup_text)
+
+    return {
+        "extracted_text": extracted_text,
+        "llm_response": result["answer"],
+        "confidence": result["confidence"],
+    }
 
 
 @app.post("/ai/crop-doctor")
@@ -2480,17 +2526,25 @@ async def ai_crop_doctor(file: UploadFile = File(...)):
 
 
 @app.post("/ai/document-insights")
-async def ai_document_insights(file: UploadFile = File(...), language: str = Form("English")):
-    contents = await file.read(MAX_UPLOAD_BYTES + 1)
-    if len(contents) > MAX_UPLOAD_BYTES:
-        raise HTTPException(status_code=413, detail="Document too large. Maximum size is 10 MB.")
-    try:
-        extracted_text = await run_in_threadpool(document_text, contents, file.filename, language)
-    except DocumentError as exc:
-        raise HTTPException(status_code=422, detail=str(exc)) from exc
+async def ai_document_insights(file: UploadFile = File(...)):
+    contents = await file.read()
+    extracted_text = ""
+
+    if file.content_type and file.content_type.startswith("image/"):
+        try:
+            image = Image.open(io.BytesIO(contents))
+            if pytesseract:
+                extracted_text = pytesseract.image_to_string(image).strip()
+        except Exception:
+            extracted_text = ""
+    else:
+        try:
+            extracted_text = contents.decode("utf-8", errors="ignore")
+        except Exception:
+            extracted_text = ""
+
     analysis = analyze_document_text(extracted_text)
     analysis["extracted_text"] = extracted_text[:1200]
-    analysis["knowledge_base_updated"] = False
     return analysis
 
 
@@ -2498,28 +2552,5 @@ async def ai_document_insights(file: UploadFile = File(...), language: str = For
 def serve_login_page():
     return FileResponse(FRONTEND_DIR / "login.html")
 
-
-
-
-@app.get("/auth/me")
-def current_session(request: Request):
-    return {"user_id": request.state.identity[0], "role": request.state.identity[1]}
-
-@app.post("/auth/logout")
-def logout_session(request: Request, response: Response):
-    revoke(request, response)
-    return {"message": "Logged out"}
-
-@app.get("/crop-decision")
-def crop_decision(user_id: int, crop: str, db: Session = Depends(get_session)):
-    user = get_user_by_id(db, user_id)
-    if not user:
-        raise HTTPException(404, "Farmer profile not found")
-    rows = db.query(MandiPrice).filter(MandiPrice.state == user.state, MandiPrice.district == user.district, func.lower(MandiPrice.crop) == crop.lower(), MandiPrice.source != "seed").order_by(MandiPrice.captured_at.desc()).limit(3).all()
-    observations = [{"market": r.mandi_name, "price": r.price, "source": r.source, "observed_at": str(r.captured_at)} for r in rows]
-    summary = f"District: {user.district or 'not set'}. Season: {user.season or 'not set'}. "
-    summary += ("Recorded market prices: " + "; ".join(f"{r.mandi_name}: Rs {r.price}/quintal ({r.captured_at})" for r in rows) + ". ") if rows else "No verified local market observations are stored for this crop. "
-    summary += "Profit and grow/do-not-grow advice need local yield, soil suitability and cultivation costs; these are not inferred from price alone."
-    return {"district":user.district, "season":user.season, "observations":observations, "roi":None, "summary":summary}
 
 app.mount("/", StaticFiles(directory=FRONTEND_DIR, html=True), name="frontend")
