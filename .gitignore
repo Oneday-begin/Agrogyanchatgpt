@@ -48,3 +48,10 @@ Thumbs.db
 # Temporary downloaded/exported pages
 temp_drive_folder.html
 agrogyan-gpt-main/temp_drive_folder.html
+
+# Generated development artifacts and database sidecars
+graphify-out/
+tmp/
+*.db-*
+*.sqlite-*
+*.sqlite3-*
