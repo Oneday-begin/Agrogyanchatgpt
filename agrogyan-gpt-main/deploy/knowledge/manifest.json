@@ -1,0 +1,12 @@
+{
+  "gr_catalog.sqlite3": {
+    "sha256": "745356e89462ea3abbebbebce077d0133ea007278e551991411330f0fc50f717",
+    "rows": 1324,
+    "bytes": 17448960
+  },
+  "pdf_pages.sqlite3": {
+    "sha256": "0803515cf9ada6c95995908eeb794b04d452313b2c11504986c7152b23f04e08",
+    "rows": 61,
+    "bytes": 311296
+  }
+}

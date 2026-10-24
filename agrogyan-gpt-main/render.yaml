@@ -1,18 +1,35 @@
+# Blueprint path: agrogyan-gpt-main/render.yaml (root render.yaml is identical).
 services:
   - type: web
-    name: agrogyan-gpt
-    env: python
+    name: agrogyan-demo
+    runtime: python
     plan: free
+    rootDir: agrogyan-gpt-main
+    buildCommand: pip install -r requirements.txt && python -m backend.deployment_knowledge unpack
+    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT --workers 1 --proxy-headers
+    healthCheckPath: /health
     envVars:
-      - key: OTP_PROVIDER
-        value: twilio
-      - key: TWILIO_ACCOUNT_SID
+      - key: PYTHON_VERSION
+        value: 3.12.10
+      - key: BASIC_REGISTRATION
+        value: "true"
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: LLM_PROVIDER
+        value: groq
+      - key: LLM_MODEL
+        value: openai/gpt-oss-120b
+      - key: TRANSLATION_PROVIDER
+        value: groq
+      - key: SEMANTIC_ENABLED
+        value: "false"
+      - key: RAG_ENABLED
+        value: "true"
+      - key: GROQ_API_KEY
         sync: false
-      - key: TWILIO_AUTH_TOKEN
+      - key: DATABASE_URL
         sync: false
-      - key: TWILIO_SMS_FROM
-        sync: false
-      - key: TWILIO_WHATSAPP_FROM
-        sync: false
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+      - key: DB_POOL_SIZE
+        value: "2"
+      - key: DB_MAX_OVERFLOW
+        value: "2"

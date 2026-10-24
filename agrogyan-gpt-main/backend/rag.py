@@ -29,7 +29,7 @@ class RAGRetriever(Retriever):
         self._vector_retry_after = 0.0
         self._vector_reconnect_lock = Lock()
         self._vector_loading = False
-        if self.enabled and self.vector_store is None:
+        if self.enabled and self.vector_store is None and os.getenv("SEMANTIC_ENABLED", "true").lower() == "true":
             try:
                 self.vector_store = VectorStore(documents, OllamaEmbeddings(),
                                                os.getenv("VECTOR_STORE_PATH") or DEFAULT_PATH)
@@ -47,7 +47,7 @@ class RAGRetriever(Retriever):
     def _maybe_reconnect_vectors(self):
         # Starting Ollama later must not leave this process in lexical-only mode
         # until a restart. Reconnect off the request path; only one worker tries.
-        if self.vector_store or not self.enabled or time.monotonic() < self._vector_retry_after:
+        if os.getenv("SEMANTIC_ENABLED", "true").lower() != "true" or self.vector_store or not self.enabled or time.monotonic() < self._vector_retry_after:
             return
         if not self._vector_reconnect_lock.acquire(blocking=False):
             return
@@ -381,16 +381,17 @@ class RAGRetriever(Retriever):
     @staticmethod
     def _cloud_configured():
         provider = os.getenv('LLM_PROVIDER', 'ollama').lower()
-        return provider in {'openai', 'gemini'} and bool(os.getenv('OPENAI_API_KEY' if provider == 'openai' else 'GEMINI_API_KEY')) and bool(os.getenv('LLM_MODEL'))
+        return provider in {'openai', 'gemini', 'groq'} and bool(os.getenv({'openai': 'OPENAI_API_KEY', 'gemini': 'GEMINI_API_KEY', 'groq': 'GROQ_API_KEY'}.get(provider, ''))) and bool(os.getenv('LLM_MODEL'))
 
     def _cloud_select(self, system, question, choices):
         provider = os.getenv('LLM_PROVIDER', 'ollama').lower()
-        base = 'https://api.openai.com/v1' if provider == 'openai' else 'https://generativelanguage.googleapis.com/v1beta/openai'
-        key = os.getenv('OPENAI_API_KEY' if provider == 'openai' else 'GEMINI_API_KEY')
+        base = {'openai': 'https://api.openai.com/v1', 'gemini': 'https://generativelanguage.googleapis.com/v1beta/openai', 'groq': 'https://api.groq.com/openai/v1'}[provider]
+        key = os.getenv({'openai': 'OPENAI_API_KEY', 'gemini': 'GEMINI_API_KEY', 'groq': 'GROQ_API_KEY'}[provider])
         response = requests.post(base+'/chat/completions', headers={'Authorization':'Bearer '+key}, json={
             'model':os.environ['LLM_MODEL'], 'messages':[{'role':'system','content':system},
             {'role':'user','content':json.dumps({'question':question,'passages':choices},ensure_ascii=False)}],
-            'response_format':{'type':'json_object'}, 'max_completion_tokens':256,
+            'response_format':{'type':'json_object'}, 'max_completion_tokens':1024,
+            **({'reasoning_effort':'low'} if provider == 'groq' and os.environ['LLM_MODEL'].startswith('openai/gpt-oss') else {}),
         }, timeout=(2,15))
         response.raise_for_status()
         return json.loads(response.json()['choices'][0]['message']['content'])

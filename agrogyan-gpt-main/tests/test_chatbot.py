@@ -430,3 +430,39 @@ class GujaratiPresentationTests(unittest.TestCase):
         self.assertIn('ગુજરાતી',data['answer'])
         self.assertIn('Soil',data['original_answer'])
         self.assertEqual(data['display_question'],'What is soil?')
+
+
+class BasicRegistrationTests(unittest.TestCase):
+    def setUp(self):
+        from backend.security import _limits
+        _limits.clear()
+        self.client = TestClient(main.app)
+
+    def test_password_registration_login_and_no_phone_claim(self):
+        import uuid
+        payload = {'name': 'Demo Tester', 'email': f'{uuid.uuid4().hex}@example.test', 'password': 'Test-only-password-42'}
+        with patch.dict(os.environ, {'BASIC_REGISTRATION': 'true'}):
+            response = self.client.post('/auth/register-basic', json={**payload, 'role': 'admin'})
+            self.assertEqual(response.status_code, 201)
+            self.assertFalse(response.json()['phone_verified'])
+            with SessionLocal() as db:
+                user = db.query(User).filter(User.email == payload['email']).one()
+                self.assertEqual(user.role, 'farmer')
+                self.assertNotEqual(user.password, payload['password'])
+            self.assertEqual(self.client.post('/auth/register-basic', json=payload).status_code, 409)
+            login = self.client.post('/login', json={'email': payload['email'], 'password': payload['password']})
+            self.assertEqual(login.status_code, 200)
+            self.assertIn('agro_session', self.client.cookies)
+
+    def test_basic_registration_disabled(self):
+        with patch.dict(os.environ, {'BASIC_REGISTRATION': 'false'}):
+            self.assertFalse(self.client.get('/auth/config').json()['basic_registration'])
+            response = self.client.post('/auth/register-basic', json={'name': 'Demo', 'email': 'disabled@example.test', 'password': 'Test-only-password'})
+            self.assertEqual(response.status_code, 404)
+
+    def test_invalid_registration_and_rate_limit(self):
+        with patch.dict(os.environ, {'BASIC_REGISTRATION': 'true'}):
+            for _ in range(6):
+                response = self.client.post('/auth/register-basic', json={'name': ' ', 'email': 'invalid', 'password': 'short'})
+                self.assertEqual(response.status_code, 422)
+            self.assertEqual(self.client.post('/auth/register-basic', json={}).status_code, 429)

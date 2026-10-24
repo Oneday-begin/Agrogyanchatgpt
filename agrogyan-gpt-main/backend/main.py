@@ -1307,6 +1307,45 @@ def merge_request_profile(db: Session, request: IntelligenceRequest) -> dict:
     return profile
 
 
+class BasicRegisterRequest(BaseModel):
+    name: str = Field(min_length=1, max_length=100)
+    email: str = Field(min_length=3, max_length=254)
+    password: str = Field(min_length=8, max_length=72)
+
+    @field_validator("name", "email")
+    @classmethod
+    def clean_identity(cls, value, info):
+        value = value.strip()
+        if not value or (info.field_name == "email" and not re.fullmatch(r"[^\s@]+@[^\s@]+\.[^\s@]+", value)):
+            raise ValueError("Enter a valid name and email address")
+        return value
+
+
+@app.get("/auth/config")
+def auth_config():
+    return {"basic_registration": os.getenv("BASIC_REGISTRATION", "false").lower() == "true"}
+
+
+@app.post("/auth/register-basic", status_code=201)
+def register_basic(req: BasicRegisterRequest, db: Session = Depends(get_session)):
+    if not auth_config()["basic_registration"]:
+        raise HTTPException(404, "Basic registration is disabled")
+    email = normalize_email(req.email)
+    if db.query(User).filter(User.email == email).first():
+        raise HTTPException(409, "An account already exists with this email")
+    user = User(name=req.name, email=email, password=hash_password(req.password),
+                role="farmer", phone_verified=False, preferred_language="English", simple_mode="off")
+    db.add(user)
+    try:
+        db.commit()
+    except SQLAlchemyError:
+        db.rollback()
+        if db.query(User).filter(User.email == email).first():
+            raise HTTPException(409, "An account already exists with this email")
+        raise
+    return {"message": "Account created. You can now log in.", "phone_verified": False}
+
+
 @app.post("/register")
 def register_user(req: RegisterRequest, db: Session = Depends(get_session)):
     normalized_email = normalize_email(req.email)
@@ -2072,7 +2111,7 @@ def health_check(deep: bool = False):
     db_ok = check_database()
     knowledge_ok = bool(documents and retriever._idf)
     vector_status = retriever.status()
-    llm_available = retriever.llm.is_available() if deep else retriever.llm._available
+    llm_available = (retriever.llm.is_available() if deep else retriever.llm._available) if not retriever._cloud_configured() else None
     ready = db_ok and knowledge_ok
     body = {
         "status": "ok" if ready else "degraded",
@@ -2088,9 +2127,9 @@ def health_check(deep: bool = False):
         "retriever_terms": len(retriever._idf),
         "llm_available": llm_available,
         "generation_status": ("available" if llm_available else ("unavailable" if llm_available is False else "unchecked")) if retriever.enabled else "not_required",
-        "llm_model": retriever.llm.model,
+        "llm_model": os.getenv("LLM_MODEL") if retriever._cloud_configured() else retriever.llm.model,
         "llm_required": False,
-        "translation": "configured API" if os.getenv("GOOGLE_TRANSLATE_API_KEY") else "local Ollama; checked on use",
+        "translation": "cloud API; checked on use" if os.getenv("GOOGLE_TRANSLATE_API_KEY") or os.getenv("TRANSLATION_PROVIDER") == "groq" else "local Ollama; checked on use",
         "translation_status": translation_status(),
     }
     return JSONResponse(status_code=200 if ready else 503, content=body)

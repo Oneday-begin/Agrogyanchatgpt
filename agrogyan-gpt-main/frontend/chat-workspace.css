@@ -75,3 +75,10 @@ body.chat-page { margin:0; padding:0; height:100dvh; overflow:hidden; background
  .starter-prompts { margin-top:12px; gap:6px; }
  .chat-page .starter-prompts .agro-followup-chip { padding:8px 10px; font-size:11px; }
 }
+
+/* Prevent iOS focus zoom and make long source links wrap on narrow screens. */
+@media(max-width:760px) {
+ .chat-page .agro-chat-textarea { font-size:16px; }
+ .chat-page .agro-msg-bubble { overflow-wrap:anywhere; }
+ .chat-page .agro-chat-inputbar { padding-bottom:max(12px, env(safe-area-inset-bottom)); }
+}

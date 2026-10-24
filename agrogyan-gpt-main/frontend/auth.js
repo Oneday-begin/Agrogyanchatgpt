@@ -514,3 +514,51 @@ window.clearRegisterForm = clearRegisterForm;
 window.goToRegisterStep = goToRegisterStep;
 window.sendRegistrationOtp = sendRegistrationOtp;
 window.registerUser = registerUser;
+
+
+// The hosted demo uses password registration; no phone/SMS service is needed.
+document.addEventListener("DOMContentLoaded", async () => {
+    try {
+        const response = await fetch(`${API_URL}/auth/config`);
+        if (!response.ok || !(await response.json()).basic_registration) return;
+        clearPendingRegistrationState();
+        pendingRegistration = null;
+        const card = document.querySelector("#registerModal .modal-card");
+        if (!card) return;
+        card.innerHTML = `<h2>Create an account</h2>
+            <p>Use your email and a password. No phone verification required.</p>
+            <form id="basicRegistrationForm">
+                <label for="regName">Name</label>
+                <input id="regName" name="name" autocomplete="name" required maxlength="100">
+                <label for="regEmail">Email</label>
+                <input id="regEmail" name="email" type="email" autocomplete="email" required maxlength="254">
+                <label for="regPassword">Password (at least 8 characters)</label>
+                <input id="regPassword" name="password" type="password" autocomplete="new-password" required minlength="8" maxlength="72">
+                <button class="login-btn-green" type="submit">Create account</button>
+            </form>
+            <button class="nav-btn" type="button" id="basicBack">Back to login</button>
+            <p id="registerMessage" role="alert" aria-live="polite"></p>`;
+        document.getElementById("basicBack").addEventListener("click", hideRegisterModal);
+        document.getElementById("basicRegistrationForm").addEventListener("submit", async event => {
+            event.preventDefault();
+            const form = event.currentTarget;
+            const button = form.querySelector("button");
+            button.disabled = true;
+            setRegisterMessage("Creating account…");
+            try {
+                const payload = Object.fromEntries(new FormData(form));
+                const result = await fetch(`${API_URL}/auth/register-basic`, {
+                    method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(payload)
+                });
+                const data = await result.json();
+                if (!result.ok) throw new Error(data.detail || "Unable to register");
+                form.reset();
+                hideRegisterModal();
+                document.getElementById("email").value = payload.email;
+                showMessage("Account created. Log in with your password.");
+            } catch (error) {
+                setRegisterMessage(error.message || "Please try again.", true);
+            } finally { button.disabled = false; }
+        });
+    } catch { showMessage("Registration settings could not load. Please refresh to retry.", true); }
+});

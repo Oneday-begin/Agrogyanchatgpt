@@ -19,6 +19,20 @@ _limits = defaultdict(deque)
 
 @contextmanager
 def connection():
+    # Hosted sessions share the durable app database; local installs retain SQLite.
+    from backend.database import engine, IS_SQLITE
+    if not IS_SQLITE:
+        from sqlalchemy import text
+        class Adapter:
+            def __init__(self, conn): self.conn = conn
+            def execute(self, sql, params=()):
+                for index in range(len(params)):
+                    sql = sql.replace('?', f':p{index}', 1)
+                return self.conn.execute(text(sql), {f'p{i}': value for i, value in enumerate(params)})
+        with engine.begin() as conn:
+            conn.execute(text('CREATE TABLE IF NOT EXISTS sessions (digest TEXT PRIMARY KEY, user_id INTEGER, role TEXT, expires DOUBLE PRECISION)'))
+            yield Adapter(conn)
+        return
     db = sqlite3.connect(SESSION_DB, timeout=10)
     db.execute('CREATE TABLE IF NOT EXISTS sessions (digest TEXT PRIMARY KEY, user_id INTEGER, role TEXT, expires REAL)')
     try:
@@ -43,7 +57,7 @@ async def authorize(request: Request):
     path = request.url.path
     if request.method == 'OPTIONS':
         return
-    if path in {'/login', '/ask', '/auth/send-registration-otp', '/auth/verify-registration-otp'}:
+    if path in {'/login', '/ask', '/auth/register-basic', '/auth/send-registration-otp', '/auth/verify-registration-otp'}:
         key = (request.client.host if request.client else 'unknown', path)
         now = time.monotonic()
         with _lock:
@@ -73,7 +87,7 @@ async def authorize(request: Request):
         local = parsed.hostname in {'localhost', '127.0.0.1'} and request.url.hostname in {'localhost', '127.0.0.1'}
         if origin not in allowed and not local:
             raise HTTPException(403, 'Untrusted request origin')
-    public_writes = {'/login', '/register', '/auth/send-registration-otp', '/auth/verify-registration-otp', '/ask', '/ai/explain-simply', '/upload-image/', '/ai/crop-doctor', '/ai/document-insights'}
+    public_writes = {'/login', '/register', '/auth/register-basic', '/auth/send-registration-otp', '/auth/verify-registration-otp', '/ask', '/ai/explain-simply', '/upload-image/', '/ai/crop-doctor', '/ai/document-insights'}
     protected = (path.startswith('/admin/') or path.startswith(('/profile/', '/farm-profile', '/ai/chat-memory/')) or path in {'/questions/feed', '/shop/orders', '/market-alerts', '/dashboard-overview', '/ops/live-sync', '/ops/feed-status', '/auth/me'} or (request.method not in {'GET', 'HEAD'} and path not in public_writes))
     if protected and not identity:
         raise HTTPException(401, 'Please log in')
