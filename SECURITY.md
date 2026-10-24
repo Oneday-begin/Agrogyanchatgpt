@@ -64,6 +64,10 @@ Standard Gitleaks rules found no supported provider keys; the additional
 project rule identified an old administrator password. No credential values
 are recorded here.
 
+The audit also removed an obsolete email-based exception from the current
+admin page. Its page-level check now requires the administrator role; backend
+administrator endpoints continue to enforce the authenticated server role.
+
 Historical findings still requiring removal:
 
 1. Earlier versions of `backend/main.py` contain a literal administrator

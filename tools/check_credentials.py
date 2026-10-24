@@ -25,6 +25,7 @@ PATTERNS = {
     'provider-api-key': re.compile(r'\b(?:gsk_[A-Za-z0-9]{20,}|sk-(?:proj-|svcacct-)?[A-Za-z0-9_-]{20,}|AIza[A-Za-z0-9_-]{30,}|gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{30,}|sb_secret_[A-Za-z0-9_-]{20,}|AKIA[A-Z0-9]{16})\b'),
     'database-credentials': re.compile(r'(?i)\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^\s/@:]+:[^\s@]+@[^\s]+'),
     'jwt-token': re.compile(r'\beyJ[A-Za-z0-9_-]{10,}\.eyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{20,}\b'),
+    'hardcoded-email-access-check': re.compile(r'''\bemail\s*(?:===|!==|==|!=)\s*["'][^"'\s]+@'''),
 }
 ASSIGNMENT = re.compile(
     r'''(?ix)\b([a-z0-9_]*(?:password|passwd|api_key|apikey|client_secret|secret_key|access_token|auth_token|database_url)[a-z0-9_]*)\b["']?\s*(?::|={1,3})\s*(["'])([^\r\n"']{3,})\2'''

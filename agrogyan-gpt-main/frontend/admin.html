@@ -197,9 +197,8 @@ let latestAnalytics = null;
 function ensureAdminAccess() {
     const currentUser = localStorage.getItem("user");
     const role = (localStorage.getItem("userRole") || "").toLowerCase();
-    const email = (localStorage.getItem("userEmail") || "").toLowerCase();
 
-    if (!currentUser || (role !== "admin" && email !== "harsh@07gmail.com")) {
+    if (!currentUser || role !== "admin") {
         window.location.replace("login.html");
         return false;
     }
