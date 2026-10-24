@@ -1,0 +1,6 @@
+#!/bin/sh
+cd "$(git rev-parse --show-toplevel)" || exit 1
+if command -v python >/dev/null 2>&1; then
+    exec python tools/check_credentials.py --pre-push
+fi
+exec python3 tools/check_credentials.py --pre-push

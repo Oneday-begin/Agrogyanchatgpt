@@ -187,3 +187,8 @@ The public landing page, login, farm dashboard and chat are separate routes. The
 - [Editable report source](agrogyan-gpt-main/docs/placement/AgroGyanGPT_Placement_Report.md)
 
 Push changes to `Oneday-begin/Agrogyanchatgpt`, branch `main`, then verify the latest Render deployment is Live. Phones load that same public HTTPS website; saving local files alone does not publish them.
+# Credential protection
+
+See [SECURITY.md](SECURITY.md) for credential storage, local commit/push checks,
+the security audit findings and the historical-cleanup requirement. Production
+secrets belong in Render Environment settings, never in Git.

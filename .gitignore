@@ -62,3 +62,21 @@ tmp/
 credentials.json
 service-account*.json
 service_account*.json
+
+# Local previews, audit output, and duplicate checkout (not deployment source)
+/output/
+/Agrogyanchatgpt/
+*.dump
+*.sql
+*.bak
+*.keystore
+*.jks
+.npmrc
+.pypirc
+.netrc
+.pgpass
+id_rsa*
+id_ed25519*
+client_secret*.json
+application_default_credentials.json
+*.tfstate*

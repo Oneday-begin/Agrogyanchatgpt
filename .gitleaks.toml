@@ -1,0 +1,16 @@
+title = "AgroGyan credential detection"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "agrogyan-admin-password"
+description = "Literal administrator password, including low entropy passwords"
+regex = '''(?i)\badmin_password\b\s*=\s*["']([^"'\r\n]{3,})["']'''
+secretGroup = 1
+
+[[rules]]
+id = "agrogyan-database-uri"
+description = "Database URI containing a password"
+regex = '''(?i)(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^\s/@:]+:([^\s@]+)@[^\s"']+'''
+secretGroup = 1
