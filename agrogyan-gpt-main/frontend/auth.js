@@ -1,5 +1,5 @@
 localStorage.removeItem("pendingRegistrationManualCode");
-const API_URL = window.AGRO_API_URL || "http://127.0.0.1:8000";
+const API_URL = window.AGRO_API_URL || (window.location.protocol === "file:" ? "http://127.0.0.1:8000" : window.location.origin);
 const PENDING_REGISTRATION_STORAGE_KEY = "agroPendingRegistration";
 let pendingRegistration = null;
 let registerStep = "details";
