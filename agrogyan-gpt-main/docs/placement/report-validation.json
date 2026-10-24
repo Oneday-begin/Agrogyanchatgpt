@@ -1,10 +1,21 @@
 {
-  "date": "2026-10-19",
-  "pages": 58,
-  "pdf_bytes": 241955,
-  "bookmarks": 35,
+  "date": "2026-10-24",
+  "pages": 71,
+  "pdf_bytes": 278975,
+  "bookmarks": 40,
   "boundary_issues": [],
-  "test_count": 95,
+  "test_count": 102,
+  "test_runner_seconds": 5.901,
   "test_status": "OK",
-  "report_words": 16092
+  "report_words": 19293,
+  "landing_widths": [
+    320,
+    390,
+    820,
+    1440
+  ],
+  "mobile_app_signed_in_pages_checked": 11,
+  "landing_live_verification": "pending publish",
+  "historical_local_snapshot_date": "2026-10-19",
+  "visual_review": "All pages reviewed as rendered contact sheets; deployment, workflow and endpoint pages reviewed at readable size"
 }

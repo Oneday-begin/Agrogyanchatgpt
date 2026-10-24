@@ -1,5 +1,7 @@
 /* Shared responsive layer, loaded after page styles to avoid competing layouts. */
 .mobile-menu-toggle { display:none; }
+.login-back-link { display:inline-block; margin:0 0 18px; font-size:14px; color:#31563b; text-decoration:none; }
+.login-back-link:hover { text-decoration:underline; }
 
 @media (max-width:900px) {
     html { -webkit-text-size-adjust:100%; }

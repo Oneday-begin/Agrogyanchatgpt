@@ -2,24 +2,24 @@
 
 Technical design and interview preparation guide
 
-19 October 2026
+Updated 24 October 2026
 
 ## How to use this report
 
-AgroGyanGPT is a local-first agricultural information application. Its central feature retrieves evidence from farming references and government resolutions, attaches source citations, and supports English, Hindi, Marathi and Gujarati. The surrounding website provides farm profiles, weather integration, community discussions and prototype commerce workflows.
+AgroGyanGPT is an agricultural information application with a local-first development setup and a deployed free cloud demonstration at https://agrogyan-demo.onrender.com/. Its central feature retrieves evidence from farming references and government resolutions, attaches source citations, and supports English, Hindi, Marathi and Gujarati. The surrounding website provides farm profiles, weather integration, community discussions and prototype commerce workflows.
 
-The project combines deterministic retrieval and source validation with pretrained local models. The active answer model selects a passage from bounded evidence; it is not trained from scratch. Some general questions use reviewed sourced entries without a model call. Read chapters 1 to 5 for the introduction, 6 to 14 for the technical deep dive, 15 to 21 for engineering evaluation, and 22 to 26 for interview practice. Appendices contain the actual API, schema and code inventories.
+The project combines deterministic retrieval and source validation with pretrained models. Local development uses Ollama; the hosted demonstration uses Groq for evidence selection and translation, with Supabase PostgreSQL for account records and sessions. The active answer model selects a passage from bounded evidence; it is not trained from scratch. Some general questions use reviewed sourced entries without a model call. Read chapters 1 to 5 for the introduction, 6 to 14 for the technical deep dive, 15 to 21 for engineering evaluation, and 22 to 26 for interview practice. Chapters 28 to 32 cover the deployed architecture, new public landing page, mobile remediation, complete update workflow and additional interview questions. Appendices contain the API, schema and code inventories.
 
-Paths are relative to agrogyan-gpt-main unless stated otherwise. Counts describe the inspected local snapshot. Historical latency observations are examples, not an SLA or a statistically representative benchmark. Source citations establish provenance; they do not prove that a historical GR is still applicable today. Implemented features, configuration-dependent integrations and future work are distinguished throughout.
+Paths are relative to agrogyan-gpt-main unless stated otherwise. Corpus counts describe the inspected knowledge snapshot. Local storage integrity/latency baselines retain their measurement dates; current hosting facts are identified separately. Never present historical local timings as cloud benchmarks. Historical latency observations are examples, not an SLA or a statistically representative benchmark. Source citations establish provenance; they do not prove that a historical GR is still applicable today. Implemented features, configuration-dependent integrations and future work are distinguished throughout.
 
 ## 1 Executive project summary
 
-AgroGyanGPT helps farmers search agricultural guidance and government resolutions through multilingual chat. A FastAPI backend loads page-aware PDF text and an imported Maharashtra GR catalog. It builds BM25 and persistent embedding indexes. Hybrid retrieval combines rankings and applies topic, state, intent and year constraints. A small Ollama model selects evidence; deterministic checks validate it. The API returns the answer, original wording, source links and warnings. A dedicated chat page organizes separate conversations in browser storage.
+AgroGyanGPT helps farmers search agricultural guidance and government resolutions through multilingual chat. A FastAPI backend loads page-aware PDF text and an imported Maharashtra GR catalog. Local hybrid retrieval combines BM25 and optional persistent embedding rankings, with topic, state, intent and year constraints. The free hosted profile uses BM25 and Groq evidence selection instead of running Ollama. Deterministic checks validate selected evidence. The API returns answer text, original wording, source links and warnings. A public landing page introduces the product; a dedicated chat page organizes separate browser-local conversations.
 
 | Item | Verified project state |
 | --- | --- |
-| Main database | SQLite agrogyan.db through SQLAlchemy |
-| Application tables | 16 |
+| Main database | Local SQLite agrogyan.db; hosted Supabase PostgreSQL through SQLAlchemy |
+| Application tables | 16 ORM tables; hosted opaque sessions use a separate sessions table |
 | Unique Maharashtra farming GRs | 662 identifiers |
 | Imported language records | 1324 English and Marathi variants |
 | Active Maharashtra GR content | 2048 pages and 4239 chunks |
@@ -28,11 +28,11 @@ AgroGyanGPT helps farmers search agricultural guidance and government resolution
 | Active retrieval passages | 4303 |
 | Embedding dimension | 768 |
 | Persisted vectors | 4302 distinct embeddings mapped to 4303 chunks |
-| Search | In-memory BM25 and exact NumPy cosine search |
+| Search | Local BM25 + NumPy cosine; hosted BM25 with semantic model calls disabled |
 | Local default models | qwen3:0.6b, embeddinggemma, translategemma:4b |
 | Chat languages | English, Hindi, Marathi, Gujarati and Auto |
-| Declared route handlers | 58, excluding generated docs and static mounts |
-| Interface | Home landing page and dedicated chat.html workspace |
+| Declared route handlers | 60, excluding generated docs and static mounts |
+| Interface | Public landing at /, farm dashboard at /index.html, chat at /chat.html |
 | Database integrity | quick_check returned ok for all 6 inspected SQLite files |
 
 The vector count differs from the chunk count because a content/model cache key can be shared by identical embedding inputs. This is valid deduplication, not a missing vector. The active corpus is not the entire upstream repository.
@@ -63,7 +63,9 @@ The scope is an information and demonstration platform. Current limitations incl
 | Optional database | PostgreSQL and psycopg2-binary | DATABASE_URL support for the ORM store; separate knowledge DBs remain SQLite |
 | Dense search | NumPy 2.4.4 | Float32 matrix and exact cosine similarity |
 | Sparse search | Custom BM25 | Inverted postings, IDF and document length normalization |
-| Model runtime | Ollama | Local embedding, evidence-selection and translation HTTP APIs |
+| Model runtime | Ollama / Groq | Local embedding/selection/translation; hosted Groq selection and translation |
+| Cloud demonstration | Render Free | Same-origin FastAPI API and static frontend, HTTPS, automatic Git deployment |
+| Cloud data | Supabase Free PostgreSQL | Durable app records and session digests via IPv4 session pooler |
 | Password hashing | bcrypt 5.0.0 | Salted hashes with SHA-256 preprocessing and legacy migration |
 | HTTP clients | Requests and HTTPX | Provider/feed helpers; many paths remain synchronous |
 | PDF extraction | pypdf 6.10.2 | Page parsing and native text extraction |
@@ -81,7 +83,7 @@ requirements.txt includes transitive and compatibility packages. Their presence 
 
 ### 4.1 Component boundaries
 
-The browser sends JSON or multipart requests to FastAPI. Dependencies validate identity and data. Route handlers call retrieval, database, domain helpers or integrations. SQLAlchemy manages users and business records. Independent SQLite files persist GRs, extracted pages, vectors, sessions and translations.
+The browser sends JSON or multipart requests to FastAPI. Dependencies validate identity and data. Route handlers call retrieval, database, domain helpers or integrations. SQLAlchemy manages users and business records. Independent SQLite files persist GRs, extracted pages, vectors and translations; sessions use local SQLite or the hosted PostgreSQL engine.
 
 Ollama runs separately, normally on localhost port 11434. Uvicorn normally listens on localhost port 8000. The API calls models by HTTP rather than loading their weights directly inside FastAPI. A Graphify graph used during development maps code relationships; it is not the chatbot's production knowledge graph. This is not an active GraphRAG implementation.
 
@@ -134,7 +136,10 @@ Corpus loading and in-memory index construction currently happen during module i
 | frontend/ui.js | Shared navigation/auth display/location utilities |
 | frontend/api-config.js | API origin and same-API credential handling |
 | frontend/farmer-pages.js | Page-specific operational interactions |
-| frontend/auth.js | Login/registration/OTP screens |
+| frontend/auth.js | Login plus environment-selected basic registration or legacy OTP screens |
+| frontend/landing.html and landing.css | Public, responsive product introduction and app entry links |
+| frontend/mobile.css | Shared mobile navigation, cards, forms and chat viewport fixes |
+| backend/deployment_knowledge.py | Allowlisted GR/OCR packaging and verified cloud restoration |
 | frontend/community.js and schemes.js | Focused feature interactions |
 | frontend/shop-catalog.js | Client catalog configuration |
 | tests | Automated source regressions |
@@ -153,7 +158,7 @@ The parent launcher delegates to the application launcher, so both are useful. T
 | pdf_pages.sqlite3 | Page extraction/OCR output and method | Rebuildable but OCR is slow and tool-sensitive |
 | vectors.sqlite3 | Float32 embeddings, active chunk metadata and model settings | Rebuildable with the corresponding corpus/model |
 | translations.sqlite3 | Provider/language/text translation cache | Regeneration increases first-response latency |
-| sessions.sqlite3 | Session digests, identity, role and expiry | Deleting signs users out |
+| sessions.sqlite3 (local) / PostgreSQL sessions (hosted) | Session digests, identity, role and expiry | Deleting signs users out |
 | Browser localStorage | Complete chat threads, drafts and frontend preferences | Browser-local; clearing storage loses these threads |
 
 User is the account parent. A user can have a farm profile, posts, comments, query memories, orders, demand signals, subscriptions and produce listings. FarmProfile.user_id is unique, modelling a one-to-one extension. Post has many comments. Operational weather and mandi snapshots are location-oriented records, not chat messages.
@@ -177,7 +182,7 @@ OrderRecord.order_code -- application link -- OrderStatusEvent.order_code
 
 get_session yields a SQLAlchemy session, rolls back on exceptions and always closes it. Route handlers explicitly commit. SQLite uses WAL, synchronous=NORMAL, foreign_keys=ON and a 15-second lock timeout. WAL improves coexistence of readers and a writer; SQLite still serializes writes. A long transaction can still cause contention.
 
-PostgreSQL has pre-ping and bounded connection pooling settings. Switching DATABASE_URL moves the SQLAlchemy store only; knowledge/session components that directly use sqlite3 do not automatically migrate. Base.metadata.create_all creates missing tables but is not a full column migration system. ensure_legacy_columns adds selected known columns to older records. Migration failures are logged and startup continues, so a later query may still reveal a schema problem. Alembic or another versioned migration process is future work.
+PostgreSQL has pre-ping and bounded connection pooling settings. DATABASE_URL selects the SQLAlchemy store. security.connection now also uses that engine for durable hosted sessions when PostgreSQL is selected; the local session path remains SQLite. Independent GR, OCR, vector and translation caches remain SQLite. Changing URLs does not migrate existing user records. Base.metadata.create_all creates missing tables but is not a full column migration system. ensure_legacy_columns adds selected known columns to older records. Migration failures are logged and startup continues, so a later query may still reveal a schema problem. Alembic or another versioned migration process is future work.
 
 Many amounts, prices, coordinates and land-size fields are strings. That makes the prototype flexible but weakens numeric validation, sorting, currency arithmetic and geospatial operations. A production migration should use Decimal/numeric types, coordinates with validation and explicit units.
 
@@ -269,7 +274,7 @@ A named 18-to-20-digit GR identifier restricts candidates to that GR. Policy que
 
 The context default is five chunks, clamped between one and six. A conservative UTF-8 byte budget reserves space for instructions/question/profile/output. Bytes are not exact tokens. The model receives up to six short passage options within a bounded byte budget and returns an integer choice, with zero meaning no answer. Local options include temperature 0, thinking disabled, num_ctx 3072 and maximum 24 output tokens. This reduces work and unsupported prose compared with long free generation.
 
-Ollama output streams internally so length/deadline checks can stop selection. The browser receives one completed JSON response, not token streaming. The server constructs the answer from selected source text and appends citations.
+Ollama output streams internally so length/deadline checks can stop selection. The browser receives one completed JSON response, not token streaming. The server constructs the answer from selected source text and appends citations. The hosted Groq selector uses the same server-side source checks; it does not authorize unrestricted agricultural claims.
 
 The validator requires valid structure, source index and quote membership. Numbers must be supported, meaningful term overlap must pass and negation must not reverse. Malformed, truncated or ungrounded output is rejected. These controls do not prove source truth, semantic entailment, current eligibility or translation fidelity. A quote can be exact but subtly irrelevant.
 
@@ -293,7 +298,7 @@ The local retrieval path preserves the original query and adds canonical farming
 
 Gujarati script is detected by Unicode range. Hindi and Marathi share Devanagari, so a small Marathi marker-word heuristic distinguishes them; otherwise the result is Hindi. This is not a trained language identifier. Romanized input may be detected as English unless mapped vocabulary helps search. Explicit selection helps ambiguous input.
 
-Translation has an in-memory LRU and a persistent SQLite cache keyed by cache version, provider/model, source language, target and text. Persistent entries have a 30-day window. Google Translation is used with a configured official key; otherwise local TranslateGemma translates the answer. One local translation runs at a time, text is bounded to 2500 characters, and the read timeout is 35 seconds.
+Translation has an in-memory LRU and a SQLite cache keyed by cache version, provider/model, source language, target and text. Persistent entries have a 30-day window. With TRANSLATION_PROVIDER=groq the hosted demo uses Groq. Otherwise an official Google key selects Google Translation, or local TranslateGemma is used. On Render the SQLite translation cache is disposable across restarts; the persistent app/session data is in PostgreSQL. One local translation runs at a time, text is bounded to 2500 characters, and the read timeout is 35 seconds.
 
 Validation rejects truncation, wrong target script and changed numbers. Trailing citation markers are removed before translation and restored afterward; internal markers are checked. A short failure cooldown avoids repeated long waits. Script checks do not establish perfect Marathi/Hindi grammar, and digit preservation does not guarantee meaning. Four core reviewed entries have content-hash-validated Gujarati localizations for fast reliable wording.
 
@@ -301,7 +306,7 @@ With Gujarati selected, a non-Gujarati question can become a Gujarati display_qu
 
 ## 13 Frontend and conversation workspace
 
-Home is the application landing page at /index.html; the bare / route currently serves login.html. The top-bar AgroGyanGPT link opens chat.html. Its sidebar opens one conversation at a time, and New chat creates an independent thread. The conversation surface omits dashboard weather/commerce widgets. Small screens use a collapsible history menu.
+The public landing page is served at / (landing.html). The farm dashboard remains /index.html, login/registration is /login.html, and the dedicated conversation workspace is /chat.html. The top-bar AgroGyanGPT link opens chat.html. Its sidebar opens one conversation at a time, and New chat creates an independent thread. The conversation surface omits dashboard weather/commerce widgets. Small screens use a collapsible history menu.
 
 Versioned localStorage is scoped to account ID or guest. Each thread stores ID, title, messages, language, draft and latest answer. Older local question history is imported as individual entries. Old plain-text history may not contain original citation links, so the UI marks that limitation. Clearing browser storage loses local threads. They are not synchronized across devices.
 
@@ -329,7 +334,7 @@ Claimed user IDs in path/query/body are compared to the session. A localStorage 
 
 ### 14.3 Abuse protection and origins
 
-The in-process sliding-window limiter permits 30 /ask calls per minute per host/path and six per minute for login/OTP. Workers have independent counters; distributed deployment needs shared state. Proxy handling must be configured deliberately.
+The in-process sliding-window limiter permits 30 /ask calls per minute per host/path and six per minute for login, basic registration and OTP. Workers have independent counters; distributed deployment needs shared state. Proxy handling must be configured deliberately.
 
 CORS allows configured origins plus localhost development origins with credentials. Write requests with Origin are checked. This is useful origin protection, not a dedicated CSRF token mechanism. Production testing should cover CSRF, proxy headers, content types and uploads.
 
@@ -478,13 +483,13 @@ The setup helper prepares the embedding and answer models plus OCR packs. It doe
 
 Use SQLite's backup API or a coordinated consistent backup. Copying only a live .db while ignoring WAL can lose committed information. Preserve source commits/provenance, preview imports, rebuild, restart and run smoke tests. Keep restoration snapshots. Import/build/startup can write caches or schema compatibility changes and are not read-only inspection operations.
 
-render.yaml is a deployment template, not proof of production deployment. A cloud container cannot assume the developer's local Ollama, OCR installation or durable filesystem. localhost means that container. Plan model hosting, persistent disks, HTTPS cookies, secrets, backups and suitable CPU/RAM. Multiple workers duplicate indexes and do not share in-memory locks, counters or caches. Scaling needs a consistency/resource plan.
+The current render.yaml configures the deployed free demonstration, verified live on 24 October 2026; it is not a production uptime/security guarantee. A cloud container cannot assume the developer's local Ollama, OCR installation or durable filesystem. localhost means that container. Plan model hosting, persistent disks, HTTPS cookies, secrets, backups and suitable CPU/RAM. Multiple workers duplicate indexes and do not share in-memory locks, counters or caches. Scaling needs a consistency/resource plan.
 
 ## 21 Known limitations and next engineering work
 
 The highest-priority gap is source freshness and supersession. Historical GRs need effective dates, amendment links and withdrawal tracking. Exact quotations can still be irrelevant or outdated. Multilingual heuristics and translations need a labelled four-language evaluation set. Script/number checks do not guarantee natural or faithful translation.
 
-Full browser threads are not retrieval context on every request. Pronoun-based follow-ups need contextual query rewriting, with privacy/token safeguards. OTP and mandi need provider configuration. Several AI-labelled helpers are rules/templates or unavailable responses, not trained prediction. Module status labels such as scaffolded do not implement subscriptions, telephony, billing or offline synchronization.
+Full browser threads are not retrieval context on every request. Pronoun-based follow-ups need contextual query rewriting, with privacy/token safeguards. The hosted BASIC_REGISTRATION=true path does not require OTP. The optional legacy OTP flow and live mandi feed still require providers. Several AI-labelled helpers are rules/templates or unavailable responses, not trained prediction. Module status labels such as scaffolded do not implement subscriptions, telephony, billing or offline synchronization.
 
 Before real commerce, validate quantities, recompute totals server-side, use Decimal and atomic stock updates, and integrate verified payment/fulfillment. Other improvements include splitting main.py into routers/services, lifecycle initialization, versioned migrations, typed fields, shared rate limiting, request IDs, dependency metrics and meaningful load/security tests.
 
@@ -502,7 +507,7 @@ cleanup-manifest.json records each removed path, size, hash and reason. A hash i
 
 ### 23.1 Thirty second introduction
 
-I built AgroGyanGPT, a multilingual agricultural information application using FastAPI, SQLAlchemy and a lightweight JavaScript frontend. It searches farming government resolutions and sourced references using BM25 plus local embeddings. A small Ollama model selects grounded evidence and the application returns source citations with multilingual answers. My focus was retrieval reliability, provenance, fallback behavior and responsive chat on a CPU-based computer.
+I built AgroGyanGPT, a multilingual agricultural information application using FastAPI, SQLAlchemy and a lightweight JavaScript frontend. It retrieves farming government resolutions and sourced references with source citations. The local setup supports hybrid BM25/vector search with Ollama; the deployed free demo uses BM25 and Groq, with Supabase PostgreSQL for durable accounts and sessions. My focus was evidence grounding, multilingual fallbacks, mobile usability and a repeatable GitHub-to-Render deployment workflow.
 
 Use I only for work you personally performed and understand. For team work use we and specify your contribution. Do not invent users, traffic, revenue, accuracy or business impact.
 
@@ -520,8 +525,10 @@ The central tradeoff is CPU speed versus model/language quality. Caching, review
 - Implemented hybrid BM25 and embedding retrieval over 4303 source passages with GR provenance and constrained local evidence selection.
 - Added content/model-aware embedding reuse, translation caching, bounded inference and explicit abstention/fallback behavior.
 - Developed regression coverage for intent, citations, multilingual text, GR source validation and translation integrity.
+- Deployed a same-origin HTTPS demo on Render with Supabase session-pooler connectivity, cloud evidence selection and basic password registration.
+- Added a public landing page and a shared accessible mobile menu; checked narrow layouts across eleven signed-in pages.
 
-Passing 95 tests does not mean 95 percent accuracy. A valid accuracy claim needs a dataset, baseline, metric and measured result.
+The 19 October baseline passed 95 tests; the 24 October suite includes registration/cloud regressions and passed 102 tests before the current landing update. A test count is not a percentage accuracy measurement. A valid accuracy claim needs a dataset, baseline, metric and measured result.
 
 ## 24 Interview questions and answer guidance
 
@@ -531,7 +538,7 @@ RAG retrieves inspectable sources and updates knowledge by importing documents r
 
 ### 24.2 What database do you use
 
-The main store is SQLite through SQLAlchemy. Separate SQLite files hold GR pages, vectors, OCR results, translations and session digests. NumPy searches the loaded normalized vector matrix. There is no active hosted vector DB or MongoDB component.
+Local application records use SQLite through SQLAlchemy; the hosted demo uses Supabase PostgreSQL for app records and opaque session digests. GR/OCR bundles remain SQLite. Local embeddings use a SQLite cache and exact NumPy cosine search. The free cloud demo disables semantic calls and uses BM25 with Groq evidence selection. There is no hosted vector database or MongoDB component.
 
 ### 24.3 BM25 versus embeddings
 
@@ -571,7 +578,7 @@ They must pass ingestion/scope checks, enter the corpus and be included in an ex
 
 ### 24.12 Why SQLite and how would you scale
 
-SQLite minimizes local operational overhead. WAL helps readers/writers, but concurrent writes remain limited. At larger scale I would measure first, then consider PostgreSQL, shared caches/limits and ANN search. Changing DATABASE_URL alone does not migrate independent knowledge/session stores.
+SQLite minimizes local operational overhead. WAL helps readers/writers, but concurrent writes remain limited. At larger scale I would measure first, then consider PostgreSQL, shared caches/limits and ANN search. Changing DATABASE_URL does not copy local user data or independent knowledge stores. Hosted sessions now use the configured PostgreSQL engine; local sessions remain SQLite.
 
 ### 24.13 How are passwords and sessions protected
 
@@ -607,7 +614,7 @@ Deterministic tests cover specific behaviors; live smoke checks cover real depen
 
 ## 25 Demonstration and troubleshooting
 
-A seven-minute demo can show the problem/Home, open AgroGyanGPT, ask a basic sourced definition, inspect a MahaDBT checklist source, demonstrate Gujarati and original wording, ask a page-specific GR question, show an honest abstention, and finish with New chat/sidebar and architecture. Warm required models and label cache use rather than representing it as cold latency.
+A seven-minute demo can start with the public landing page, move to the farm dashboard, open AgroGyanGPT, ask a basic sourced definition, inspect a MahaDBT checklist source, demonstrate Gujarati and original wording, ask a page-specific GR question, show an honest abstention, and finish with New chat/sidebar and architecture. Warm required models and label cache use rather than representing it as cold latency.
 
 | Symptom | Likely reason | Check |
 | --- | --- | --- |
@@ -616,7 +623,11 @@ A seven-minute demo can show the problem/Home, open AgroGyanGPT, ask a basic sou
 | Related topic but no answer | Requested fact missing or intent/scope restriction | Evidence and answer mode |
 | Regional reply remains English | Translation failed validation/service | Status, warnings and model |
 | First response slow | Cold model or uncached translation | Stage times and cache state |
-| OTP not sent | Default provider unconfigured | Private Twilio settings |
+| OTP not sent | Optional legacy flow selected | Hosted basic registration needs no SMS; check BASIC_REGISTRATION |
+| Cloud database network unreachable | Direct IPv6 host used | Supabase Session pooler, port 5432 |
+| Password authentication failed | Wrong database credentials or URL encoding | Private Render DATABASE_URL |
+| Registration settings could not load | API script order or wrong origin | Current api-config.js initialization before auth.js |
+| Phone shows old UI | Previous deployment or cached document | Match deployed commit; reload without clearing local chats |
 | No mandi prices | Missing key/feed or matching data | Feed status/source timestamp |
 | Added PDF not answering | Import/build/restart missing or exclusion | Ingestion/scope report |
 | OCR unavailable | Missing executable/language/clear text | Setup and Tesseract language listing |
@@ -640,15 +651,150 @@ Primary evidence is the inspected repository: main.py, rag.py, retriever.py, vec
 The imported repository is https://github.com/orgpedia/mahGRs. Government PDF and repository-commit links are stored per record. Reviewed entries retain official source URLs in backend/knowledge/farming_reference.json; the soil source is in backend/knowledge/states/soil_basics.html. External URLs are source/further-reading locations, not a claim that policy currency or provider availability was independently verified during this task.
 
 
-## Appendix A Verification snapshot
+## 28 Deployed free demonstration architecture
+
+### 28.1 Deployment topology and environment differences
+
+The demonstration is available at https://agrogyan-demo.onrender.com/. The browser loads the frontend and API from the same HTTPS origin. Render runs one Uvicorn worker, reads the packaged knowledge corpus, constructs BM25 postings at startup, and connects to Supabase PostgreSQL through its IPv4 Session pooler. Groq receives the question and bounded retrieved passages for evidence selection, and supplied text for requested translation. Do not describe this as fully offline or claim that questions never leave the server in cloud mode.
+
+```text
+Phone / desktop browser
+        | same-origin HTTPS
+        v
+Render Free: FastAPI + static frontend + BM25
+        |-- Supabase Session pooler (IPv4 + SSL) -> PostgreSQL app/session records
+        |-- Groq Free -> bounded evidence selection and translation
+        |-- packaged public GR/OCR SQLite files -> page-aware source text
+        `-- browser localStorage -> per-browser conversation sidebar
+```
+
+| Concern | Local setup | Free hosted demonstration |
+| --- | --- | --- |
+| App data | SQLite agrogyan.db | Supabase PostgreSQL |
+| Sessions | sessions.sqlite3 | PostgreSQL sessions table via engine.begin |
+| Retrieval | BM25 plus optional exact cosine vectors | BM25 and multilingual query aliases |
+| Embeddings | EmbeddingGemma via Ollama | SEMANTIC_ENABLED=false; local vectors not queried |
+| Answer selection | qwen3:0.6b via Ollama | Groq openai/gpt-oss-120b, environment-selectable |
+| Translation | TranslateGemma or configured Google API | Groq with script/number/citation validation |
+| Registration | Configurable OTP/basic flow | BASIC_REGISTRATION=true, password registration |
+| Persistent filesystem | PC storage | Render filesystem is disposable |
+| HTTPS cookie | Local development configuration | COOKIE_SECURE=true |
+| Hosting trigger | Start local process | Push main -> Render automatic build/deploy |
+
+This is a cost/resource tradeoff. The free cloud profile does not silently retain vector search or local model weights. Cloud model support and quotas may change. The local hybrid implementation remains available and unchanged by the hosted configuration.
+
+### 28.2 Durable data and public knowledge packaging
+
+backend/deployment_knowledge.py reconstructs only the gr_documents and pages tables from the two allowlisted local knowledge stores. It excludes extra tables and deleted SQLite pages. It compresses each reconstructed database with gzip and records SHA-256 integrity hashes, row counts and uncompressed sizes in deploy/knowledge/manifest.json. The current bundle contains 1324 GR language records and 61 cached PDF pages. These are not the same as 662 unique GR identifiers or 4303 active retrieval chunks.
+
+Render restores the package during its build. Unpack verifies hashes and refuses to overwrite an existing database. App records, passwords, session digests, user uploads and translation histories are not in the public package. This solves the earlier empty-corpus risk when ignored local knowledge databases were absent from a GitHub checkout.
+
+A separate Supabase project stores new cloud demo accounts and server records. Existing PC user records were not automatically migrated or uploaded. In PostgreSQL mode, security.connection uses an adapter around SQLAlchemy engine.begin; positional SQLite placeholders are translated into named bound parameters, and sessions live in a separate PostgreSQL sessions table. The 16 ORM tables do not include this manually created session table. In local mode the existing SQLite session implementation remains.
+
+The Supabase Data API was disabled during project setup because these tables are accessed by the backend, not anonymous browser client libraries. Public Data API exposure without suitable row-level security would be a different security model and is not required here. The database URL and Groq key belong only in private Render Environment settings.
+
+### 28.3 Free-tier constraints and operational choices
+
+Render can sleep after inactivity, causing a cold first visit. Supabase Free can pause inactive projects. Groq enforces free request/token quotas. Free-plan limits are not an uptime guarantee and can change; no application code deliberately upgrades a plan or switches to paid inference. Keep payment methods and paid upgrades disabled if zero billing is a requirement. A custom purchased domain is unnecessary because the Render HTTPS subdomain works on phones.
+
+No local PC needs to remain on for the hosted demo. Conversely, the local app still needs its own server and model configuration. A phone opening localhost would contact the phone itself, not the developer PC. The shared frontend uses the public origin when hosted.
+
+Live OCR of new uploads still requires a Tesseract executable, which the current Python Render setup does not provision. Bundled PDF OCR text is already available. Real SMS delivery, payment settlement, a trained crop-disease classifier and a trained mandi forecaster were not added by deploying the app.
+
+### 28.4 Failures diagnosed during deployment
+
+| Observed failure | Mechanism | Resolution and lesson |
+| --- | --- | --- |
+| Direct Supabase host: Network is unreachable | Direct endpoint resolved to IPv6 unavailable to this Render service | Use the verified IPv4 Session pooler, not a guessed hostname or paid IPv4 add-on |
+| Pooler: password authentication failed | Database credentials did not match or URI was malformed | Set correct database password/project-qualified username; percent-encode password characters; require SSL |
+| Registration settings failed to load | auth.js ran before deferred api-config.js and captured localhost fallback | Initialize API config first; hosted fallback uses window.location.origin |
+| Historical password errors in logs after a healthy deployment | Older failed attempts remained in log history | Check the latest commit/status and current /health rather than conflating timestamps |
+| Phone header occupied much of screen | Stacked shared nav and competing responsive grid rules | Shared compact mobile menu and last-loaded responsive layer |
+| Farmer Setup broke into single letters in chat | Narrow grid cells plus overflow-wrap:anywhere | Full-width mobile menu rows with normal word breaking |
+
+The database health endpoint reports connectivity and available corpus/index state. Configured model keys are not a successful model call. Live language/source tests remain necessary even when /health says ok.
+
+## 29 Public landing page and navigation model
+
+The bare GET / route now serves frontend/landing.html through FileResponse. /landing.html is also available as a static asset. The previous login and dashboard routes remain /login.html and /index.html; /chat.html remains the dedicated conversation workspace. Root-route behavior changed without changing database schemas or user records.
+
+The new page introduces the agricultural use case, four chat languages, source-linked evidence and farm tools. It includes an actual reviewed soil example with a USDA NRCS source link, clear chatbot and sign-in/profile entry points, an explanation of the evidence-checking workflow and FAQs about coverage and browser-local history. It avoids promises of universally correct advice, live market rates without a feed or cross-device conversation sync.
+
+The visual uses local HTML/CSS and a scalable inline SVG field illustration. No framework, JavaScript bundle, stock-video download or third-party font is required by the landing page. Semantic headings, a skip link, visible focus styles, native details/summary navigation and FAQ controls, and reduced-motion handling support accessibility. Its responsive stylesheet is independent of the app's dense legacy CSS. Chat remains usable as a guest; account-protected tools keep their existing authorization.
+
+The app's More menu links back to About AgroGyan, and the login page links back to the public landing page. The farm dashboard continues to be the Home link inside the application. In interviews, distinguish public marketing/navigation entry from the authenticated or profile-aware application dashboard.
+
+## 30 Mobile remediation across the application
+
+frontend/mobile.css is loaded after page-specific styles on all existing application HTML pages. renderUnifiedHeader in ui.js inserts a shared mobile menu button with aria-controls, aria-expanded and an accessible label. The collapsed header is 64 pixels high. Opening the menu reveals normal-width navigation, grouped Farmer Setup/More links, language controls and account actions. Escape returns focus to the toggle; outside clicks collapse it. Desktop navigation remains visible while the mobile button is hidden.
+
+The fix addressed the actual CSS cascade: earlier 760px grid rules forced small cells, arbitrary word wrapping and a tall stacked header. An early preview also exposed inherited flex-direction:column interacting with a 150px flex basis, producing huge action buttons. Setting the mobile action direction explicitly fixed it. This is a useful debugging example: inspect computed layout properties instead of merely hiding horizontal overflow.
+
+The responsive layer reduces hero headings/padding, uses compact two-column summary cards where space permits, stacks forms, constrains media, improves source wrapping, and removes some expensive decorative shadows. Inputs use readable sizes; chat input text is at least 16px to avoid iOS focus zoom. Controls include visible focus outlines and touch-sized menu rows.
+
+Chat uses dynamic viewport height plus visualViewport resize events where supported. The usable height is stored in a CSS custom property and shared with the workspace calculation; the header remains 64px and the composer stays above the usable viewport bottom. Safe-area padding accounts for device/browser controls. Resize writes are scheduled through requestAnimationFrame. Browser emulation supports these checks but does not establish perfect behavior on every iPhone keyboard/browser version.
+
+Eleven signed-in pages were inspected locally at 320px with no detected document horizontal overflow: My Farm, Crop Care, Market, Sell Produce, Shop, Cart, Checkout, Schemes, Community, Profile and Chat. Home/login and the shared menu were inspected separately. Additional checks used 390px, a short 390x420 chat viewport, 820px tablet width and 1280px desktop width. The short chat check placed the composer bottom at the viewport boundary. A real phone was confirmed by the user to access the hosted app before this remediation; the exact updated physical-phone rendering still merits user review.
+
+## 31 Publishing future changes and maintenance workflow
+
+The complete practical guide is deploy/UPDATING_THE_WEBSITE.md. The authoritative retained folder is C:\Users\HP\Desktop\Divyansh\Agrogyanchatgpt, with application files under agrogyan-gpt-main. The Git destination is Oneday-begin/Agrogyanchatgpt and the deployed branch is main. Avoid the earlier unrelated destination when checking remotes.
+
+The end-to-end chain is edit/save -> local verification -> Git commit -> Push origin -> Render build/start/health succeeds -> reload the same HTTPS website on desktop and phone. Saving or committing locally alone does not publish. Render's auto-deploy was verified to trigger on the pushed mobile commit; the deployment was observed Live and the public site served the new menu. The landing update uses that same established pipeline.
+
+Use GitHub Desktop to add/select the outer repository, verify its remote, fetch/pull upstream work before editing, review source diffs, commit, and push. Confirm the exact latest commit ID in Render Deploys. A previous green deployment does not prove the newest source is online. If auto-deploy is disabled, choose Manual Deploy > Deploy latest commit. Keep the instance Free. Existing hosting needs no second upload for phones.
+
+For local checks, use the configured Python environment and run python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 from the app directory. Open the root landing page and test login, navigation and affected features. Backend/retrieval/auth edits require the regression suite; UI edits require responsive browser inspection. Do not change the local database URL to the cloud database merely for layout testing.
+
+Code changes and secret changes follow different channels. Public HTML/CSS/JS/Python and documentation go to GitHub. Actual DATABASE_URL, GROQ_API_KEY and passwords go privately into Render Environment. Changing a database password requires matching Render credentials. Version asset URLs where useful and refresh after a successful deploy. Avoid clearing all phone site data because chat threads are browser-local.
+
+Knowledge changes need preparation as well as deployment. Import only supported agriculture/farming sources, preview scope and extraction quality, apply accepted updates, rebuild local embeddings if needed, then run python -m backend.deployment_knowledge pack. Commit the public bundle, manifest and necessary public sources. Render restores those files at build time. A generic browser document upload does not automatically approve or publish knowledge. The cloud profile still uses BM25 until a separately tested semantic provider is configured.
+
+A code rollback does not undo database changes. Prefer ordinary corrective/revert commits over force-pushing shared history. Render rollback may restore recent code, but a durable schema/data migration needs its own tested recovery plan. Open the site before an interview to allow a sleeping free instance to start; do not fabricate keep-alive traffic or claim an SLA.
+
+## 32 Interview revision for the hosted version
+
+### 32.1 Explain the deployment in thirty seconds
+
+The same FastAPI service serves a static frontend and JSON APIs over HTTPS on Render Free. Supabase PostgreSQL persists accounts and session digests through an SSL session-pooler connection. To fit a small free host, the cloud profile uses BM25 and multilingual aliases rather than local embedding inference. Groq selects bounded source evidence and translates requested text, with deterministic citation and numeric checks. Public reference tables are packaged with hashes so the deployed corpus is available without uploading user data.
+
+### 32.2 Did you remove RAG by disabling vectors?
+
+No. RAG is retrieval followed by model-assisted use of retrieved evidence; retrieval can be lexical or dense. The hosted path retrieves with BM25 and constrains the model to evidence selection. The local path additionally supports vector retrieval and reciprocal-rank fusion. Do not claim semantic parity without evaluation: disabling dense search may reduce recall for paraphrases and unfamiliar vocabulary.
+
+### 32.3 Why did deployment fail despite working locally?
+
+Localhost dependency addresses, direct IPv6 endpoints, ephemeral filesystems and secrets differ from a PC environment. The real failures included an IPv6 database network error, a credential rejection and JavaScript initialization that captured the visitor's localhost. These required environment-aware connection/configuration fixes, not simply repeated rebuilds.
+
+### 32.4 What does a successful deployment prove?
+
+It proves that a specific artifact built and started sufficiently to pass platform checks. It does not prove every route, provider, language or phone interaction. We separately checked database/corpus health, password registration/login, selected cited responses, source links and responsive layouts. Unit tests mock providers and cannot prove live Groq availability or faithful agricultural translation.
+
+### 32.5 Which state survives a restart?
+
+Supabase application records and sessions are durable independently of Render. The public corpus can be restored from the committed bundle. Render-local translation/OCR changes are disposable. Browser-local chat sidebars survive a server restart in that browser but do not automatically appear on a second device. Source files live in Git history; Git history is not a user-database backup.
+
+### 32.6 Can you promise zero future cost or hallucination?
+
+No universal promise is justified. The chosen demo uses free plans without intentional paid upgrades/fallbacks, but providers can change limits or availability. Source selection, citations and validation reduce unsupported output; they do not mathematically guarantee source truth, relevance, freshness or translation meaning. Explain those boundaries and your measured evidence rather than making absolute marketing claims.
+
+## Appendix A Verification snapshots
+
+### Current revision (24 October 2026)
+
+The landing-route revision passed the full 102-test backend suite in 5.901 seconds of unittest runner time, excluding corpus import/startup. This includes the earlier basic-registration tests and four mocked Groq/semantic-mode checks. JavaScript syntax checks passed for the changed scripts. The landing page was checked at 320px, 390px, 820px and 1440px: one h1, no detected document horizontal overflow, working internal links/assets, and native mobile navigation/FAQs. The prior mobile application update was observed Live at commit 19807ca, and a public soil answer returned source citations. The user confirmed website access from a phone. Live multilingual quality, OCR uploads without Tesseract, concurrency/load and agricultural field accuracy were not established by these checks.
+
+The landing deployment and updated report PDF are verified separately in report-validation.json. PDF layout validation is not a software correctness test.
+
+### Historical baseline (19 October 2026)
 
 The fresh run on 19 October 2026 completed 95 tests in 5.467 seconds with OK, after discovery/import preparation. This duration is the unittest runner duration, not total process startup. JavaScript syntax checks passed for script.js, ui.js, chat-workspace.js, community.js and farmer-pages.js. All six inspected SQLite stores returned quick_check=ok. No new real-provider OTP, paid API, payment settlement or agricultural field trial was performed.
 
-An earlier test process stalled in the restricted execution environment before test execution. It was stopped after the replacement completed. This is separate from the passing result and does not establish that every import/startup scenario is fast. The current test log is graphify-out/placement-verification-final.log.
+An earlier test process stalled in the restricted execution environment before test execution. It was stopped after the replacement completed. This is separate from the passing result and does not establish that every import/startup scenario is fast. That historical test log is graphify-out/placement-verification-final.log. The current deployment checks are recorded in report-validation.json; neither log is a multilingual accuracy benchmark.
 
 Cleanup removed 105 files and 3,664,870 bytes (3.50 MiB); 0 files were skipped. Volatile bytecode may regenerate during normal validation.
 
-### Storage inventory
+### Historical local storage inventory (19 October 2026)
 
 | Store | Size MiB | Tables | Integrity |
 | --- | --- | --- | --- |
@@ -675,68 +821,70 @@ Historical observations below were aggregated before deleting obsolete diagnosti
 
 ## Appendix B Endpoint inventory
 
-This is the inspected source route catalog. Shared authorization is defined in security.py; the handler name alone does not describe access control. Refer to Pydantic models below for request fields. HTTP/documentation/static mounts generated by the framework are additional.
+Current route decorators in backend/main.py; generated OpenAPI/docs and static mounts are excluded. Line numbers identify this revision.
 
-| Method and path | Handler | main.py line |
+| Method and path | Handler | Line |
 | --- | --- | --- |
-| POST /register | register_user | 1311 |
-| POST /auth/send-registration-otp | send_registration_otp | 1320 |
-| POST /auth/verify-registration-otp | verify_registration_otp | 1388 |
-| POST /login | login_user | 1464 |
-| GET /admin/analytics | get_admin_analytics | 1520 |
-| GET /profile/{user_id} | get_profile | 1527 |
-| POST /profile/preferences | update_profile_preferences | 1558 |
-| GET /farm-profile/{user_id} | get_farm_profile | 1569 |
-| POST /farm-profile | save_farm_profile | 1578 |
-| POST /ops/live-sync | sync_live_feeds | 1595 |
-| GET /ops/feed-status | get_feed_status | 1605 |
-| GET /shop/inventory | get_shop_inventory | 1642 |
-| POST /admin/inventory/upsert | upsert_inventory_item | 1665 |
-| POST /shop/demand-signal | create_demand_signal | 1685 |
-| GET /admin/commerce-overview | get_commerce_overview | 1700 |
-| POST /shop/orders | create_shop_order | 1742 |
-| GET /shop/orders | list_shop_orders | 1769 |
-| POST /shop/orders/status | update_shop_order_status | 1780 |
-| POST /market-alerts | create_market_alert | 1793 |
-| GET /market-alerts | list_market_alerts | 1812 |
-| GET /produce/listings | list_farmer_produce_listings | 1843 |
-| POST /produce/listings | create_farmer_produce_listing | 1875 |
-| POST /produce/orders | create_produce_order | 1900 |
-| GET /dashboard-overview | dashboard_overview | 1939 |
-| POST /ai/loan-insurance-assistant | ai_loan_insurance_assistant | 2050 |
-| GET /platform/modules | get_platform_modules | 2056 |
-| GET /health | health_check | 2070 |
-| POST /ask | ask_question | 2100 |
-| GET /knowledge/gr/{source_id} | repository_gr_source | 2181 |
-| GET /knowledge/pdf/{source_id} | knowledge_pdf | 2198 |
-| GET /knowledge/sources/{source_name} | knowledge_source | 2213 |
-| POST /ai/explain-simply | explain_simply | 2226 |
-| POST /ai/daily-briefing | ai_daily_briefing | 2233 |
-| POST /ai/farm-planner | ai_farm_planner | 2239 |
-| POST /ai/scheme-eligibility | ai_scheme_eligibility | 2245 |
-| POST /ai/weather-alerts | ai_weather_alerts | 2251 |
-| POST /ai/market-prediction | ai_market_prediction | 2257 |
-| POST /ai/pest-risk | ai_pest_risk | 2263 |
-| POST /ai/map-context | ai_map_context | 2269 |
-| GET /ai/chat-memory/{user_id} | ai_chat_memory | 2275 |
-| GET /questions/feed | get_question_feed | 2298 |
-| POST /community/create-post | create_post | 2323 |
-| GET /community/posts | get_posts | 2343 |
-| GET /community/insights | get_community_insights | 2372 |
-| POST /community/like/{post_id} | like_post | 2378 |
-| POST /community/dislike/{post_id} | dislike_post | 2388 |
-| POST /community/react | react_to_post | 2398 |
-| PUT /community/post | edit_post | 2415 |
-| DELETE /community/post | delete_post | 2428 |
-| POST /community/comment | add_comment | 2441 |
-| GET /community/comments/{post_id} | get_comments | 2451 |
-| POST /upload-image/ | upload_image | 2457 |
-| POST /ai/crop-doctor | ai_crop_doctor | 2476 |
-| POST /ai/document-insights | ai_document_insights | 2483 |
-| GET / | serve_login_page | 2498 |
-| GET /auth/me | current_session | 2505 |
-| POST /auth/logout | logout_session | 2509 |
-| GET /crop-decision | crop_decision | 2514 |
+| GET /auth/config | auth_config | 1325 |
+| POST /auth/register-basic | register_basic | 1330 |
+| POST /register | register_user | 1350 |
+| POST /auth/send-registration-otp | send_registration_otp | 1359 |
+| POST /auth/verify-registration-otp | verify_registration_otp | 1427 |
+| POST /login | login_user | 1503 |
+| GET /admin/analytics | get_admin_analytics | 1559 |
+| GET /profile/{user_id} | get_profile | 1566 |
+| POST /profile/preferences | update_profile_preferences | 1597 |
+| GET /farm-profile/{user_id} | get_farm_profile | 1608 |
+| POST /farm-profile | save_farm_profile | 1617 |
+| POST /ops/live-sync | sync_live_feeds | 1634 |
+| GET /ops/feed-status | get_feed_status | 1644 |
+| GET /shop/inventory | get_shop_inventory | 1681 |
+| POST /admin/inventory/upsert | upsert_inventory_item | 1704 |
+| POST /shop/demand-signal | create_demand_signal | 1724 |
+| GET /admin/commerce-overview | get_commerce_overview | 1739 |
+| POST /shop/orders | create_shop_order | 1781 |
+| GET /shop/orders | list_shop_orders | 1808 |
+| POST /shop/orders/status | update_shop_order_status | 1819 |
+| POST /market-alerts | create_market_alert | 1832 |
+| GET /market-alerts | list_market_alerts | 1851 |
+| GET /produce/listings | list_farmer_produce_listings | 1882 |
+| POST /produce/listings | create_farmer_produce_listing | 1914 |
+| POST /produce/orders | create_produce_order | 1939 |
+| GET /dashboard-overview | dashboard_overview | 1978 |
+| POST /ai/loan-insurance-assistant | ai_loan_insurance_assistant | 2089 |
+| GET /platform/modules | get_platform_modules | 2095 |
+| GET /health | health_check | 2109 |
+| POST /ask | ask_question | 2139 |
+| GET /knowledge/gr/{source_id} | repository_gr_source | 2220 |
+| GET /knowledge/pdf/{source_id} | knowledge_pdf | 2237 |
+| GET /knowledge/sources/{source_name} | knowledge_source | 2252 |
+| POST /ai/explain-simply | explain_simply | 2265 |
+| POST /ai/daily-briefing | ai_daily_briefing | 2272 |
+| POST /ai/farm-planner | ai_farm_planner | 2278 |
+| POST /ai/scheme-eligibility | ai_scheme_eligibility | 2284 |
+| POST /ai/weather-alerts | ai_weather_alerts | 2290 |
+| POST /ai/market-prediction | ai_market_prediction | 2296 |
+| POST /ai/pest-risk | ai_pest_risk | 2302 |
+| POST /ai/map-context | ai_map_context | 2308 |
+| GET /ai/chat-memory/{user_id} | ai_chat_memory | 2314 |
+| GET /questions/feed | get_question_feed | 2337 |
+| POST /community/create-post | create_post | 2362 |
+| GET /community/posts | get_posts | 2382 |
+| GET /community/insights | get_community_insights | 2411 |
+| POST /community/like/{post_id} | like_post | 2417 |
+| POST /community/dislike/{post_id} | dislike_post | 2427 |
+| POST /community/react | react_to_post | 2437 |
+| PUT /community/post | edit_post | 2454 |
+| DELETE /community/post | delete_post | 2467 |
+| POST /community/comment | add_comment | 2480 |
+| GET /community/comments/{post_id} | get_comments | 2490 |
+| POST /upload-image/ | upload_image | 2496 |
+| POST /ai/crop-doctor | ai_crop_doctor | 2515 |
+| POST /ai/document-insights | ai_document_insights | 2522 |
+| GET / | serve_landing_page | 2537 |
+| GET /auth/me | current_session | 2544 |
+| POST /auth/logout | logout_session | 2548 |
+| GET /crop-decision | crop_decision | 2553 |
 
 ## Appendix C Request schema dictionary
 
@@ -767,6 +915,16 @@ Validators: validate_question, validate_language.
 | preferred_language | str | 'English' |
 | otp_channel | str | 'sms' |
 | role | str | 'farmer' |
+### BasicRegisterRequest
+
+Used by POST /auth/register-basic when enabled. Email/name are stripped and checked; passwords require 8 to 72 characters. The role is fixed to farmer and phone_verified remains false.
+
+| Field | Type | Constraint |
+| --- | --- | --- |
+| name | str | 1 to 100 characters, nonblank |
+| email | str | 3 to 254 characters, basic email pattern |
+| password | str | 8 to 72 characters |
+
 ### LoginRequest
 
 | Field | Annotation | Default or constraints |
@@ -1330,7 +1488,7 @@ Stored rows at inspection: 2.
 
 ## Appendix E Code symbol navigation
 
-The navigation map lists every inspected Python class/function by module and source line. Class methods appear separately. Test names document the regression topics. This is a source navigation appendix, not a claim that each symbol is a separate user feature.
+Current Python class/function locations from backend and tests. This is a source navigation map, not a feature-count claim.
 
 ### backend/build_knowledge_base.py
 
@@ -1339,9 +1497,11 @@ The navigation map lists every inspected Python class/function by module and sou
 - L40: text_to_sections (function).
 - L45: build_html_page (function).
 - L86: main (function).
+
 ### backend/build_vector_index.py
 
 - L9: main (function).
+
 ### backend/data_loader.py
 
 - L18: normalize_text (function).
@@ -1353,20 +1513,29 @@ The navigation map lists every inspected Python class/function by module and sou
 - L165: load_documents (function).
 - L173: load_farming_references (function).
 - L195: load_corpus (function).
+
 ### backend/database.py
 
 - L37: _sqlite_pragmas (function).
 - L58: get_session (function).
 - L74: check_database (function).
 - L113: ensure_legacy_columns (function).
+
+### backend/deployment_knowledge.py
+
+- L16: pack (function).
+- L39: unpack (function).
+
 ### backend/document_processing.py
 
 - L17: DocumentError (class).
 - L21: image_text (function).
 - L64: document_text (function).
+
 ### backend/gr_scope.py
 
 - L38: farming_scope (function).
+
 ### backend/import_maharashtra_grs.py
 
 - L27: parse_pages (function).
@@ -1375,6 +1544,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L92: import_repository (function).
 - L156: load_gr_documents (function).
 - L191: main (function).
+
 ### backend/intelligence.py
 
 - L52: merge_profile (function).
@@ -1394,12 +1564,13 @@ The navigation map lists every inspected Python class/function by module and sou
 - L251: map_context (function).
 - L266: build_chat_context (function).
 - L278: build_dashboard_payload (function).
+
 ### backend/main.py
 
-- L109: log_requests (async function).
-- L120: validation_error_handler (async function).
-- L127: database_error_handler (async function).
-- L133: unhandled_error_handler (async function).
+- L109: log_requests (function).
+- L120: validation_error_handler (function).
+- L127: database_error_handler (function).
+- L133: unhandled_error_handler (function).
 - L265: hash_password (function).
 - L269: verify_password (function).
 - L273: is_admin_credentials (function).
@@ -1410,7 +1581,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L293: is_recent (function).
 - L299: safe_float (function).
 - L306: coerce_price_number (function).
-- L311: fetch_json (async function).
+- L311: fetch_json (function).
 - L318: fetch_json_sync (function).
 - L323: generate_otp (function).
 - L327: normalize_indian_phone_number (function).
@@ -1471,64 +1642,69 @@ The navigation map lists every inspected Python class/function by module and sou
 - L1273: ProduceListingRequest (class).
 - L1288: ProduceOrderRequest (class).
 - L1298: merge_request_profile (function).
-- L1311: register_user (function).
-- L1320: send_registration_otp (function).
-- L1388: verify_registration_otp (function).
-- L1464: login_user (function).
-- L1520: get_admin_analytics (function).
-- L1527: get_profile (function).
-- L1558: update_profile_preferences (function).
-- L1569: get_farm_profile (function).
-- L1578: save_farm_profile (function).
-- L1595: sync_live_feeds (function).
-- L1605: get_feed_status (function).
-- L1642: get_shop_inventory (function).
-- L1665: upsert_inventory_item (function).
-- L1685: create_demand_signal (function).
-- L1700: get_commerce_overview (function).
-- L1742: create_shop_order (function).
-- L1769: list_shop_orders (function).
-- L1780: update_shop_order_status (function).
-- L1793: create_market_alert (function).
-- L1812: list_market_alerts (function).
-- L1843: list_farmer_produce_listings (function).
-- L1875: create_farmer_produce_listing (function).
-- L1900: create_produce_order (function).
-- L1939: dashboard_overview (function).
-- L2050: ai_loan_insurance_assistant (function).
-- L2056: get_platform_modules (function).
-- L2070: health_check (function).
-- L2100: ask_question (function).
-- L2181: repository_gr_source (function).
-- L2198: knowledge_pdf (function).
-- L2213: knowledge_source (function).
-- L2226: explain_simply (function).
-- L2233: ai_daily_briefing (function).
-- L2239: ai_farm_planner (function).
-- L2245: ai_scheme_eligibility (function).
-- L2251: ai_weather_alerts (function).
-- L2257: ai_market_prediction (function).
-- L2263: ai_pest_risk (function).
-- L2269: ai_map_context (function).
-- L2275: ai_chat_memory (function).
-- L2298: get_question_feed (function).
-- L2323: create_post (function).
-- L2343: get_posts (function).
-- L2372: get_community_insights (function).
-- L2378: like_post (function).
-- L2388: dislike_post (function).
-- L2398: react_to_post (function).
-- L2415: edit_post (function).
-- L2428: delete_post (function).
-- L2441: add_comment (function).
-- L2451: get_comments (function).
-- L2457: upload_image (async function).
-- L2476: ai_crop_doctor (async function).
-- L2483: ai_document_insights (async function).
-- L2498: serve_login_page (function).
-- L2505: current_session (function).
-- L2509: logout_session (function).
-- L2514: crop_decision (function).
+- L1310: BasicRegisterRequest (class).
+- L1317: clean_identity (function).
+- L1325: auth_config (function).
+- L1330: register_basic (function).
+- L1350: register_user (function).
+- L1359: send_registration_otp (function).
+- L1427: verify_registration_otp (function).
+- L1503: login_user (function).
+- L1559: get_admin_analytics (function).
+- L1566: get_profile (function).
+- L1597: update_profile_preferences (function).
+- L1608: get_farm_profile (function).
+- L1617: save_farm_profile (function).
+- L1634: sync_live_feeds (function).
+- L1644: get_feed_status (function).
+- L1681: get_shop_inventory (function).
+- L1704: upsert_inventory_item (function).
+- L1724: create_demand_signal (function).
+- L1739: get_commerce_overview (function).
+- L1781: create_shop_order (function).
+- L1808: list_shop_orders (function).
+- L1819: update_shop_order_status (function).
+- L1832: create_market_alert (function).
+- L1851: list_market_alerts (function).
+- L1882: list_farmer_produce_listings (function).
+- L1914: create_farmer_produce_listing (function).
+- L1939: create_produce_order (function).
+- L1978: dashboard_overview (function).
+- L2089: ai_loan_insurance_assistant (function).
+- L2095: get_platform_modules (function).
+- L2109: health_check (function).
+- L2139: ask_question (function).
+- L2220: repository_gr_source (function).
+- L2237: knowledge_pdf (function).
+- L2252: knowledge_source (function).
+- L2265: explain_simply (function).
+- L2272: ai_daily_briefing (function).
+- L2278: ai_farm_planner (function).
+- L2284: ai_scheme_eligibility (function).
+- L2290: ai_weather_alerts (function).
+- L2296: ai_market_prediction (function).
+- L2302: ai_pest_risk (function).
+- L2308: ai_map_context (function).
+- L2314: ai_chat_memory (function).
+- L2337: get_question_feed (function).
+- L2362: create_post (function).
+- L2382: get_posts (function).
+- L2411: get_community_insights (function).
+- L2417: like_post (function).
+- L2427: dislike_post (function).
+- L2437: react_to_post (function).
+- L2454: edit_post (function).
+- L2467: delete_post (function).
+- L2480: add_comment (function).
+- L2490: get_comments (function).
+- L2496: upload_image (function).
+- L2515: ai_crop_doctor (function).
+- L2522: ai_document_insights (function).
+- L2537: serve_landing_page (function).
+- L2544: current_session (function).
+- L2548: logout_session (function).
+- L2553: crop_decision (function).
+
 ### backend/models.py
 
 - L6: User (class).
@@ -1547,6 +1723,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L206: MarketAlertSubscription (class).
 - L220: SchemeSnapshot (class).
 - L233: FarmerProduceListing (class).
+
 ### backend/multilingual.py
 
 - L83: normalize_digits (function).
@@ -1554,15 +1731,18 @@ The navigation map lists every inspected Python class/function by module and sou
 - L101: topic_anchors (function).
 - L112: has_topic (function).
 - L117: search_plan (function).
+
 ### backend/passwords.py
 
 - L7: hash_password (function).
 - L12: verify_password (function).
+
 ### backend/pdf_ingestion.py
 
 - L23: ocr_page (function).
 - L39: overlapping_chunks (function).
 - L56: load_pdf_documents (function).
+
 ### backend/rag.py
 
 - L21: RAGRetriever (class).
@@ -1576,8 +1756,9 @@ The navigation map lists every inspected Python class/function by module and sou
 - L272: _generate (function).
 - L382: _cloud_configured (function).
 - L386: _cloud_select (function).
-- L399: _passages (function).
-- L405: _validate (function).
+- L400: _passages (function).
+- L406: _validate (function).
+
 ### backend/retrieval_policy.py
 
 - L13: intent (function).
@@ -1587,6 +1768,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L55: requested_years_match (function).
 - L60: policy_request (function).
 - L64: source_fits_request (function).
+
 ### backend/retriever.py
 
 - L60: tokenize (function).
@@ -1611,25 +1793,33 @@ The navigation map lists every inspected Python class/function by module and sou
 - L398: _definition_target (function).
 - L411: _overlaps (function).
 - L418: _result (function).
+
 ### backend/security.py
 
 - L21: connection (function).
-- L30: issue_session (function).
-- L37: revoke (function).
-- L42: authorize (async function).
+- L26: Adapter (class).
+- L27: __init__ (function).
+- L28: execute (function).
+- L44: issue_session (function).
+- L51: revoke (function).
+- L56: authorize (function).
+
 ### backend/setup_rag.py
 
 - L11: main (function).
+
 ### backend/translation.py
 
 - L26: cache_connection (function).
 - L34: translation_status (function).
 - L38: translate_cached (function).
-- L81: detect_language (function).
-- L88: _normalize_digits (function).
-- L92: _valid_target_script (function).
-- L103: _validate_translation (function).
-- L116: local_translate (function).
+- L82: detect_language (function).
+- L89: _normalize_digits (function).
+- L93: _valid_target_script (function).
+- L104: _validate_translation (function).
+- L117: local_translate (function).
+- L168: groq_translate (function).
+
 ### backend/vector_store.py
 
 - L26: OllamaEmbeddings (class).
@@ -1642,6 +1832,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L91: _build (function).
 - L139: search (function).
 - L151: status (function).
+
 ### tests/test_chatbot.py
 
 - L22: tearDownModule (function).
@@ -1699,6 +1890,20 @@ The navigation map lists every inspected Python class/function by module and sou
 - L412: test_auto_detects_gujarati_and_preserves_source (function).
 - L421: test_unsupported_languages_removed (function).
 - L425: test_translation_failure_is_not_english_answer_disguised_as_gujarati (function).
+- L435: BasicRegistrationTests (class).
+- L436: setUp (function).
+- L441: test_password_registration_login_and_no_phone_claim (function).
+- L457: test_basic_registration_disabled (function).
+- L463: test_invalid_registration_and_rate_limit (function).
+
+### tests/test_cloud_demo.py
+
+- L9: CloudDemoTests (class).
+- L10: test_groq_selector_uses_only_configured_endpoint (function).
+- L20: test_cloud_translation_rejects_changed_amount (function).
+- L27: test_cloud_translation_keeps_citation (function).
+- L33: test_disabled_semantic_search_never_initializes_ollama (function).
+
 ### tests/test_gr_import.py
 
 - L12: ImportTests (class).
@@ -1711,6 +1916,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L61: test_agriculture_department_does_not_approve_unrelated_subjects (function).
 - L72: test_salted_hashes_and_legacy_verification (function).
 - L80: test_original_uses_paired_subject_and_removes_previous_false_match (function).
+
 ### tests/test_multilingual_rag.py
 
 - L11: MultilingualTests (class).
@@ -1721,6 +1927,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L58: test_failed_generation_cannot_escape_named_source (function).
 - L68: test_definition_intent_is_explained_without_discarding_question (function).
 - L79: test_topic_filter_excludes_generic_budget_paragraph (function).
+
 ### tests/test_rag.py
 
 - L16: FakeEmbeddings (class).
@@ -1753,6 +1960,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L212: test_named_gr_does_not_mix_other_resolutions (function).
 - L225: test_document_number_abbreviation_is_not_negation (function).
 - L230: test_gr_identity_uses_metadata_but_does_not_approve_invented_amounts (function).
+
 ### tests/test_retrieval_improvements.py
 
 - L11: RetrievalImprovementTests (class).
@@ -1771,6 +1979,7 @@ The navigation map lists every inspected Python class/function by module and sou
 - L97: thread (function).
 - L107: test_failed_reconnect_has_cooldown_and_preserves_keyword_index (function).
 - L111: thread (function).
+
 ### tests/test_translation_local.py
 
 - L13: LocalTranslationTests (class).
@@ -1794,28 +2003,27 @@ Current application source/configuration files are listed below. Runtime environ
 
 | File | Bytes |
 | --- | --- |
-| .env.example | 806 |
+| .env.example | 1094 |
 | .gitignore | 341 |
+| README.md | 5992 |
 | backend/__init__.py | 0 |
 | backend/build_knowledge_base.py | 3253 |
-| backend/build_vector_index.py | 491 |
+| backend/build_vector_index.py | 508 |
 | backend/data_loader.py | 10008 |
-| backend/database.py | 5037 |
-| backend/document_processing.py | 4266 |
-| backend/gr_scope.py | 3417 |
-| backend/import_maharashtra_grs.py | 12435 |
+| backend/database.py | 5176 |
+| backend/deployment_knowledge.py | 2488 |
+| backend/document_processing.py | 4359 |
+| backend/gr_scope.py | 3461 |
+| backend/import_maharashtra_grs.py | 12650 |
 | backend/intelligence.py | 11697 |
+| backend/knowledge/README.md | 1284 |
 | backend/knowledge/farming_reference.json | 24092 |
 | backend/knowledge/gr_accepted_subjects.json | 398169 |
-| backend/knowledge/gr_import_report.json | 1900770 |
-| backend/knowledge/README.md | 1262 |
-| backend/knowledge/source_exclusions.json | 933 |
+| backend/knowledge/source_exclusions.json | 945 |
 | backend/knowledge/states/gujarat.html | 57191 |
 | backend/knowledge/states/maharashtra_research_units.html | 8677 |
 | backend/knowledge/states/punjab.html | 10126 |
-| backend/knowledge/states/soil_basics.html | 770 |
-| backend/knowledge_imports/farming units/Farming_Research_Units_Maharashtra.pdf | 4896 |
-| backend/knowledge_imports/farming units/PROB STATEMENT 2.pdf | 237747 |
+| backend/knowledge/states/soil_basics.html | 787 |
 | backend/knowledge_imports/GR (guju)/1.pdf | 97208 |
 | backend/knowledge_imports/GR (guju)/10.pdf | 176381 |
 | backend/knowledge_imports/GR (guju)/2.pdf | 78009 |
@@ -1827,7 +2035,9 @@ Current application source/configuration files are listed below. Runtime environ
 | backend/knowledge_imports/GR (guju)/8.pdf | 204878 |
 | backend/knowledge_imports/GR (guju)/9.pdf | 220732 |
 | backend/knowledge_imports/GR (punjab)/msp.pdf | 556103 |
-| backend/main.py | 100205 |
+| backend/knowledge_imports/farming units/Farming_Research_Units_Maharashtra.pdf | 4896 |
+| backend/knowledge_imports/farming units/PROB STATEMENT 2.pdf | 237747 |
+| backend/main.py | 102040 |
 | backend/models.py | 11190 |
 | backend/multilingual.py | 10134 |
 | backend/ocr/tessdata/eng.traineddata | 4113088 |
@@ -1835,52 +2045,59 @@ Current application source/configuration files are listed below. Runtime environ
 | backend/ocr/tessdata/hin.traineddata | 1122751 |
 | backend/ocr/tessdata/mar.traineddata | 2118233 |
 | backend/passwords.py | 1274 |
-| backend/pdf_ingestion.py | 5884 |
-| backend/rag.py | 28405 |
-| backend/retrieval_policy.py | 3542 |
-| backend/retriever.py | 21152 |
-| backend/security.py | 5462 |
-| backend/setup_rag.py | 2126 |
-| backend/translation.py | 9055 |
-| backend/vector_store.py | 7877 |
-| frontend/admin.html | 25600 |
+| backend/pdf_ingestion.py | 5996 |
+| backend/rag.py | 28775 |
+| backend/retrieval_policy.py | 3613 |
+| backend/retriever.py | 21252 |
+| backend/security.py | 6289 |
+| backend/setup_rag.py | 2173 |
+| backend/translation.py | 11214 |
+| backend/vector_store.py | 8031 |
+| deploy/README.md | 3963 |
+| deploy/UPDATING_THE_WEBSITE.md | 11561 |
+| docs/placement/build_report.py | 9925 |
+| frontend/admin.html | 25660 |
 | frontend/api-config.js | 966 |
-| frontend/auth.js | 20258 |
-| frontend/cart.html | 5263 |
-| frontend/chat-workspace.css | 7070 |
+| frontend/auth.js | 23177 |
+| frontend/cart.html | 5323 |
+| frontend/chat-workspace.css | 7461 |
 | frontend/chat-workspace.js | 7465 |
-| frontend/chat.css | 12236 |
-| frontend/chat.html | 6558 |
-| frontend/checkout.html | 9260 |
-| frontend/community.html | 10543 |
+| frontend/chat.css | 12639 |
+| frontend/chat.html | 6623 |
+| frontend/checkout.html | 9320 |
+| frontend/community.html | 10603 |
 | frontend/community.js | 31993 |
-| frontend/crop-care.html | 8492 |
+| frontend/crop-care.html | 8552 |
 | frontend/farmer-pages.js | 183842 |
-| frontend/i18n.js | 48888 |
-| frontend/index.html | 6570 |
-| frontend/login.html | 11392 |
-| frontend/market.html | 11821 |
-| frontend/my-farm.html | 12688 |
-| frontend/profile.html | 21524 |
-| frontend/schemes.html | 6209 |
+| frontend/i18n.js | 48402 |
+| frontend/index.html | 6635 |
+| frontend/landing.css | 10365 |
+| frontend/landing.html | 9216 |
+| frontend/landing.js | 667 |
+| frontend/login.html | 11523 |
+| frontend/market.html | 11881 |
+| frontend/mobile.css | 8656 |
+| frontend/my-farm.html | 12748 |
+| frontend/profile.html | 21584 |
+| frontend/schemes.html | 6269 |
 | frontend/schemes.js | 10033 |
 | frontend/script.js | 46510 |
-| frontend/sell-crops.html | 8269 |
+| frontend/sell-crops.html | 8329 |
 | frontend/shop-catalog.js | 21289 |
-| frontend/shop.html | 13307 |
+| frontend/shop.html | 13367 |
 | frontend/style.css | 137514 |
-| frontend/ui.js | 23670 |
-| README.md | 5292 |
-| render.yaml | 494 |
-| requirements-dev.txt | 34 |
+| frontend/ui.js | 25390 |
+| render.yaml | 1077 |
+| requirements-dev.txt | 36 |
 | requirements.txt | 604 |
-| start_agrogyan.bat | 849 |
-| tests/test_chatbot.py | 24497 |
-| tests/test_gr_import.py | 6259 |
-| tests/test_multilingual_rag.py | 6303 |
-| tests/test_rag.py | 13109 |
-| tests/test_retrieval_improvements.py | 7582 |
-| tests/test_translation_local.py | 6335 |
+| start_agrogyan.bat | 884 |
+| tests/test_chatbot.py | 26661 |
+| tests/test_cloud_demo.py | 2570 |
+| tests/test_gr_import.py | 6355 |
+| tests/test_multilingual_rag.py | 6395 |
+| tests/test_rag.py | 13348 |
+| tests/test_retrieval_improvements.py | 7705 |
+| tests/test_translation_local.py | 6449 |
 
 ### Cleanup categories
 

@@ -2,7 +2,7 @@
 
 A multilingual agricultural assistant with source-backed chat, government-resolution and PDF retrieval, farm profiles, weather information, and community tools.
 
-AgroGyanGPT combines a FastAPI backend with an HTML, CSS, and JavaScript frontend. It uses local Ollama models by default and can return cited extracts when model-assisted answers are unavailable. The project is under active development; some advisory and commerce modules are foundations rather than complete services.
+AgroGyanGPT combines a FastAPI backend with an HTML, CSS, and JavaScript frontend. It uses local Ollama models by default and can return cited extracts when model-assisted answers are unavailable. The free hosted demo uses Render, Supabase PostgreSQL and Groq; the local default remains Ollama. The project is under active development; some advisory and commerce modules are foundations rather than complete services.
 
 ## Features
 
@@ -14,7 +14,7 @@ AgroGyanGPT combines a FastAPI backend with an HTML, CSS, and JavaScript fronten
 | Chat workspace | Separate conversations, saved history, drafts, language preferences, and source links stored in the browser. |
 | Farm information | Farm profiles, crop and season context, weather information, market observations, and scheme-related assistance. |
 | Community | Posts, comments, reactions, and community insights. |
-| Accounts | OTP registration through a configured delivery provider, password hashing, revocable session cookies, and configurable admin access. |
+| Accounts | Basic email/password registration in the hosted demo; optional configured OTP locally. Password hashing, revocable session cookies, and configurable admin access. |
 | Marketplace | Inventory, produce listings, order records, and demand signals; payment and fulfilment services are not established by these records. |
 
 ## Technology
@@ -175,3 +175,15 @@ Tests cover retrieval, API behavior, security, multilingual presentation, GR imp
 ## Authors
 
 Harsh Shah, Hitanshi Jain, Divyansh Kanti, and Diya Mehtalia.
+
+## Live demo and future updates
+
+Public introduction: https://agrogyan-demo.onrender.com/
+
+The public landing page, login, farm dashboard and chat are separate routes. The hosted profile uses BM25 with Groq evidence selection and translation; it does not run local embedding models. Account records and sessions persist in Supabase.
+
+- [Complete PC-to-GitHub-to-Render update steps](agrogyan-gpt-main/deploy/UPDATING_THE_WEBSITE.md)
+- [Updated placement study report](agrogyan-gpt-main/docs/placement/AgroGyanGPT_Placement_Report.pdf)
+- [Editable report source](agrogyan-gpt-main/docs/placement/AgroGyanGPT_Placement_Report.md)
+
+Push changes to `Oneday-begin/Agrogyanchatgpt`, branch `main`, then verify the latest Render deployment is Live. Phones load that same public HTTPS website; saving local files alone does not publish them.

@@ -282,6 +282,7 @@ function renderUnifiedHeader() {
                         <a href="schemes.html">Schemes</a>
                         <a href="community.html">Community</a>
                         <a href="profile.html">Profile</a>
+                        <a href="/#about">About AgroGyan</a>
                     </div>
                 </details>
             </nav>

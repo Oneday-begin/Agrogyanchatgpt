@@ -1,363 +1,379 @@
 {
-  "date": "2026-10-19",
+  "date": "2026-10-24",
   "routes": [
+    {
+      "method": "GET",
+      "path": "/auth/config",
+      "handler": "auth_config",
+      "line": 1325
+    },
+    {
+      "method": "POST",
+      "path": "/auth/register-basic",
+      "handler": "register_basic",
+      "line": 1330
+    },
     {
       "method": "POST",
       "path": "/register",
       "handler": "register_user",
-      "line": 1311
+      "line": 1350
     },
     {
       "method": "POST",
       "path": "/auth/send-registration-otp",
       "handler": "send_registration_otp",
-      "line": 1320
+      "line": 1359
     },
     {
       "method": "POST",
       "path": "/auth/verify-registration-otp",
       "handler": "verify_registration_otp",
-      "line": 1388
+      "line": 1427
     },
     {
       "method": "POST",
       "path": "/login",
       "handler": "login_user",
-      "line": 1464
+      "line": 1503
     },
     {
       "method": "GET",
       "path": "/admin/analytics",
       "handler": "get_admin_analytics",
-      "line": 1520
+      "line": 1559
     },
     {
       "method": "GET",
       "path": "/profile/{user_id}",
       "handler": "get_profile",
-      "line": 1527
+      "line": 1566
     },
     {
       "method": "POST",
       "path": "/profile/preferences",
       "handler": "update_profile_preferences",
-      "line": 1558
+      "line": 1597
     },
     {
       "method": "GET",
       "path": "/farm-profile/{user_id}",
       "handler": "get_farm_profile",
-      "line": 1569
+      "line": 1608
     },
     {
       "method": "POST",
       "path": "/farm-profile",
       "handler": "save_farm_profile",
-      "line": 1578
+      "line": 1617
     },
     {
       "method": "POST",
       "path": "/ops/live-sync",
       "handler": "sync_live_feeds",
-      "line": 1595
+      "line": 1634
     },
     {
       "method": "GET",
       "path": "/ops/feed-status",
       "handler": "get_feed_status",
-      "line": 1605
+      "line": 1644
     },
     {
       "method": "GET",
       "path": "/shop/inventory",
       "handler": "get_shop_inventory",
-      "line": 1642
+      "line": 1681
     },
     {
       "method": "POST",
       "path": "/admin/inventory/upsert",
       "handler": "upsert_inventory_item",
-      "line": 1665
+      "line": 1704
     },
     {
       "method": "POST",
       "path": "/shop/demand-signal",
       "handler": "create_demand_signal",
-      "line": 1685
+      "line": 1724
     },
     {
       "method": "GET",
       "path": "/admin/commerce-overview",
       "handler": "get_commerce_overview",
-      "line": 1700
+      "line": 1739
     },
     {
       "method": "POST",
       "path": "/shop/orders",
       "handler": "create_shop_order",
-      "line": 1742
+      "line": 1781
     },
     {
       "method": "GET",
       "path": "/shop/orders",
       "handler": "list_shop_orders",
-      "line": 1769
+      "line": 1808
     },
     {
       "method": "POST",
       "path": "/shop/orders/status",
       "handler": "update_shop_order_status",
-      "line": 1780
+      "line": 1819
     },
     {
       "method": "POST",
       "path": "/market-alerts",
       "handler": "create_market_alert",
-      "line": 1793
+      "line": 1832
     },
     {
       "method": "GET",
       "path": "/market-alerts",
       "handler": "list_market_alerts",
-      "line": 1812
+      "line": 1851
     },
     {
       "method": "GET",
       "path": "/produce/listings",
       "handler": "list_farmer_produce_listings",
-      "line": 1843
+      "line": 1882
     },
     {
       "method": "POST",
       "path": "/produce/listings",
       "handler": "create_farmer_produce_listing",
-      "line": 1875
+      "line": 1914
     },
     {
       "method": "POST",
       "path": "/produce/orders",
       "handler": "create_produce_order",
-      "line": 1900
+      "line": 1939
     },
     {
       "method": "GET",
       "path": "/dashboard-overview",
       "handler": "dashboard_overview",
-      "line": 1939
+      "line": 1978
     },
     {
       "method": "POST",
       "path": "/ai/loan-insurance-assistant",
       "handler": "ai_loan_insurance_assistant",
-      "line": 2050
+      "line": 2089
     },
     {
       "method": "GET",
       "path": "/platform/modules",
       "handler": "get_platform_modules",
-      "line": 2056
+      "line": 2095
     },
     {
       "method": "GET",
       "path": "/health",
       "handler": "health_check",
-      "line": 2070
+      "line": 2109
     },
     {
       "method": "POST",
       "path": "/ask",
       "handler": "ask_question",
-      "line": 2100
+      "line": 2139
     },
     {
       "method": "GET",
       "path": "/knowledge/gr/{source_id}",
       "handler": "repository_gr_source",
-      "line": 2181
+      "line": 2220
     },
     {
       "method": "GET",
       "path": "/knowledge/pdf/{source_id}",
       "handler": "knowledge_pdf",
-      "line": 2198
+      "line": 2237
     },
     {
       "method": "GET",
       "path": "/knowledge/sources/{source_name}",
       "handler": "knowledge_source",
-      "line": 2213
+      "line": 2252
     },
     {
       "method": "POST",
       "path": "/ai/explain-simply",
       "handler": "explain_simply",
-      "line": 2226
+      "line": 2265
     },
     {
       "method": "POST",
       "path": "/ai/daily-briefing",
       "handler": "ai_daily_briefing",
-      "line": 2233
+      "line": 2272
     },
     {
       "method": "POST",
       "path": "/ai/farm-planner",
       "handler": "ai_farm_planner",
-      "line": 2239
+      "line": 2278
     },
     {
       "method": "POST",
       "path": "/ai/scheme-eligibility",
       "handler": "ai_scheme_eligibility",
-      "line": 2245
+      "line": 2284
     },
     {
       "method": "POST",
       "path": "/ai/weather-alerts",
       "handler": "ai_weather_alerts",
-      "line": 2251
+      "line": 2290
     },
     {
       "method": "POST",
       "path": "/ai/market-prediction",
       "handler": "ai_market_prediction",
-      "line": 2257
+      "line": 2296
     },
     {
       "method": "POST",
       "path": "/ai/pest-risk",
       "handler": "ai_pest_risk",
-      "line": 2263
+      "line": 2302
     },
     {
       "method": "POST",
       "path": "/ai/map-context",
       "handler": "ai_map_context",
-      "line": 2269
+      "line": 2308
     },
     {
       "method": "GET",
       "path": "/ai/chat-memory/{user_id}",
       "handler": "ai_chat_memory",
-      "line": 2275
+      "line": 2314
     },
     {
       "method": "GET",
       "path": "/questions/feed",
       "handler": "get_question_feed",
-      "line": 2298
+      "line": 2337
     },
     {
       "method": "POST",
       "path": "/community/create-post",
       "handler": "create_post",
-      "line": 2323
+      "line": 2362
     },
     {
       "method": "GET",
       "path": "/community/posts",
       "handler": "get_posts",
-      "line": 2343
+      "line": 2382
     },
     {
       "method": "GET",
       "path": "/community/insights",
       "handler": "get_community_insights",
-      "line": 2372
+      "line": 2411
     },
     {
       "method": "POST",
       "path": "/community/like/{post_id}",
       "handler": "like_post",
-      "line": 2378
+      "line": 2417
     },
     {
       "method": "POST",
       "path": "/community/dislike/{post_id}",
       "handler": "dislike_post",
-      "line": 2388
+      "line": 2427
     },
     {
       "method": "POST",
       "path": "/community/react",
       "handler": "react_to_post",
-      "line": 2398
+      "line": 2437
     },
     {
       "method": "PUT",
       "path": "/community/post",
       "handler": "edit_post",
-      "line": 2415
+      "line": 2454
     },
     {
       "method": "DELETE",
       "path": "/community/post",
       "handler": "delete_post",
-      "line": 2428
+      "line": 2467
     },
     {
       "method": "POST",
       "path": "/community/comment",
       "handler": "add_comment",
-      "line": 2441
+      "line": 2480
     },
     {
       "method": "GET",
       "path": "/community/comments/{post_id}",
       "handler": "get_comments",
-      "line": 2451
+      "line": 2490
     },
     {
       "method": "POST",
       "path": "/upload-image/",
       "handler": "upload_image",
-      "line": 2457
+      "line": 2496
     },
     {
       "method": "POST",
       "path": "/ai/crop-doctor",
       "handler": "ai_crop_doctor",
-      "line": 2476
+      "line": 2515
     },
     {
       "method": "POST",
       "path": "/ai/document-insights",
       "handler": "ai_document_insights",
-      "line": 2483
+      "line": 2522
     },
     {
       "method": "GET",
       "path": "/",
-      "handler": "serve_login_page",
-      "line": 2498
+      "handler": "serve_landing_page",
+      "line": 2537
     },
     {
       "method": "GET",
       "path": "/auth/me",
       "handler": "current_session",
-      "line": 2505
+      "line": 2544
     },
     {
       "method": "POST",
       "path": "/auth/logout",
       "handler": "logout_session",
-      "line": 2509
+      "line": 2548
     },
     {
       "method": "GET",
       "path": "/crop-decision",
       "handler": "crop_decision",
-      "line": 2514
+      "line": 2553
     }
   ],
   "files": [
     {
       "path": ".env.example",
-      "bytes": 806
+      "bytes": 1094
     },
     {
       "path": ".gitignore",
       "bytes": 341
+    },
+    {
+      "path": "README.md",
+      "bytes": 5992
     },
     {
       "path": "backend/__init__.py",
@@ -369,7 +385,7 @@
     },
     {
       "path": "backend/build_vector_index.py",
-      "bytes": 491
+      "bytes": 508
     },
     {
       "path": "backend/data_loader.py",
@@ -377,23 +393,31 @@
     },
     {
       "path": "backend/database.py",
-      "bytes": 5037
+      "bytes": 5176
+    },
+    {
+      "path": "backend/deployment_knowledge.py",
+      "bytes": 2488
     },
     {
       "path": "backend/document_processing.py",
-      "bytes": 4266
+      "bytes": 4359
     },
     {
       "path": "backend/gr_scope.py",
-      "bytes": 3417
+      "bytes": 3461
     },
     {
       "path": "backend/import_maharashtra_grs.py",
-      "bytes": 12435
+      "bytes": 12650
     },
     {
       "path": "backend/intelligence.py",
       "bytes": 11697
+    },
+    {
+      "path": "backend/knowledge/README.md",
+      "bytes": 1284
     },
     {
       "path": "backend/knowledge/farming_reference.json",
@@ -404,20 +428,8 @@
       "bytes": 398169
     },
     {
-      "path": "backend/knowledge/gr_bilingual_preview.json",
-      "bytes": 2021494
-    },
-    {
-      "path": "backend/knowledge/gr_import_report.json",
-      "bytes": 1900770
-    },
-    {
-      "path": "backend/knowledge/README.md",
-      "bytes": 1262
-    },
-    {
       "path": "backend/knowledge/source_exclusions.json",
-      "bytes": 933
+      "bytes": 945
     },
     {
       "path": "backend/knowledge/states/gujarat.html",
@@ -433,15 +445,7 @@
     },
     {
       "path": "backend/knowledge/states/soil_basics.html",
-      "bytes": 770
-    },
-    {
-      "path": "backend/knowledge_imports/farming units/Farming_Research_Units_Maharashtra.pdf",
-      "bytes": 4896
-    },
-    {
-      "path": "backend/knowledge_imports/farming units/PROB STATEMENT 2.pdf",
-      "bytes": 237747
+      "bytes": 787
     },
     {
       "path": "backend/knowledge_imports/GR (guju)/1.pdf",
@@ -488,8 +492,16 @@
       "bytes": 556103
     },
     {
+      "path": "backend/knowledge_imports/farming units/Farming_Research_Units_Maharashtra.pdf",
+      "bytes": 4896
+    },
+    {
+      "path": "backend/knowledge_imports/farming units/PROB STATEMENT 2.pdf",
+      "bytes": 237747
+    },
+    {
       "path": "backend/main.py",
-      "bytes": 100205
+      "bytes": 102040
     },
     {
       "path": "backend/models.py",
@@ -521,39 +533,51 @@
     },
     {
       "path": "backend/pdf_ingestion.py",
-      "bytes": 5884
+      "bytes": 5996
     },
     {
       "path": "backend/rag.py",
-      "bytes": 28405
+      "bytes": 28775
     },
     {
       "path": "backend/retrieval_policy.py",
-      "bytes": 3542
+      "bytes": 3613
     },
     {
       "path": "backend/retriever.py",
-      "bytes": 21152
+      "bytes": 21252
     },
     {
       "path": "backend/security.py",
-      "bytes": 5462
+      "bytes": 6289
     },
     {
       "path": "backend/setup_rag.py",
-      "bytes": 2126
+      "bytes": 2173
     },
     {
       "path": "backend/translation.py",
-      "bytes": 9055
+      "bytes": 11214
     },
     {
       "path": "backend/vector_store.py",
-      "bytes": 7877
+      "bytes": 8031
+    },
+    {
+      "path": "deploy/README.md",
+      "bytes": 3963
+    },
+    {
+      "path": "deploy/UPDATING_THE_WEBSITE.md",
+      "bytes": 11561
+    },
+    {
+      "path": "docs/placement/build_report.py",
+      "bytes": 9925
     },
     {
       "path": "frontend/admin.html",
-      "bytes": 25600
+      "bytes": 25660
     },
     {
       "path": "frontend/api-config.js",
@@ -561,15 +585,15 @@
     },
     {
       "path": "frontend/auth.js",
-      "bytes": 20258
+      "bytes": 23177
     },
     {
       "path": "frontend/cart.html",
-      "bytes": 5263
+      "bytes": 5323
     },
     {
       "path": "frontend/chat-workspace.css",
-      "bytes": 7070
+      "bytes": 7461
     },
     {
       "path": "frontend/chat-workspace.js",
@@ -577,19 +601,19 @@
     },
     {
       "path": "frontend/chat.css",
-      "bytes": 12236
+      "bytes": 12639
     },
     {
       "path": "frontend/chat.html",
-      "bytes": 6558
+      "bytes": 6623
     },
     {
       "path": "frontend/checkout.html",
-      "bytes": 9260
+      "bytes": 9320
     },
     {
       "path": "frontend/community.html",
-      "bytes": 10543
+      "bytes": 10603
     },
     {
       "path": "frontend/community.js",
@@ -597,7 +621,7 @@
     },
     {
       "path": "frontend/crop-care.html",
-      "bytes": 8492
+      "bytes": 8552
     },
     {
       "path": "frontend/farmer-pages.js",
@@ -605,31 +629,47 @@
     },
     {
       "path": "frontend/i18n.js",
-      "bytes": 48888
+      "bytes": 48402
     },
     {
       "path": "frontend/index.html",
-      "bytes": 6570
+      "bytes": 6635
+    },
+    {
+      "path": "frontend/landing.css",
+      "bytes": 10365
+    },
+    {
+      "path": "frontend/landing.html",
+      "bytes": 9216
+    },
+    {
+      "path": "frontend/landing.js",
+      "bytes": 667
     },
     {
       "path": "frontend/login.html",
-      "bytes": 11392
+      "bytes": 11523
     },
     {
       "path": "frontend/market.html",
-      "bytes": 11821
+      "bytes": 11881
+    },
+    {
+      "path": "frontend/mobile.css",
+      "bytes": 8656
     },
     {
       "path": "frontend/my-farm.html",
-      "bytes": 12688
+      "bytes": 12748
     },
     {
       "path": "frontend/profile.html",
-      "bytes": 21524
+      "bytes": 21584
     },
     {
       "path": "frontend/schemes.html",
-      "bytes": 6209
+      "bytes": 6269
     },
     {
       "path": "frontend/schemes.js",
@@ -641,7 +681,7 @@
     },
     {
       "path": "frontend/sell-crops.html",
-      "bytes": 8269
+      "bytes": 8329
     },
     {
       "path": "frontend/shop-catalog.js",
@@ -649,7 +689,7 @@
     },
     {
       "path": "frontend/shop.html",
-      "bytes": 13307
+      "bytes": 13367
     },
     {
       "path": "frontend/style.css",
@@ -657,23 +697,15 @@
     },
     {
       "path": "frontend/ui.js",
-      "bytes": 23670
-    },
-    {
-      "path": "Instruction to start.txt",
-      "bytes": 132
-    },
-    {
-      "path": "README.md",
-      "bytes": 5292
+      "bytes": 25390
     },
     {
       "path": "render.yaml",
-      "bytes": 494
+      "bytes": 1077
     },
     {
       "path": "requirements-dev.txt",
-      "bytes": 34
+      "bytes": 36
     },
     {
       "path": "requirements.txt",
@@ -681,31 +713,35 @@
     },
     {
       "path": "start_agrogyan.bat",
-      "bytes": 849
+      "bytes": 884
     },
     {
       "path": "tests/test_chatbot.py",
-      "bytes": 24497
+      "bytes": 26661
+    },
+    {
+      "path": "tests/test_cloud_demo.py",
+      "bytes": 2570
     },
     {
       "path": "tests/test_gr_import.py",
-      "bytes": 6259
+      "bytes": 6355
     },
     {
       "path": "tests/test_multilingual_rag.py",
-      "bytes": 6303
+      "bytes": 6395
     },
     {
       "path": "tests/test_rag.py",
-      "bytes": 13109
+      "bytes": 13348
     },
     {
       "path": "tests/test_retrieval_improvements.py",
-      "bytes": 7582
+      "bytes": 7705
     },
     {
       "path": "tests/test_translation_local.py",
-      "bytes": 6335
+      "bytes": 6449
     }
   ],
   "symbols": [
@@ -840,6 +876,20 @@
       "line": 37,
       "kind": "FunctionDef",
       "name": "_sqlite_pragmas",
+      "doc": null
+    },
+    {
+      "file": "backend/deployment_knowledge.py",
+      "line": 16,
+      "kind": "FunctionDef",
+      "name": "pack",
+      "doc": null
+    },
+    {
+      "file": "backend/deployment_knowledge.py",
+      "line": 39,
+      "kind": "FunctionDef",
+      "name": "unpack",
       "doc": null
     },
     {
@@ -1537,406 +1587,427 @@
     },
     {
       "file": "backend/main.py",
-      "line": 1311,
+      "line": 1310,
+      "kind": "ClassDef",
+      "name": "BasicRegisterRequest",
+      "doc": null
+    },
+    {
+      "file": "backend/main.py",
+      "line": 1325,
+      "kind": "FunctionDef",
+      "name": "auth_config",
+      "doc": null
+    },
+    {
+      "file": "backend/main.py",
+      "line": 1330,
+      "kind": "FunctionDef",
+      "name": "register_basic",
+      "doc": null
+    },
+    {
+      "file": "backend/main.py",
+      "line": 1350,
       "kind": "FunctionDef",
       "name": "register_user",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1320,
+      "line": 1359,
       "kind": "FunctionDef",
       "name": "send_registration_otp",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1388,
+      "line": 1427,
       "kind": "FunctionDef",
       "name": "verify_registration_otp",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1464,
+      "line": 1503,
       "kind": "FunctionDef",
       "name": "login_user",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1520,
+      "line": 1559,
       "kind": "FunctionDef",
       "name": "get_admin_analytics",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1527,
+      "line": 1566,
       "kind": "FunctionDef",
       "name": "get_profile",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1558,
+      "line": 1597,
       "kind": "FunctionDef",
       "name": "update_profile_preferences",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1569,
+      "line": 1608,
       "kind": "FunctionDef",
       "name": "get_farm_profile",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1578,
+      "line": 1617,
       "kind": "FunctionDef",
       "name": "save_farm_profile",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1595,
+      "line": 1634,
       "kind": "FunctionDef",
       "name": "sync_live_feeds",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1605,
+      "line": 1644,
       "kind": "FunctionDef",
       "name": "get_feed_status",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1642,
+      "line": 1681,
       "kind": "FunctionDef",
       "name": "get_shop_inventory",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1665,
+      "line": 1704,
       "kind": "FunctionDef",
       "name": "upsert_inventory_item",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1685,
+      "line": 1724,
       "kind": "FunctionDef",
       "name": "create_demand_signal",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1700,
+      "line": 1739,
       "kind": "FunctionDef",
       "name": "get_commerce_overview",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1742,
+      "line": 1781,
       "kind": "FunctionDef",
       "name": "create_shop_order",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1769,
+      "line": 1808,
       "kind": "FunctionDef",
       "name": "list_shop_orders",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1780,
+      "line": 1819,
       "kind": "FunctionDef",
       "name": "update_shop_order_status",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1793,
+      "line": 1832,
       "kind": "FunctionDef",
       "name": "create_market_alert",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1812,
+      "line": 1851,
       "kind": "FunctionDef",
       "name": "list_market_alerts",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1843,
+      "line": 1882,
       "kind": "FunctionDef",
       "name": "list_farmer_produce_listings",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1875,
+      "line": 1914,
       "kind": "FunctionDef",
       "name": "create_farmer_produce_listing",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1900,
+      "line": 1939,
       "kind": "FunctionDef",
       "name": "create_produce_order",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 1939,
+      "line": 1978,
       "kind": "FunctionDef",
       "name": "dashboard_overview",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2050,
+      "line": 2089,
       "kind": "FunctionDef",
       "name": "ai_loan_insurance_assistant",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2056,
+      "line": 2095,
       "kind": "FunctionDef",
       "name": "get_platform_modules",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2070,
+      "line": 2109,
       "kind": "FunctionDef",
       "name": "health_check",
       "doc": "Report database, vector index and checked model readiness honestly."
     },
     {
       "file": "backend/main.py",
-      "line": 2100,
+      "line": 2139,
       "kind": "FunctionDef",
       "name": "ask_question",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2181,
+      "line": 2220,
       "kind": "FunctionDef",
       "name": "repository_gr_source",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2198,
+      "line": 2237,
       "kind": "FunctionDef",
       "name": "knowledge_pdf",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2213,
+      "line": 2252,
       "kind": "FunctionDef",
       "name": "knowledge_source",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2226,
+      "line": 2265,
       "kind": "FunctionDef",
       "name": "explain_simply",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2233,
+      "line": 2272,
       "kind": "FunctionDef",
       "name": "ai_daily_briefing",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2239,
+      "line": 2278,
       "kind": "FunctionDef",
       "name": "ai_farm_planner",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2245,
+      "line": 2284,
       "kind": "FunctionDef",
       "name": "ai_scheme_eligibility",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2251,
+      "line": 2290,
       "kind": "FunctionDef",
       "name": "ai_weather_alerts",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2257,
+      "line": 2296,
       "kind": "FunctionDef",
       "name": "ai_market_prediction",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2263,
+      "line": 2302,
       "kind": "FunctionDef",
       "name": "ai_pest_risk",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2269,
+      "line": 2308,
       "kind": "FunctionDef",
       "name": "ai_map_context",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2275,
+      "line": 2314,
       "kind": "FunctionDef",
       "name": "ai_chat_memory",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2298,
+      "line": 2337,
       "kind": "FunctionDef",
       "name": "get_question_feed",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2323,
+      "line": 2362,
       "kind": "FunctionDef",
       "name": "create_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2343,
+      "line": 2382,
       "kind": "FunctionDef",
       "name": "get_posts",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2372,
+      "line": 2411,
       "kind": "FunctionDef",
       "name": "get_community_insights",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2378,
+      "line": 2417,
       "kind": "FunctionDef",
       "name": "like_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2388,
+      "line": 2427,
       "kind": "FunctionDef",
       "name": "dislike_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2398,
+      "line": 2437,
       "kind": "FunctionDef",
       "name": "react_to_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2415,
+      "line": 2454,
       "kind": "FunctionDef",
       "name": "edit_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2428,
+      "line": 2467,
       "kind": "FunctionDef",
       "name": "delete_post",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2441,
+      "line": 2480,
       "kind": "FunctionDef",
       "name": "add_comment",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2451,
+      "line": 2490,
       "kind": "FunctionDef",
       "name": "get_comments",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2457,
+      "line": 2496,
       "kind": "AsyncFunctionDef",
       "name": "upload_image",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2476,
+      "line": 2515,
       "kind": "AsyncFunctionDef",
       "name": "ai_crop_doctor",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2483,
+      "line": 2522,
       "kind": "AsyncFunctionDef",
       "name": "ai_document_insights",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2498,
+      "line": 2537,
       "kind": "FunctionDef",
-      "name": "serve_login_page",
+      "name": "serve_landing_page",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2505,
+      "line": 2544,
       "kind": "FunctionDef",
       "name": "current_session",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2509,
+      "line": 2548,
       "kind": "FunctionDef",
       "name": "logout_session",
       "doc": null
     },
     {
       "file": "backend/main.py",
-      "line": 2514,
+      "line": 2553,
       "kind": "FunctionDef",
       "name": "crop_decision",
       "doc": null
@@ -1960,6 +2031,13 @@
       "line": 1163,
       "kind": "FunctionDef",
       "name": "readable_comment",
+      "doc": null
+    },
+    {
+      "file": "backend/main.py",
+      "line": 1317,
+      "kind": "FunctionDef",
+      "name": "clean_identity",
       "doc": null
     },
     {
@@ -2216,14 +2294,14 @@
     },
     {
       "file": "backend/rag.py",
-      "line": 399,
+      "line": 400,
       "kind": "FunctionDef",
       "name": "_passages",
       "doc": null
     },
     {
       "file": "backend/rag.py",
-      "line": 405,
+      "line": 406,
       "kind": "FunctionDef",
       "name": "_validate",
       "doc": null
@@ -2447,23 +2525,44 @@
     },
     {
       "file": "backend/security.py",
-      "line": 30,
+      "line": 44,
       "kind": "FunctionDef",
       "name": "issue_session",
       "doc": null
     },
     {
       "file": "backend/security.py",
-      "line": 37,
+      "line": 51,
       "kind": "FunctionDef",
       "name": "revoke",
       "doc": null
     },
     {
       "file": "backend/security.py",
-      "line": 42,
+      "line": 56,
       "kind": "AsyncFunctionDef",
       "name": "authorize",
+      "doc": null
+    },
+    {
+      "file": "backend/security.py",
+      "line": 26,
+      "kind": "ClassDef",
+      "name": "Adapter",
+      "doc": null
+    },
+    {
+      "file": "backend/security.py",
+      "line": 27,
+      "kind": "FunctionDef",
+      "name": "__init__",
+      "doc": null
+    },
+    {
+      "file": "backend/security.py",
+      "line": 28,
+      "kind": "FunctionDef",
+      "name": "execute",
       "doc": null
     },
     {
@@ -2496,38 +2595,45 @@
     },
     {
       "file": "backend/translation.py",
-      "line": 81,
+      "line": 82,
       "kind": "FunctionDef",
       "name": "detect_language",
       "doc": null
     },
     {
       "file": "backend/translation.py",
-      "line": 88,
+      "line": 89,
       "kind": "FunctionDef",
       "name": "_normalize_digits",
       "doc": null
     },
     {
       "file": "backend/translation.py",
-      "line": 92,
+      "line": 93,
       "kind": "FunctionDef",
       "name": "_valid_target_script",
       "doc": "Hindi and Marathi share a script; the language heuristic cannot validate them."
     },
     {
       "file": "backend/translation.py",
-      "line": 103,
+      "line": 104,
       "kind": "FunctionDef",
       "name": "_validate_translation",
       "doc": null
     },
     {
       "file": "backend/translation.py",
-      "line": 116,
+      "line": 117,
       "kind": "FunctionDef",
       "name": "local_translate",
       "doc": null
+    },
+    {
+      "file": "backend/translation.py",
+      "line": 168,
+      "kind": "FunctionDef",
+      "name": "groq_translate",
+      "doc": "Translate only supplied evidence; reject numeric or citation changes."
     },
     {
       "file": "backend/vector_store.py",
@@ -2646,6 +2752,13 @@
       "line": 396,
       "kind": "ClassDef",
       "name": "GujaratiPresentationTests",
+      "doc": null
+    },
+    {
+      "file": "tests/test_chatbot.py",
+      "line": 435,
+      "kind": "ClassDef",
+      "name": "BasicRegistrationTests",
       "doc": null
     },
     {
@@ -2982,6 +3095,69 @@
       "line": 425,
       "kind": "FunctionDef",
       "name": "test_translation_failure_is_not_english_answer_disguised_as_gujarati",
+      "doc": null
+    },
+    {
+      "file": "tests/test_chatbot.py",
+      "line": 436,
+      "kind": "FunctionDef",
+      "name": "setUp",
+      "doc": null
+    },
+    {
+      "file": "tests/test_chatbot.py",
+      "line": 441,
+      "kind": "FunctionDef",
+      "name": "test_password_registration_login_and_no_phone_claim",
+      "doc": null
+    },
+    {
+      "file": "tests/test_chatbot.py",
+      "line": 457,
+      "kind": "FunctionDef",
+      "name": "test_basic_registration_disabled",
+      "doc": null
+    },
+    {
+      "file": "tests/test_chatbot.py",
+      "line": 463,
+      "kind": "FunctionDef",
+      "name": "test_invalid_registration_and_rate_limit",
+      "doc": null
+    },
+    {
+      "file": "tests/test_cloud_demo.py",
+      "line": 9,
+      "kind": "ClassDef",
+      "name": "CloudDemoTests",
+      "doc": null
+    },
+    {
+      "file": "tests/test_cloud_demo.py",
+      "line": 10,
+      "kind": "FunctionDef",
+      "name": "test_groq_selector_uses_only_configured_endpoint",
+      "doc": null
+    },
+    {
+      "file": "tests/test_cloud_demo.py",
+      "line": 20,
+      "kind": "FunctionDef",
+      "name": "test_cloud_translation_rejects_changed_amount",
+      "doc": null
+    },
+    {
+      "file": "tests/test_cloud_demo.py",
+      "line": 27,
+      "kind": "FunctionDef",
+      "name": "test_cloud_translation_keeps_citation",
+      "doc": null
+    },
+    {
+      "file": "tests/test_cloud_demo.py",
+      "line": 33,
+      "kind": "FunctionDef",
+      "name": "test_disabled_semantic_search_never_initializes_ollama",
       "doc": null
     },
     {
@@ -5288,11 +5464,39 @@
     ]
   },
   "verification": {
-    "date": "2026-10-19",
-    "tests": 95,
-    "runner_seconds": 5.467,
+    "date": "2026-10-24",
+    "tests": 102,
+    "runner_seconds": 5.901,
     "result": "OK",
-    "javascript_syntax": "passed five relevant files",
-    "sqlite_integrity": "all six files ok"
+    "javascript_syntax": "changed UI and landing scripts passed",
+    "historical_sqlite_integrity": "six local stores ok on 2026-10-19",
+    "landing_widths": [
+      320,
+      390,
+      820,
+      1440
+    ],
+    "mobile_signed_in_pages": 11,
+    "limitations": [
+      "mocked cloud transports are not live provider validation",
+      "no labelled multilingual accuracy benchmark"
+    ]
+  },
+  "historical_local_snapshot_date": "2026-10-19",
+  "deployment": {
+    "public_url": "https://agrogyan-demo.onrender.com/",
+    "host": "Render Free",
+    "app_store": "Supabase PostgreSQL",
+    "sessions": "PostgreSQL when hosted; SQLite locally",
+    "answer_provider": "Groq",
+    "hosted_retrieval": "BM25 with semantic calls disabled",
+    "languages": [
+      "English",
+      "Hindi",
+      "Marathi",
+      "Gujarati"
+    ],
+    "latest_verified_mobile_commit": "19807ca",
+    "landing_revision": "in verification"
   }
 }

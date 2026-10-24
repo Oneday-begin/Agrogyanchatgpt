@@ -45,4 +45,11 @@ The home page loads only its required data, suppresses decorative motion, batche
 
 
 ### Chat workspace
-Home is the landing page; the AgroGyanGPT top-bar link opens the dedicated chat.html conversation workspace. New chat creates a separate conversation; the sidebar reopens saved conversations without sending the question again. Conversation history, drafts, language choices and new source links are stored in this browser, scoped by user ID (or guest). Existing local question history is imported as individual conversations. This is browser-local storage, not cross-device conversation sync. On small screens, use the history menu to open the sidebar.
+The public introduction is at /; Home remains the farm dashboard at /index.html; the AgroGyanGPT top-bar link opens the dedicated chat.html conversation workspace. New chat creates a separate conversation; the sidebar reopens saved conversations without sending the question again. Conversation history, drafts, language choices and new source links are stored in this browser, scoped by user ID (or guest). Existing local question history is imported as individual conversations. This is browser-local storage, not cross-device conversation sync. On small screens, use the history menu to open the sidebar.
+
+
+### Public landing and hosted demo
+
+The root route serves landing.html, with login at /login.html and chat at /chat.html. Render Free serves the API and frontend; Supabase PostgreSQL persists app/session records; Groq selects source evidence and translates. The cloud profile uses BM25, with local semantic inference disabled.
+
+See [the complete update guide](deploy/UPDATING_THE_WEBSITE.md) for local editing, GitHub Desktop, automatic deployment, phone refresh, GR packaging, secret configuration and report regeneration. The [placement report](docs/placement/AgroGyanGPT_Placement_Report.pdf) distinguishes local and cloud behavior.

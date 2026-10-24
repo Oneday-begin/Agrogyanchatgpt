@@ -2534,8 +2534,8 @@ async def ai_document_insights(file: UploadFile = File(...), language: str = For
 
 
 @app.get("/", include_in_schema=False)
-def serve_login_page():
-    return FileResponse(FRONTEND_DIR / "login.html")
+def serve_landing_page():
+    return FileResponse(FRONTEND_DIR / "landing.html")
 
 
 
