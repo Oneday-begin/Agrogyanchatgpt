@@ -1,0 +1,134 @@
+/* Shared responsive layer, loaded after page styles to avoid competing layouts. */
+.mobile-menu-toggle { display:none; }
+
+@media (max-width:900px) {
+    html { -webkit-text-size-adjust:100%; }
+    body { margin:0; background-attachment:scroll; }
+    *, *::before, *::after { box-sizing:border-box; }
+    body .page-shell { width:100%!important; max-width:none; padding:0 12px 24px; }
+    body .site-header {
+        position:relative; top:0; z-index:100; display:flex; flex-wrap:nowrap;
+        align-items:center; justify-content:space-between; gap:12px;
+        height:64px; min-height:64px; padding:10px 14px; margin:0 -12px 16px;
+        border:0; border-bottom:1px solid #dce5db; border-radius:0;
+        background:#fff; color:#24452e; box-shadow:none; backdrop-filter:none;
+    }
+    body .site-header .brand-left {
+        width:auto; min-width:0; max-width:calc(100% - 90px); padding:0;
+        align-items:flex-start; justify-content:center;
+    }
+    body .site-header .brand-mark {
+        font-size:clamp(19px,5.4vw,24px); line-height:1.2; letter-spacing:-.5px;
+        white-space:nowrap; word-break:normal; overflow-wrap:normal; color:#284e35;
+        text-decoration:none; gap:0; transform:none;
+    }
+    body .site-header .brand-mark::before,
+    body .site-header .welcome-text { display:none; }
+    body .site-header .mobile-menu-toggle {
+        display:inline-flex; align-items:center; justify-content:center; gap:7px;
+        flex:0 0 auto; min-width:78px; min-height:44px; padding:8px 10px;
+        background:#f2f6ef; color:#284e35; border:1px solid #dce5db;
+        border-radius:9px; font:600 14px Arial,sans-serif; white-space:nowrap;
+        cursor:pointer; box-shadow:none;
+    }
+    body .site-header .top-actions { display:none!important; }
+    body .site-header.menu-open .top-actions {
+        display:grid!important; grid-template-columns:minmax(0,1fr); gap:14px;
+        position:absolute; top:100%; right:0; left:0; width:100%; padding:16px;
+        max-height:min(75dvh,600px); overflow-y:auto; overscroll-behavior:contain;
+        background:#fff; color:#284e35; border-bottom:1px solid #dce5db;
+        box-shadow:0 14px 22px #17301e18; z-index:110;
+    }
+    body .site-header .clean-nav {
+        display:grid; grid-template-columns:minmax(0,1fr); gap:4px; width:100%;
+    }
+    body .site-header .clean-nav > * { width:100%; min-width:0; }
+    body .site-header .clean-nav .clean-nav-link {
+        display:flex; align-items:center; justify-content:flex-start; width:100%;
+        min-height:44px; padding:12px; margin:0; font:600 15px/1.3 Arial,sans-serif;
+        text-align:left; white-space:nowrap; overflow-wrap:normal; word-break:normal;
+        color:#284e35; background:transparent; border:0; border-radius:8px;
+    }
+    body .site-header .clean-nav-link.active { background:#edf3e9; }
+    body .site-header .nav-dropdown > summary::after { display:inline; margin-left:auto; }
+    body .site-header .dropdown-panel {
+        position:static; width:100%; min-width:0; margin:0; padding:2px 8px 8px;
+        background:#f5f8f2; border:0; border-radius:8px; box-shadow:none; transform:none;
+    }
+    body .site-header .dropdown-panel a {
+        display:flex; align-items:center; min-height:44px; padding:10px 16px;
+        font-size:15px; color:#284e35; white-space:normal; word-break:normal;
+    }
+    body .site-header .header-utility {
+        display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:10px;
+        width:100%; border-top:1px solid #e2e9df; padding-top:12px;
+    }
+    body .site-header .header-utility :is(select,button,a) {
+        display:flex; width:100%; min-width:0; min-height:44px; margin:0;
+        padding:10px; font-size:16px; color:#284e35; background:#f4f7f0;
+        border:1px solid #dce5db; border-radius:8px; justify-content:center;
+    }
+    body .site-header button:focus-visible,
+    body .site-header a:focus-visible { outline:2px solid #527b42; outline-offset:2px; }
+
+    /* Readable cards instead of oversized hero blocks and stacked decoration. */
+    body .hero-panel { padding:20px 16px; border-radius:16px; gap:20px; }
+    body .hero-panel::before { display:none; }
+    body .main-title { max-width:100%; font-size:clamp(26px,6.5vw,34px); line-height:1.18; margin:12px 0; }
+    body .section-title { font-size:clamp(24px,6vw,30px); line-height:1.2; }
+    body .subtitle { max-width:100%; font-size:15px; line-height:1.55; margin:10px 0 16px; }
+    body :is(.hero-chip,.eyebrow) { width:auto; max-width:100%; font-size:12px; }
+    body :is(.hero-meta-row,.hero-cta-row) { display:flex; flex-direction:row; flex-wrap:wrap; gap:8px; }
+    body .hero-cta-row > * { display:flex; justify-content:center; align-items:center; flex:1 1 140px; height:auto; min-height:44px; font-size:14px; padding:12px; }
+    body .clean-support-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    body .clean-support-grid .quick-link-card { min-width:0; padding:12px; border-radius:12px; }
+    body .clean-support-grid strong { font-size:18px; }
+    body .clean-support-grid p { font-size:13px; line-height:1.45; }
+    body :is(.hero-copy,.hero-side,.dashboard-widgets,.profile-grid,.form-grid,
+        .market-grid,.scheme-grid,.shop-layout,.shop-product-card,.post-card,
+        .profile-card,.timeline-card,.advisory-card) { min-width:0; }
+    body :is(.dashboard-grid,.home-secondary-grid,.profile-grid,.form-grid,
+        .scheme-grid,.command-center-grid,.shop-layout) { grid-template-columns:minmax(0,1fr); }
+    body :is(.timeline-card,.advisory-card,.profile-card,.scheme-card,.post-card,.forecast-card) {
+        padding:16px; border-radius:16px;
+    }
+    body :is(.hero-stats,.compact-hero-stats) { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    body .hero-stats .stat-card { min-width:0; padding:12px; border-radius:12px; }
+    body .hero-stats .stat-label { font-size:11px; line-height:1.4; }
+    body .hero-stats .stat-value { font-size:20px; line-height:1.3; overflow-wrap:anywhere; }
+    body :is(.hero-panel,.forecast-card,.post-box,.profile-card) { box-shadow:none; }
+    body .hero-side .forecast-card { padding:16px; min-height:0; gap:12px; }
+    body .hero-side .forecast-card::before,
+    body .hero-side .forecast-card::after { display:none; }
+    body :is(.weather-ai-pill,.weather-story-mini) { display:none; }
+    body :is(input,select,textarea) { max-width:100%; font-size:16px; }
+    body :is(img,video,canvas,iframe) { max-width:100%; }
+    body :is(.form-actions,.filter-row,.shop-toolbar,.community-toolbar) { flex-wrap:wrap; gap:8px; }
+    body :is(.table-wrap,.table-wrapper,.table-scroll) { max-width:100%; overflow-x:auto; }
+    body :is(.post-content,.source-list,.profile-value) { overflow-wrap:anywhere; }
+    body .modal-card { max-height:85dvh; overflow-y:auto; overscroll-behavior:contain; }
+    body .weather-story-card { min-height:120px; max-height:180px; }
+    body .weather-stats-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+
+    /* Chat uses the area actually visible above the keyboard and Safari controls. */
+    body.chat-page { height:var(--chat-viewport-height,100dvh); overflow:hidden; }
+    body.chat-page .site-header { height:64px; min-height:64px; margin:0; flex-shrink:0; }
+    body.chat-page .chat-workspace { height:calc(var(--chat-viewport-height,100dvh) - 64px); }
+    body.chat-page .conversation-sidebar { top:64px; }
+    body.chat-page .conversation-toolbar { padding:10px 14px; }
+    body.chat-page .conversation-toolbar p { font-size:12px; }
+    body.chat-page .agro-chat-messages { padding:16px; gap:20px; overscroll-behavior:contain; }
+    body.chat-page .agro-msg-bubble { font-size:15px; line-height:1.65; overflow-wrap:anywhere; }
+    body.chat-page .agro-chat-inputbar { padding:8px 12px max(10px,env(safe-area-inset-bottom)); }
+    body.chat-page .agro-chat-textarea { font-size:16px; min-height:48px; padding:12px; }
+    body.chat-page .agro-chat-attachrow { margin-bottom:4px; }
+    body.chat-page .agro-explain-row { flex-wrap:wrap; gap:4px 10px; }
+    body.chat-page .agro-chip-btn { min-height:32px; padding:5px 2px; }
+    body.chat-page .agro-lang-select { min-height:40px; font-size:16px; }
+    body.chat-page .agro-icon-btn { min-width:40px; min-height:40px; }
+    body.chat-page .agro-send-btn { flex:0 0 46px; width:46px; height:46px; }
+}
+
+@media (min-width:761px) and (max-width:900px) {
+    body.chat-page .chat-workspace { grid-template-columns:220px minmax(0,1fr); }
+}

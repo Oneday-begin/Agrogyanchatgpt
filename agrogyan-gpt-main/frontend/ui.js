@@ -255,13 +255,14 @@ function renderUnifiedHeader() {
         ? `<a id="adminNavButton" class="nav-btn clean-secondary-btn" href="admin.html">Admin Panel</a>`
         : "";
 
-    topBar.classList.add("clean-top-bar");
+    topBar.classList.add("clean-top-bar", "site-header");
     topBar.innerHTML = `
         <div class="brand-left">
             <a class="brand-mark clean-brand-mark brand-home-link" href="index.html" aria-label="Go to Home">AgroGyanGPT</a>
             <div id="welcomeUser" class="welcome-text">${subtitle}</div>
         </div>
-        <div class="top-actions clean-top-actions">
+        <button class="mobile-menu-toggle" type="button" aria-controls="siteNavigation" aria-expanded="false" aria-label="Open navigation menu">☰ <span>Menu</span></button>
+        <div id="siteNavigation" class="top-actions clean-top-actions">
             <nav class="clean-nav" aria-label="Primary">
                 <a class="clean-nav-link ${activeHome ? "active" : ""}" href="index.html">Home</a>
                 <a class="clean-nav-link ${pageKey === "chat" ? "active" : ""}" href="chat.html">AgroGyanGPT</a>
@@ -295,6 +296,34 @@ function renderUnifiedHeader() {
             </div>
         </div>
     `;
+    const toggle = topBar.querySelector(".mobile-menu-toggle");
+    const setMenu = (open) => {
+        topBar.classList.toggle("menu-open", open);
+        toggle.setAttribute("aria-expanded", String(open));
+        toggle.setAttribute("aria-label", open ? "Close navigation menu" : "Open navigation menu");
+        toggle.querySelector("span").textContent = open ? "Close" : "Menu";
+        if (!open) topBar.querySelectorAll("details[open]").forEach(item => item.removeAttribute("open"));
+    };
+    toggle.addEventListener("click", () => setMenu(toggle.getAttribute("aria-expanded") !== "true"));
+    document.addEventListener("click", event => {
+        if (!topBar.contains(event.target)) setMenu(false);
+    });
+    topBar.addEventListener("keydown", event => {
+        if (event.key === "Escape" && toggle.getAttribute("aria-expanded") === "true") {
+            setMenu(false);
+            toggle.focus();
+        }
+    });
+    // iOS exposes the usable height through visualViewport when the keyboard opens.
+    if (pageKey === "chat" && window.visualViewport) {
+        let frame;
+        const resize = () => {
+            cancelAnimationFrame(frame);
+            frame = requestAnimationFrame(() => document.documentElement.style.setProperty("--chat-viewport-height", `${window.visualViewport.height}px`));
+        };
+        window.visualViewport.addEventListener("resize", resize);
+        resize();
+    }
 }
 
 function injectAdminNavButton() {
