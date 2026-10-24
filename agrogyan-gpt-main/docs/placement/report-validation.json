@@ -7,7 +7,7 @@
   "test_count": 102,
   "test_runner_seconds": 5.901,
   "test_status": "OK",
-  "report_words": 19293,
+  "report_words": 19298,
   "landing_widths": [
     320,
     390,
@@ -15,7 +15,20 @@
     1440
   ],
   "mobile_app_signed_in_pages_checked": 11,
-  "landing_live_verification": "pending publish",
+  "landing_live_verification": {
+    "status": "verified",
+    "date": "2026-10-24",
+    "application_commit": "bf50e6f",
+    "url": "https://agrogyan-demo.onrender.com/",
+    "checks": [
+      "Render deployment Live",
+      "root serves landing title and main heading",
+      "390px layout has no horizontal overflow",
+      "landing chat link opens chat.html",
+      "login return link targets root"
+    ]
+  },
   "historical_local_snapshot_date": "2026-10-19",
-  "visual_review": "All pages reviewed as rendered contact sheets; deployment, workflow and endpoint pages reviewed at readable size"
+  "visual_review": "All pages reviewed as rendered contact sheets; deployment, workflow and endpoint pages reviewed at readable size",
+  "pdf_sha256": "38d1560888edbbb06b80719727105761e2f26e3baa4071d6facdacca5c925d14"
 }
